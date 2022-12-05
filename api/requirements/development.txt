@@ -1,0 +1,7 @@
+-r production.txt
+
+black
+flake8
+mypy == 0.961
+pytest
+pytest-asyncio
