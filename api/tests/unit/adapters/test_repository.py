@@ -15,7 +15,7 @@ async def test_add_and_fetch_job(repo: Repository, sample_pdf: bytes) -> None:
     assert found_job.id == jid
     assert found_job.src == sample_pdf
     assert found_job.type == JobType.PDF
-    assert found_job.status == JobStatus.QUEUED
+    assert found_job.status == JobStatus.CREATED
 
 
 async def test_cant_add_with_specific_jid(repo: Repository, sample_pdf: bytes) -> None:
