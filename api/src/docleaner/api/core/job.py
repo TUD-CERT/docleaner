@@ -1,6 +1,6 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import IntEnum
-from typing import List
+from typing import List, Optional
 
 
 class JobStatus(IntEnum):
@@ -10,12 +10,19 @@ class JobStatus(IntEnum):
     ERROR = 3  # Job execution threw an error, a log is available
 
 
-@dataclass
+class JobType(IntEnum):
+    PDF = 0
+
+
+@dataclass(eq=False, kw_only=True)
 class Job:
     """A document cleaning job."""
 
-    id: str  # Base64-encoded 160 bit identifier
-    log: List[str]  # Log data for progress monitoring and debugging
-    result: bytes  # Resulting cleaned document
     src: bytes  # Source, the document to clean
+    type: JobType  # Source document type, selects a worker to handle this job
+    id: Optional[str] = None  # Unique identifier
+    log: List[str] = field(
+        default_factory=list
+    )  # Log data for progress monitoring and debugging
+    result: bytes = b""  # Resulting cleaned document
     status: JobStatus = JobStatus.QUEUED
