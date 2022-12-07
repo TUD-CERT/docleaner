@@ -1,7 +1,8 @@
 import pytest
 
-from docleaner.api.adapters.job_queue.fake_job_queue import FakeJobQueue
+from docleaner.api.adapters.job_queue.dummy_job_queue import DummyJobQueue
 from docleaner.api.adapters.repository.memory_repository import MemoryRepository
+from docleaner.api.adapters.sandbox.dummy_sandbox import DummySandbox
 from docleaner.api.services.job_queue import JobQueue
 from docleaner.api.services.repository import Repository
 
@@ -20,4 +21,4 @@ def sample_pdf() -> bytes:
 
 @pytest.fixture
 def queue(repo: Repository) -> JobQueue:
-    return FakeJobQueue(repo=repo)
+    return DummyJobQueue(repo=repo, sandbox=DummySandbox())
