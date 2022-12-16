@@ -1,0 +1,6 @@
+#!/bin/sh
+set -e
+test "${1}" -a "${2}" || exit
+mv "${1}" /tmp/source.pdf  # exiftool demands its source files have the proper extension
+exiftool -all= -tagsfromfile @ -title -keywords -subject -description /tmp/source.pdf -o /tmp/intermediate.pdf
+qpdf --linearize /tmp/intermediate.pdf "${2}"

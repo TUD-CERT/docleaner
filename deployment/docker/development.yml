@@ -8,3 +8,4 @@ services:
     volumes:
       - ${PWD}/api/src/docleaner/api:/srv/src/docleaner/api
       - ${PWD}/api/tests:/srv/tests
+      - ${DOCLEANER_PODMAN_SOCKET}:/run/podman.sock
