@@ -27,12 +27,18 @@ class MemoryRepository(Repository):
     async def update_job(
         self,
         jid: str,
+        metadata_result: Optional[Dict[str, str]] = None,
+        metadata_src: Optional[Dict[str, str]] = None,
         result: Optional[bytes] = None,
         status: Optional[JobStatus] = None,
     ) -> None:
         job = self._jobs.get(jid)
         if job is None:
             raise ValueError(f"No job with ID {jid}")
+        if metadata_result is not None:
+            job.metadata_result = metadata_result
+        if metadata_src is not None:
+            job.metadata_src = metadata_src
         if result is not None:
             job.result = result
         if status is not None:

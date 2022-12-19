@@ -1,5 +1,5 @@
 import abc
-from typing import Optional, Set
+from typing import Dict, Optional, Set
 
 from docleaner.api.core.job import Job, JobStatus
 
@@ -26,6 +26,8 @@ class Repository(abc.ABC):
     async def update_job(
         self,
         jid: str,
+        metadata_result: Optional[Dict[str, str]] = None,
+        metadata_src: Optional[Dict[str, str]] = None,
         result: Optional[bytes] = None,
         status: Optional[JobStatus] = None,
     ) -> None:

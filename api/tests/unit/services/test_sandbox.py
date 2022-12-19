@@ -21,6 +21,8 @@ async def test_process_successful_job_in_sandbox(
     assert found_job.status == JobStatus.SUCCESS
     assert len(found_job.result) > 0  # Result is present
     assert len(found_job.log) > 0  # Something was logged
+    # Presence of attached document metadata
+    assert len(found_job.metadata_src) > 0
 
 
 async def test_process_unsuccessful_job_in_sandbox(

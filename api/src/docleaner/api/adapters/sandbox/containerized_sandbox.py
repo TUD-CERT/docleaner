@@ -1,30 +1,35 @@
+import json
 import os
 import tarfile
 from tempfile import TemporaryDirectory
-from typing import List, Tuple
 
 from podman import PodmanClient  # type: ignore
 
-from docleaner.api.services.sandbox import Sandbox
+from docleaner.api.services.sandbox import Sandbox, SandboxResult
 
 
 class ContainerizedSandbox(Sandbox):
     """Launches a podman-controlled container with a predefined image.
     That container is expected to idle (e.g. via 'sleep infinity') after startup.
     This sandbox will then copy the source file into the container's filesystem (via the podman API),
-    execute '/opt/process <source_path> <result_path>', retrieve and return the result."""
+    execute '/opt/analyze <source_path>' to retrieve source metadata,
+    then execute '/opt/process <source_path> <result_path>' for metadata processing,
+    then execute '/opt/analyze <result_path>' to retrieve result metadata
+    and finally retrieve+return the result."""
 
     def __init__(self, container_image: str, podman_uri: str):
         self._image = container_image
         self._podman_uri = podman_uri
 
-    async def process(self, source: bytes) -> Tuple[List[str], bool, bytes]:
+    async def process(self, source: bytes) -> SandboxResult:
         with PodmanClient(
             base_url=self._podman_uri
         ) as podman, TemporaryDirectory() as tmpdir:
             log = []
-            result = b""
+            result_document = b""
+            metadata_result = metadata_src = {}
             success = False
+            # Copy source into container
             source_path = os.path.join(tmpdir, "source")
             source_tar = os.path.join(tmpdir, "source.tar")
             with open(source_path, "wb") as f:
@@ -35,13 +40,42 @@ class ContainerizedSandbox(Sandbox):
             container.start()
             with open(source_tar, "rb") as tar_raw:
                 container.put_archive("/tmp", tar_raw)
-            process_status, process_out = container.exec_run(
-                ["/opt/process", "/tmp/source", "/tmp/result"]
-            )
-            log.append(process_out.decode("utf-8"))
-            if process_status == 0:
+            try:
+                # Pre-process metadata analysis
+                process_status, process_out = container.exec_run(
+                    ["/opt/analyze", "/tmp/source"]
+                )
+                if process_status != 0:
+                    log.append(process_out.decode("utf-8"))
+                    raise ValueError()
+                metadata_src = json.loads(process_out.decode("utf-8"))
+                # Metadata processing
+                process_status, process_out = container.exec_run(
+                    ["/opt/process", "/tmp/source", "/tmp/result"]
+                )
+                log.append(process_out.decode("utf-8"))
+                if process_status != 0:
+                    raise ValueError()
+                # Retrieve result from container
                 result_iterator, _ = container.get_archive("/tmp/result")
-                result = b"".join(result_iterator)
+                result_document = b"".join(result_iterator)
+                # Post-process metadata analysis
+                process_status, process_out = container.exec_run(
+                    ["/opt/analyze", "/tmp/result"]
+                )
+                if process_status != 0:
+                    log.append(process_out.decode("utf-8"))
+                    raise ValueError()
+                metadata_result = json.loads(process_out.decode("utf-8"))
                 success = True
-            container.stop(timeout=10)
-            return log, success, result
+            except ValueError:
+                result_document = b""
+            finally:
+                container.stop(timeout=10)
+                return SandboxResult(
+                    success=success,
+                    log=log,
+                    result=result_document,
+                    metadata_result=metadata_result,
+                    metadata_src=metadata_src,
+                )

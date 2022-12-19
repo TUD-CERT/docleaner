@@ -1,6 +1,4 @@
-from typing import Tuple, List
-
-from docleaner.api.services.sandbox import Sandbox
+from docleaner.api.services.sandbox import Sandbox, SandboxResult
 
 
 class DummySandbox(Sandbox):
@@ -10,9 +8,13 @@ class DummySandbox(Sandbox):
         """Set simulate_errors to True to force this sandbox to simulate an error on each job."""
         self._simulate_errors = simulate_errors
 
-    async def process(self, source: bytes) -> Tuple[List[str], bool, bytes]:
-        return (
-            ["Executing job in dummy sandbox"],
-            not self._simulate_errors,
-            b"" if self._simulate_errors else b"RESULT",
+    async def process(self, source: bytes) -> SandboxResult:
+        return SandboxResult(
+            success=not self._simulate_errors,
+            log=["Executing job in dummy sandbox"],
+            result=b"" if self._simulate_errors else b"RESULT",
+            metadata_result={"author": "Alice", "domain": "example.com"},
+            metadata_src={
+                "domain": "example.com"
+            },  # Assumes the sandbox didn't purge all metadata
         )

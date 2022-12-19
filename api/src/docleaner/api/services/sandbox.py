@@ -1,8 +1,22 @@
 import abc
-from typing import List, Tuple
+from dataclasses import dataclass, field
+from typing import Dict, List
 
 from docleaner.api.core.job import JobStatus
 from docleaner.api.services.repository import Repository
+
+
+@dataclass(kw_only=True)
+class SandboxResult:
+    """After processing a job, a sandbox returns an instance of this
+    to indicate success or errors, pass on log data, the actual result
+    and associated document metadata."""
+
+    success: bool
+    log: List[str]  # A list of collected log lines
+    result: bytes = field(repr=False)  # Raw result document
+    metadata_result: Dict[str, str]  # Document metadata after conversion
+    metadata_src: Dict[str, str]  # Document metadata prior to conversion
 
 
 class Sandbox(abc.ABC):
@@ -10,7 +24,7 @@ class Sandbox(abc.ABC):
     attempts to purge its metadata and returns the result."""
 
     @abc.abstractmethod
-    async def process(self, source: bytes) -> Tuple[List[str], bool, bytes]:
+    async def process(self, source: bytes) -> SandboxResult:
         """Transforms the given source document by removing associated metadata.
         Returns a tuple of the form (log_data, success, resulting clean file)."""
         raise NotImplementedError()
@@ -26,9 +40,13 @@ async def process_job_in_sandbox(jid: str, sandbox: Sandbox, repo: Repository) -
         raise ValueError(
             f"Can't execute job {jid}, because it's not in QUEUED state (state is {job.status})"
         )
-    log_data, success, result = await sandbox.process(job.src)
-    for d in log_data:
-        await repo.add_to_job_log(jid, d)
+    result = await sandbox.process(job.src)
+    for logline in result.log:
+        await repo.add_to_job_log(jid, logline)
     await repo.update_job(
-        jid=jid, status=JobStatus.SUCCESS if success else JobStatus.ERROR, result=result
+        jid=jid,
+        status=JobStatus.SUCCESS if result.success else JobStatus.ERROR,
+        result=result.result,
+        metadata_result=result.metadata_result,
+        metadata_src=result.metadata_src,
     )

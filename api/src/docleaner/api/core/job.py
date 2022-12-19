@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from enum import IntEnum
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 
 class JobStatus(IntEnum):
@@ -22,8 +22,11 @@ class Job:
     src: bytes  # Source, the document to clean
     type: JobType  # Source document type, selects a worker to handle this job
     id: Optional[str] = None  # Unique identifier
-    log: List[str] = field(
-        default_factory=list
-    )  # Log data for progress monitoring and debugging
+    # Log data for progress monitoring and debugging
+    log: List[str] = field(default_factory=list)
+    # Document metadata associated with the resulting document
+    metadata_result: Dict[str, str] = field(default_factory=dict)
+    # Document metadata associated with the source document
+    metadata_src: Dict[str, str] = field(default_factory=dict)
     result: bytes = b""  # Resulting cleaned document
     status: JobStatus = JobStatus.CREATED
