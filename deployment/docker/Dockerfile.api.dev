@@ -6,7 +6,7 @@ ENV PYTHONDONTWRITEBYTECODE 1
 WORKDIR /srv
 ADD api/requirements api/pytest.ini api/setup.py /srv/
 ADD api/scripts /usr/local/bin/
-RUN apk add py3-pip; \
+RUN apk add libmagic py3-pip; \
     pip3 install -r /srv/development.txt; \
     mkdir -p /srv/src/docleaner/api /srv/tests; \
     pip3 install -e /srv

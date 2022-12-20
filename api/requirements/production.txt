@@ -1,2 +1,2 @@
 podman
-PyPDF2
+python-magic

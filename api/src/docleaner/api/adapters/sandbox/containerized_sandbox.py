@@ -58,7 +58,14 @@ class ContainerizedSandbox(Sandbox):
                     raise ValueError()
                 # Retrieve result from container
                 result_iterator, _ = container.get_archive("/tmp/result")
-                result_document = b"".join(result_iterator)
+                result_tar_raw = b"".join(result_iterator)
+                result_tar = os.path.join(tmpdir, "result.tar")
+                with open(result_tar, "wb") as f:
+                    f.write(result_tar_raw)
+                with tarfile.open(result_tar, "r") as tar:
+                    tar.extract("result", path=tmpdir)
+                with open(os.path.join(tmpdir, "result"), "rb") as f:
+                    result_document = f.read()
                 # Post-process metadata analysis
                 process_status, process_out = container.exec_run(
                     ["/opt/analyze", "/tmp/result"]

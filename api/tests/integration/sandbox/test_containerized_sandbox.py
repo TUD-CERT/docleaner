@@ -1,3 +1,5 @@
+import magic
+
 from docleaner.api.adapters.sandbox.containerized_sandbox import ContainerizedSandbox
 
 
@@ -10,7 +12,7 @@ async def test_process_valid_pdf(sample_pdf: bytes) -> None:
     result = await sandbox.process(sample_pdf)
     assert result.success
     assert isinstance(result.result, bytes)
-    assert len(result.result) > 0
+    assert magic.from_buffer(result.result, mime=True) == "application/pdf"
     assert result.metadata_src["Subject"] == "testing"
     assert result.metadata_src["Author"] == "John Doe"
     assert (
