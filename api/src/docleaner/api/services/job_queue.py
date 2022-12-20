@@ -12,6 +12,6 @@ class JobQueue(abc.ABC):
         A job is only accepted if it carries an ID and is in CREATED state."""
         raise NotImplementedError()
 
-    async def wait_for(self, job: Job) -> None:
+    async def wait_for(self, jid: str) -> None:
         """Waits until the given job either completed successfully or was aborted due to an error."""
         raise NotImplementedError()

@@ -23,10 +23,11 @@ class DummyJobQueue(JobQueue):
         await self._repo.update_job(job.id, status=JobStatus.QUEUED)
         await process_job_in_sandbox(job.id, self._sandbox, self._repo)
 
-    async def wait_for(self, job: Job) -> None:
-        if job.id is None:
-            raise ValueError("Only jobs with an ID can be awaited")
+    async def wait_for(self, jid: str) -> None:
+        job = await self._repo.find_job(jid)
+        if job is None:
+            raise ValueError(f"A job with jid {jid} does not exist")
         while True:
-            j = await self._repo.find_job(job.id)
-            if j is None or j.status in [JobStatus.SUCCESS, JobStatus.ERROR]:
+            if job is None or job.status in [JobStatus.SUCCESS, JobStatus.ERROR]:
                 break
+            job = await self._repo.find_job(jid)

@@ -10,9 +10,9 @@ async def test_enqueue_job(
 ) -> None:
     """Adding a job to the processing queue and waiting until job completion."""
     job = Job(src=sample_pdf, type=JobType.PDF)
-    await repo.add_job(job)
+    jid = await repo.add_job(job)
     await queue.enqueue(job)
-    await queue.wait_for(job)
+    await queue.wait_for(jid)
 
 
 async def test_enqueue_job_without_id(

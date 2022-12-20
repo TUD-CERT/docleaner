@@ -31,10 +31,7 @@ async def await_job(
 ) -> Tuple[JobStatus, JobType, List[str], Dict[str, str], Dict[str, str]]:
     """Blocks until the job identified by jid has been processed.
     Returns the job's final status, type, log data, source metadata and resulting metadata."""
-    job = await repo.find_job(jid)
-    if job is None:
-        raise ValueError(f"A job with jid {jid} does not exist")
-    await queue.wait_for(job)
+    await queue.wait_for(jid)
     job = await repo.find_job(jid)
     if job is not None:
         return job.status, job.type, job.log, job.metadata_src, job.metadata_result
