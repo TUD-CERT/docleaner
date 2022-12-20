@@ -1,7 +1,7 @@
 from datetime import timedelta
 from typing import Dict, List, Set, Tuple
 
-from docleaner.api.core.job import Job, JobStatus, JobType
+from docleaner.api.core.job import JobStatus, JobType
 from docleaner.api.services.clock import Clock
 from docleaner.api.services.file_identifier import FileIdentifier
 from docleaner.api.services.job_queue import JobQueue
@@ -24,7 +24,7 @@ async def create_job(
         case _:
             raise ValueError("Unsupported document")
     # Create and schedule job
-    jid = await repo.add_job(Job(src=source, type=source_type, created=clock.now()))
+    jid = await repo.add_job(source, source_type)
     job = await repo.find_job(jid)
     if job is None:
         raise RuntimeError(f"Race condition: added job {jid} is now gone")

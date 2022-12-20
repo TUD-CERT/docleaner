@@ -1,6 +1,6 @@
 from typing import Dict, Optional, Set
 
-from docleaner.api.core.job import Job, JobStatus
+from docleaner.api.core.job import Job, JobStatus, JobType
 from docleaner.api.services.clock import Clock
 from docleaner.api.services.repository import Repository
 from docleaner.api.utils import generate_token
@@ -13,12 +13,11 @@ class MemoryRepository(Repository):
         self._clock = clock
         self._jobs: Dict[str, Job] = {}
 
-    async def add_job(self, job: Job) -> str:
-        if job.id is not None:
-            raise ValueError("Can't add a job with an existing job identifier")
-        job.id = generate_token()
-        self._jobs[job.id] = job
-        return job.id
+    async def add_job(self, src: bytes, job_type: JobType) -> str:
+        jid = generate_token()
+        job = Job(id=jid, src=src, type=job_type, created=self._clock.now())
+        self._jobs[jid] = job
+        return jid
 
     async def find_job(self, jid: str) -> Optional[Job]:
         return self._jobs.get(jid)

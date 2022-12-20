@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import IntEnum
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 
 class JobStatus(IntEnum):
@@ -20,11 +20,11 @@ class JobType(IntEnum):
 class Job:
     """A document cleaning job."""
 
+    id: str  # Unique identifier
     src: bytes = field(repr=False)  # Source, the document to clean
     type: JobType  # Source document type, selects a worker to handle this job
     created: datetime  # Job creation timestamp
     updated: datetime = field(init=False)  # Last update timestamp
-    id: Optional[str] = None  # Unique identifier
     # Log data for progress monitoring and debugging
     log: List[str] = field(default_factory=list)
     # Document metadata associated with the resulting document

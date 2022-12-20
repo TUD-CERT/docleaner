@@ -4,7 +4,7 @@ import magic
 import pytest
 
 from docleaner.api.adapters.clock.dummy_clock import DummyClock
-from docleaner.api.core.job import Job, JobStatus, JobType
+from docleaner.api.core.job import JobStatus, JobType
 from docleaner.api.services.clock import Clock
 from docleaner.api.services.file_identifier import FileIdentifier
 from docleaner.api.services.job_queue import JobQueue
@@ -83,14 +83,9 @@ async def test_await_again(
         assert x == y
 
 
-async def test_get_unfinished_job_result(
-    sample_pdf: bytes, repo: Repository, clock: Clock
-) -> None:
+async def test_get_unfinished_job_result(sample_pdf: bytes, repo: Repository) -> None:
     """Attempting to retrieve the result of a yet unfinished job raises an exception."""
-    job = Job(
-        src=sample_pdf, type=JobType.PDF, status=JobStatus.QUEUED, created=clock.now()
-    )
-    jid = await repo.add_job(job)
+    jid = await repo.add_job(sample_pdf, JobType.PDF)
     with pytest.raises(ValueError, match=r".*didn't complete.*"):
         await get_job_result(jid, repo)
 
@@ -112,10 +107,8 @@ async def test_purge_jobs(
     repo._clock = clock  # type: ignore
     jid1, _ = await create_job(sample_pdf, repo, queue, file_identifier, clock)
     jid2, _ = await create_job(sample_pdf, repo, queue, file_identifier, clock)
-    running_job = Job(
-        src=sample_pdf, type=JobType.PDF, status=JobStatus.RUNNING, created=clock.now()
-    )
-    running_jid = await repo.add_job(running_job)
+    running_jid = await repo.add_job(sample_pdf, JobType.PDF)
+    await repo.update_job(running_jid, status=JobStatus.RUNNING)
     clock.advance(60)
     newer_jid, _ = await create_job(sample_pdf, repo, queue, file_identifier, clock)
     purged_ids = await purge_jobs(timedelta(seconds=30), repo, clock)

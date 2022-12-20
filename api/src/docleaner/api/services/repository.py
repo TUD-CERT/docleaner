@@ -1,15 +1,16 @@
 import abc
 from typing import Dict, Optional, Set
 
-from docleaner.api.core.job import Job, JobStatus
+from docleaner.api.core.job import Job, JobStatus, JobType
 
 
 class Repository(abc.ABC):
     """Repository to store and retrieve job data without support for transactions."""
 
     @abc.abstractmethod
-    async def add_job(self, job: Job) -> str:
-        """Adds a job to the repository and returns the resulting job id."""
+    async def add_job(self, src: bytes, job_type: JobType) -> str:
+        """Creates a job of a specific type for a given
+        source document and returns the resulting job id."""
         raise NotImplementedError()
 
     @abc.abstractmethod
