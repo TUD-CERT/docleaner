@@ -31,7 +31,8 @@ class Repository(abc.ABC):
         result: Optional[bytes] = None,
         status: Optional[JobStatus] = None,
     ) -> None:
-        """Updates a job's result and/or status flag."""
+        """Updates a job's result and/or status flag.
+        In addition, transparently refreshes the 'updated' field."""
         raise NotImplementedError()
 
     @abc.abstractmethod

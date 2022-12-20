@@ -1,15 +1,22 @@
 import pytest
 
+from docleaner.api.adapters.clock.dummy_clock import DummyClock
 from docleaner.api.adapters.file_identifier.magic_file_identifier import (
     MagicFileIdentifier,
 )
 from docleaner.api.adapters.job_queue.dummy_job_queue import DummyJobQueue
 from docleaner.api.adapters.repository.memory_repository import MemoryRepository
 from docleaner.api.adapters.sandbox.dummy_sandbox import DummySandbox
+from docleaner.api.services.clock import Clock
 from docleaner.api.services.file_identifier import FileIdentifier
 from docleaner.api.services.job_queue import JobQueue
 from docleaner.api.services.repository import Repository
 from docleaner.api.services.sandbox import Sandbox
+
+
+@pytest.fixture
+def clock() -> Clock:
+    return DummyClock()
 
 
 @pytest.fixture
@@ -20,8 +27,8 @@ def sample_pdf() -> bytes:
 
 
 @pytest.fixture
-def repo() -> Repository:
-    return MemoryRepository()
+def repo(clock: Clock) -> Repository:
+    return MemoryRepository(clock)
 
 
 @pytest.fixture

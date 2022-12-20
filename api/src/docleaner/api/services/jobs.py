@@ -1,13 +1,19 @@
-from typing import Dict, List, Tuple
+from datetime import timedelta
+from typing import Dict, List, Set, Tuple
 
 from docleaner.api.core.job import Job, JobStatus, JobType
+from docleaner.api.services.clock import Clock
 from docleaner.api.services.file_identifier import FileIdentifier
 from docleaner.api.services.job_queue import JobQueue
 from docleaner.api.services.repository import Repository
 
 
 async def create_job(
-    source: bytes, repo: Repository, queue: JobQueue, file_identifier: FileIdentifier
+    source: bytes,
+    repo: Repository,
+    queue: JobQueue,
+    file_identifier: FileIdentifier,
+    clock: Clock,
 ) -> Tuple[str, JobType]:
     """Creates and schedules a job to clean the given source document.
     Returns the job id and (identified) type."""
@@ -18,7 +24,7 @@ async def create_job(
         case _:
             raise ValueError("Unsupported document")
     # Create and schedule job
-    jid = await repo.add_job(Job(src=source, type=source_type))
+    jid = await repo.add_job(Job(src=source, type=source_type, created=clock.now()))
     job = await repo.find_job(jid)
     if job is None:
         raise RuntimeError(f"Race condition: added job {jid} is now gone")
@@ -48,3 +54,15 @@ async def get_job_result(jid: str, repo: Repository) -> bytes:
             f"Job with jid {jid} didn't complete (yet), current state is {job.status}"
         )
     return job.result
+
+
+async def purge_jobs(delta: timedelta, repo: Repository, clock: Clock) -> Set[str]:
+    """Deletes all jobs that haven't been updated within the timeframe specified by delta.
+    Returns the identifiers of all deleted jobs."""
+    now = clock.now()
+    purged_jobs = set()
+    for job in await repo.find_jobs():
+        if job.status != JobStatus.RUNNING and now - job.updated > delta:
+            purged_jobs.add(job.id)
+            await repo.delete_job(job.id)
+    return purged_jobs

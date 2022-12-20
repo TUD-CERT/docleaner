@@ -2,17 +2,20 @@ import pytest
 
 from docleaner.api.adapters.sandbox.dummy_sandbox import DummySandbox
 from docleaner.api.core.job import Job, JobStatus, JobType
+from docleaner.api.services.clock import Clock
 from docleaner.api.services.repository import Repository
 from docleaner.api.services.sandbox import process_job_in_sandbox
 from docleaner.api.utils import generate_token
 
 
 async def test_process_successful_job_in_sandbox(
-    repo: Repository, sample_pdf: bytes
+    repo: Repository, sample_pdf: bytes, clock: Clock
 ) -> None:
     """Successfully processing a job in a dummy sandbox
     and storing the result in the repository."""
-    job = Job(src=sample_pdf, type=JobType.PDF, status=JobStatus.QUEUED)
+    job = Job(
+        src=sample_pdf, type=JobType.PDF, status=JobStatus.QUEUED, created=clock.now()
+    )
     jid = await repo.add_job(job)
     sandbox = DummySandbox()
     await process_job_in_sandbox(jid, sandbox, repo)
@@ -26,11 +29,13 @@ async def test_process_successful_job_in_sandbox(
 
 
 async def test_process_unsuccessful_job_in_sandbox(
-    repo: Repository, sample_pdf: bytes
+    repo: Repository, sample_pdf: bytes, clock: Clock
 ) -> None:
     """Processing a job that fails during execution in a dummy
     sandbox and storing the result in the repository."""
-    job = Job(src=sample_pdf, type=JobType.PDF, status=JobStatus.QUEUED)
+    job = Job(
+        src=sample_pdf, type=JobType.PDF, status=JobStatus.QUEUED, created=clock.now()
+    )
     jid = await repo.add_job(job)
     sandbox = DummySandbox(simulate_errors=True)
     await process_job_in_sandbox(jid, sandbox, repo)
@@ -42,7 +47,7 @@ async def test_process_unsuccessful_job_in_sandbox(
 
 
 async def test_process_invalid_job_in_sandbox(
-    repo: Repository, sample_pdf: bytes
+    repo: Repository, sample_pdf: bytes, clock: Clock
 ) -> None:
     """Attempting to process an invalid job in the sandbox raises an exception."""
     # Invalid jid
@@ -50,7 +55,9 @@ async def test_process_invalid_job_in_sandbox(
     with pytest.raises(ValueError):
         await process_job_in_sandbox(generate_token(), sandbox, repo)
     # Invalid job status
-    job = Job(src=sample_pdf, type=JobType.PDF, status=JobStatus.ERROR)
+    job = Job(
+        src=sample_pdf, type=JobType.PDF, status=JobStatus.ERROR, created=clock.now()
+    )
     jid = await repo.add_job(job)
     with pytest.raises(ValueError):
         await process_job_in_sandbox(jid, sandbox, repo)

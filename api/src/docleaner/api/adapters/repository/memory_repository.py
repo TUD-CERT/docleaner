@@ -1,6 +1,7 @@
 from typing import Dict, Optional, Set
 
 from docleaner.api.core.job import Job, JobStatus
+from docleaner.api.services.clock import Clock
 from docleaner.api.services.repository import Repository
 from docleaner.api.utils import generate_token
 
@@ -8,7 +9,8 @@ from docleaner.api.utils import generate_token
 class MemoryRepository(Repository):
     """Repository implementation that stores all jobs in memory without further persistence."""
 
-    def __init__(self) -> None:
+    def __init__(self, clock: Clock) -> None:
+        self._clock = clock
         self._jobs: Dict[str, Job] = {}
 
     async def add_job(self, job: Job) -> str:
@@ -43,6 +45,7 @@ class MemoryRepository(Repository):
             job.result = result
         if status is not None:
             job.status = status
+        job.updated = self._clock.now()
 
     async def add_to_job_log(self, jid: str, entry: str) -> None:
         job = self._jobs.get(jid)
