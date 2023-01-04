@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+echo "Serving web application at http://$(hostname -i):8000/ - Ctrl+C to stop"
+uvicorn --host 0.0.0.0 --port 8000 --reload /srv docleaner.api.entrypoints.web.main:app

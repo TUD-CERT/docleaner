@@ -1,12 +1,19 @@
 FROM alpine:3.16
 
+ENV PATH /srv/node_modules/.bin:$PATH
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 
 WORKDIR /srv
-ADD api/requirements api/pytest.ini api/setup.py /srv/
-ADD api/scripts /usr/local/bin/
-RUN apk add libmagic py3-pip; \
-    pip3 install -r /srv/development.txt; \
-    mkdir -p /srv/src/docleaner/api /srv/tests; \
-    pip3 install -e /srv
+ADD api/scripts deployment/docker/run.sh /usr/local/bin/
+RUN apk add libmagic npm py3-pip; \
+    mkdir -p /srv/src/docleaner; \
+    ln -s /mnt/requirements/ /srv/requirements; \
+    ln -s /mnt/pytest.ini /srv/pytest.ini; \
+    ln -s /mnt/setup.py /srv/setup.py; \
+    ln -s /mnt/src/docleaner/api /srv/src/docleaner; \
+    ln -s /mnt/tests /srv; \
+    ln -s /mnt/src/docleaner/api/entrypoints/web/package.json /srv/package.json; \
+    ln -s /mnt/src/docleaner/api/entrypoints/web/webpack.config.js /srv/webpack.config.js; \
+    ln -s /mnt/src/docleaner/api/entrypoints/web/static /srv/static
+CMD ["/usr/local/bin/run.sh"]

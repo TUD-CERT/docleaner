@@ -4,8 +4,6 @@ services:
     build:
       context: ${PWD}
       dockerfile: deployment/docker/Dockerfile.api.dev
-    command: sleep infinity
     volumes:
-      - ${PWD}/api/src/docleaner/api:/srv/src/docleaner/api
-      - ${PWD}/api/tests:/srv/tests
+      - ${PWD}/api:/mnt
       - ${DOCLEANER_PODMAN_SOCKET}:/run/podman.sock

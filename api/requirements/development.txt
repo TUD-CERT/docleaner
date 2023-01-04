@@ -2,6 +2,7 @@
 
 black
 flake8
+httpx
 mypy == 0.961
 pytest
 pytest-asyncio

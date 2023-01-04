@@ -1,2 +1,5 @@
+fastapi
+jinja2
 podman
 python-magic
+uvicorn[standard]
