@@ -1,4 +1,4 @@
-const miniCssExtractPlugin = require("/srv/node_modules/mini-css-extract-plugin")
+const miniCssExtractPlugin = require("mini-css-extract-plugin")
 const path = require("path")
 
 module.exports = {

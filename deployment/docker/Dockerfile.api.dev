@@ -1,6 +1,7 @@
 FROM alpine:3.16
 
 ENV PATH /srv/node_modules/.bin:$PATH
+ENV NODE_PATH /srv/node_modules
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 
