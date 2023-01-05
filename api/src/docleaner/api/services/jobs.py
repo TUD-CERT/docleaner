@@ -44,6 +44,16 @@ async def await_job(
     raise RuntimeError(f"Race condition: awaited job {jid} is now gone")
 
 
+async def get_job(
+    jid: str, repo: Repository
+) -> Tuple[JobStatus, JobType, List[str], Dict[str, str], Dict[str, str]]:
+    """Returns details for the job identified by jid."""
+    job = await repo.find_job(jid)
+    if job is None:
+        raise ValueError(f"A job with jid {jid} does not exist")
+    return job.status, job.type, job.log, job.metadata_src, job.metadata_result
+
+
 async def get_job_result(jid: str, repo: Repository) -> bytes:
     """Retrieves the result for a successfully completed job identified by jid."""
     job = await repo.find_job(jid)
