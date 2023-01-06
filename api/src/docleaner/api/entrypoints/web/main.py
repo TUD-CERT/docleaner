@@ -24,10 +24,6 @@ templates = Jinja2Templates(directory=os.path.join(base_path, "templates"))
 adapters: Optional[Adapters] = None
 
 
-class JobRequest(BaseModel):
-    pass
-
-
 @app.on_event("startup")
 def on_startup() -> None:
     global adapters
