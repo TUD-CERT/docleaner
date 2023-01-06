@@ -26,7 +26,9 @@ async def test_process_pdf_job(
     clock: Clock,
 ) -> None:
     """Creating a PDF cleaning job, waiting until processing is complete and retrieving the result."""
-    jid, job_type = await create_job(sample_pdf, repo, queue, file_identifier, clock)
+    jid, job_type = await create_job(
+        sample_pdf, "sample.pdf", repo, queue, file_identifier, clock
+    )
     assert isinstance(jid, str) and len(jid) > 0
     assert job_type == JobType.PDF
     # Wait until job completion
@@ -39,7 +41,8 @@ async def test_process_pdf_job(
     assert isinstance(metadata_src, dict) and len(metadata_src) > 0
     assert isinstance(metadata_result, dict)
     # Retrieve resulting PDF
-    result = await get_job_result(jid, repo)
+    result, document_name = await get_job_result(jid, repo)
+    assert document_name == "sample.pdf"
     assert magic.from_buffer(result, mime=True) == "application/pdf"
     assert result != sample_pdf
 
@@ -49,7 +52,9 @@ async def test_process_invalid_job(
 ) -> None:
     """Attempting to create a job from an unsupported document type raises an exception."""
     with pytest.raises(ValueError, match=r".*Unsupported document.*"):
-        await create_job(b"INVALID_DOCUMENT", repo, queue, file_identifier, clock)
+        await create_job(
+            b"INVALID_DOCUMENT", "sample.pdf", repo, queue, file_identifier, clock
+        )
 
 
 async def test_await_nonexisting_job(repo: Repository, queue: JobQueue) -> None:
@@ -67,7 +72,9 @@ async def test_await_again(
 ) -> None:
     """Attempting to await a job that has been successfully awaited before
     succeeds and returns identical results."""
-    jid, _ = await create_job(sample_pdf, repo, queue, file_identifier, clock)
+    jid, _ = await create_job(
+        sample_pdf, "sample.pdf", repo, queue, file_identifier, clock
+    )
     r1_status, r1_type, r1_log, r1_meta_src, r1_meta_result = await await_job(
         jid, repo, queue
     )
@@ -86,7 +93,7 @@ async def test_await_again(
 
 async def test_get_unfinished_job_details(sample_pdf: bytes, repo: Repository) -> None:
     """Retrieving details for a job that hasn't been finished yet."""
-    jid = await repo.add_job(sample_pdf, JobType.PDF)
+    jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
     job_status, job_type, job_log, job_meta_src, job_meta_result = await get_job(
         jid, repo
     )
@@ -102,7 +109,9 @@ async def test_get_finished_job_details(
     clock: Clock,
 ) -> None:
     """Retrieving details for a job that has been finished."""
-    jid, job_type = await create_job(sample_pdf, repo, queue, file_identifier, clock)
+    jid, job_type = await create_job(
+        sample_pdf, "sample.pdf", repo, queue, file_identifier, clock
+    )
     await await_job(jid, repo, queue)
     job_status, job_type, job_log, job_meta_src, job_meta_result = await get_job(
         jid, repo
@@ -120,7 +129,7 @@ async def test_get_nonexisting_job_details(repo: Repository) -> None:
 
 async def test_get_unfinished_job_result(sample_pdf: bytes, repo: Repository) -> None:
     """Attempting to retrieve the result of a yet unfinished job raises an exception."""
-    jid = await repo.add_job(sample_pdf, JobType.PDF)
+    jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
     with pytest.raises(ValueError, match=r".*didn't complete.*"):
         await get_job_result(jid, repo)
 
@@ -140,12 +149,18 @@ async def test_purge_jobs(
     """Purge jobs after some time of inactivity as long as they are not in a RUNNING state."""
     clock = DummyClock()
     repo._clock = clock  # type: ignore
-    jid1, _ = await create_job(sample_pdf, repo, queue, file_identifier, clock)
-    jid2, _ = await create_job(sample_pdf, repo, queue, file_identifier, clock)
-    running_jid = await repo.add_job(sample_pdf, JobType.PDF)
+    jid1, _ = await create_job(
+        sample_pdf, "sample.pdf", repo, queue, file_identifier, clock
+    )
+    jid2, _ = await create_job(
+        sample_pdf, "sample.pdf", repo, queue, file_identifier, clock
+    )
+    running_jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
     await repo.update_job(running_jid, status=JobStatus.RUNNING)
     clock.advance(60)
-    newer_jid, _ = await create_job(sample_pdf, repo, queue, file_identifier, clock)
+    newer_jid, _ = await create_job(
+        sample_pdf, "sample.pdf", repo, queue, file_identifier, clock
+    )
     purged_ids = await purge_jobs(timedelta(seconds=30), repo, clock)
     assert purged_ids == {jid1, jid2}
     jids = {job.id for job in await repo.find_jobs()}

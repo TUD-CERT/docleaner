@@ -8,7 +8,7 @@ class Repository(abc.ABC):
     """Repository to store and retrieve job data without support for transactions."""
 
     @abc.abstractmethod
-    async def add_job(self, src: bytes, job_type: JobType) -> str:
+    async def add_job(self, src: bytes, src_name: str, job_type: JobType) -> str:
         """Creates a job of a specific type for a given
         source document and returns the resulting job id."""
         raise NotImplementedError()

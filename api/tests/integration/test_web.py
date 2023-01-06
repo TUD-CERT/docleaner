@@ -23,14 +23,20 @@ async def test_clean_document_workflow(web_app: str, sample_pdf: bytes) -> None:
         r2 = await client.send(r1_next)
         assert r2.status_code == 200
         assert "Your job was processed successfully" in r2.text
-        match = re.search(r"<a href=\"/jobs/(\S+)/result\"", r2.text)
-        assert match is not None
-        jid = match.group(1)
+        jid_match = re.search(r"<a href=\"/jobs/(\S+)/result\"", r2.text)
+        assert jid_match is not None
+        jid = jid_match.group(1)
         assert len(jid) > 0
         # Download result
         r3 = await client.get(f"{web_app}/jobs/{jid}/result")
         assert r3.status_code == 200
         assert r3.headers["content-type"] == "application/octet-stream"
+        # Result file name suggested by the server matches the uploaded one
+        filename_match = re.search(
+            r'filename="(\S+)"', r3.headers["content-disposition"]
+        )
+        assert filename_match is not None
+        assert filename_match.group(1) == "test.pdf"
         assert "PDF" in r3.text
 
 

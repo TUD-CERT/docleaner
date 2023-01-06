@@ -13,9 +13,11 @@ class MemoryRepository(Repository):
         self._clock = clock
         self._jobs: Dict[str, Job] = {}
 
-    async def add_job(self, src: bytes, job_type: JobType) -> str:
+    async def add_job(self, src: bytes, src_name: str, job_type: JobType) -> str:
         jid = generate_token()
-        job = Job(id=jid, src=src, type=job_type, created=self._clock.now())
+        job = Job(
+            id=jid, src=src, name=src_name, type=job_type, created=self._clock.now()
+        )
         self._jobs[jid] = job
         return jid
 

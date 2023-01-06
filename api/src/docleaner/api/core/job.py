@@ -22,6 +22,7 @@ class Job:
 
     id: str  # Unique identifier
     src: bytes = field(repr=False)  # Source, the document to clean
+    name: str  # Source document name, typically its filename
     type: JobType  # Source document type, selects a worker to handle this job
     created: datetime  # Job creation timestamp
     updated: datetime = field(init=False)  # Last update timestamp

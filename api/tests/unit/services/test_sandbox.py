@@ -13,7 +13,7 @@ async def test_process_successful_job_in_sandbox(
 ) -> None:
     """Successfully processing a job in a dummy sandbox
     and storing the result in the repository."""
-    jid = await repo.add_job(sample_pdf, JobType.PDF)
+    jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
     await repo.update_job(jid, status=JobStatus.QUEUED)
     sandbox = DummySandbox()
     await process_job_in_sandbox(jid, sandbox, repo)
@@ -31,7 +31,7 @@ async def test_process_unsuccessful_job_in_sandbox(
 ) -> None:
     """Processing a job that fails during execution in a dummy
     sandbox and storing the result in the repository."""
-    jid = await repo.add_job(sample_pdf, JobType.PDF)
+    jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
     await repo.update_job(jid, status=JobStatus.QUEUED)
     sandbox = DummySandbox(simulate_errors=True)
     await process_job_in_sandbox(jid, sandbox, repo)
@@ -51,7 +51,7 @@ async def test_process_invalid_job_in_sandbox(
     with pytest.raises(ValueError):
         await process_job_in_sandbox(generate_token(), sandbox, repo)
     # Invalid job status
-    jid = await repo.add_job(sample_pdf, JobType.PDF)
+    jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
     await repo.update_job(jid, status=JobStatus.ERROR)
     with pytest.raises(ValueError):
         await process_job_in_sandbox(jid, sandbox, repo)

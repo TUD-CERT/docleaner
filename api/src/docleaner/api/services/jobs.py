@@ -10,6 +10,7 @@ from docleaner.api.services.repository import Repository
 
 async def create_job(
     source: bytes,
+    source_name: str,
     repo: Repository,
     queue: JobQueue,
     file_identifier: FileIdentifier,
@@ -24,7 +25,7 @@ async def create_job(
         case _:
             raise ValueError("Unsupported document")
     # Create and schedule job
-    jid = await repo.add_job(source, source_type)
+    jid = await repo.add_job(source, source_name, source_type)
     job = await repo.find_job(jid)
     if job is None:
         raise RuntimeError(f"Race condition: added job {jid} is now gone")
@@ -54,8 +55,8 @@ async def get_job(
     return job.status, job.type, job.log, job.metadata_src, job.metadata_result
 
 
-async def get_job_result(jid: str, repo: Repository) -> bytes:
-    """Retrieves the result for a successfully completed job identified by jid."""
+async def get_job_result(jid: str, repo: Repository) -> Tuple[bytes, str]:
+    """Retrieves the result and document name for a successfully completed job identified by jid."""
     job = await repo.find_job(jid)
     if job is None:
         raise ValueError(f"A job with jid {jid} does not exist")
@@ -63,7 +64,7 @@ async def get_job_result(jid: str, repo: Repository) -> bytes:
         raise ValueError(
             f"Job with jid {jid} didn't complete (yet), current state is {job.status}"
         )
-    return job.result
+    return job.result, job.name
 
 
 async def purge_jobs(delta: timedelta, repo: Repository, clock: Clock) -> Set[str]:

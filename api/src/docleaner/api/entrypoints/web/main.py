@@ -1,12 +1,11 @@
 import os
 from typing import Optional
 
-from fastapi import FastAPI, File, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, UploadFile
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel
 from starlette.exceptions import HTTPException as StarletteHTTPException
 import starlette.status as status
 from starlette.templating import _TemplateResponse
@@ -31,7 +30,9 @@ def on_startup() -> None:
 
 
 @app.exception_handler(StarletteHTTPException)
-async def template_exception_handler(request: Request, exc: StarletteHTTPException) -> Response:
+async def template_exception_handler(
+    request: Request, exc: StarletteHTTPException
+) -> Response:
     if exc.status_code == status.HTTP_400_BAD_REQUEST:
         return templates.TemplateResponse(
             "errors/400.html",
@@ -48,11 +49,12 @@ def landing_get(request: Request) -> _TemplateResponse:
 
 
 @app.post("/")
-async def landing_post(doc_src: bytes = File()) -> RedirectResponse:
+async def landing_post(doc_src: UploadFile) -> RedirectResponse:
     assert isinstance(adapters, Adapters)
     try:
         jid, _ = await create_job(
-            doc_src,
+            await doc_src.read(),
+            doc_src.filename,
             adapters.repo,
             adapters.queue,
             adapters.file_identifier,
@@ -91,10 +93,12 @@ async def jobs_get(request: Request, jid: str) -> _TemplateResponse:
 async def jobs_get_result(jid: str) -> Response:
     assert isinstance(adapters, Adapters)
     try:
-        job_result = await get_job_result(jid, adapters.repo)
+        job_result, document_name = await get_job_result(jid, adapters.repo)
     except ValueError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    response_headers = {"Content-Disposition": 'attachment; filename="out.pdf"'}
+    response_headers = {
+        "Content-Disposition": f'attachment; filename="{document_name}"'
+    }
     return Response(
         content=job_result,
         media_type="application/octet-stream",
