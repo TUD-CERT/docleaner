@@ -58,7 +58,6 @@ async def landing_post(doc_src: UploadFile) -> RedirectResponse:
             adapters.repo,
             adapters.queue,
             adapters.file_identifier,
-            adapters.clock,
         )
         return RedirectResponse(f"/jobs/{jid}", status_code=status.HTTP_302_FOUND)
     except ValueError:

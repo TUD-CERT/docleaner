@@ -14,7 +14,6 @@ async def create_job(
     repo: Repository,
     queue: JobQueue,
     file_identifier: FileIdentifier,
-    clock: Clock,
 ) -> Tuple[str, JobType]:
     """Creates and schedules a job to clean the given source document.
     Returns the job id and (identified) type."""
