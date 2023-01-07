@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import tarfile
@@ -22,6 +23,10 @@ class ContainerizedSandbox(Sandbox):
         self._podman_uri = podman_uri
 
     async def process(self, source: bytes) -> SandboxResult:
+        """Runs _process() in its own thread due to blocking dependencies (podman)."""
+        return await asyncio.to_thread(self._process_blocking, source)
+
+    def _process_blocking(self, source: bytes) -> SandboxResult:
         with PodmanClient(
             base_url=self._podman_uri
         ) as podman, TemporaryDirectory() as tmpdir:

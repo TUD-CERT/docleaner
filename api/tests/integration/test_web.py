@@ -1,3 +1,4 @@
+import asyncio
 import httpx
 import re
 
@@ -22,7 +23,11 @@ async def test_clean_document_workflow(web_app: str, sample_pdf: bytes) -> None:
         # Follow redirect to the job status page
         r2 = await client.send(r1_next)
         assert r2.status_code == 200
-        assert "Your job was processed successfully" in r2.text
+        assert "please wait" in r2.text
+        # Refresh until job has been executed
+        while "Your job was processed successfully" not in r2.text:
+            await asyncio.sleep(0.2)
+            r2 = await client.send(r1_next)
         jid_match = re.search(r"<a href=\"/jobs/(\S+)/result\"", r2.text)
         assert jid_match is not None
         jid = jid_match.group(1)

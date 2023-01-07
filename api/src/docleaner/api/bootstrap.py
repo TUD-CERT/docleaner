@@ -5,7 +5,7 @@ from docleaner.api.adapters.clock.system_clock import SystemClock
 from docleaner.api.adapters.file_identifier.magic_file_identifier import (
     MagicFileIdentifier,
 )
-from docleaner.api.adapters.job_queue.dummy_job_queue import DummyJobQueue
+from docleaner.api.adapters.job_queue.async_job_queue import AsyncJobQueue
 from docleaner.api.adapters.repository.memory_repository import MemoryRepository
 from docleaner.api.adapters.sandbox.containerized_sandbox import ContainerizedSandbox
 from docleaner.api.services.clock import Clock
@@ -48,7 +48,7 @@ def bootstrap(
             podman_uri="unix:///run/podman.sock",
         )
     if queue is None:
-        queue = DummyJobQueue(repo, sandbox)
+        queue = AsyncJobQueue(repo, sandbox)
     return Adapters(
         clock=clock,
         file_identifier=file_identifier,
