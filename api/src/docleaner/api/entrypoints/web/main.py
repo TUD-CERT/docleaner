@@ -93,7 +93,7 @@ async def jobs_get(request: Request, jid: str) -> _TemplateResponse:
             "job_status": job_status,
             "meta_src": job_meta_src,
             "meta_result": job_meta_result,
-            "htmx": "hx-request" in request.headers
+            "htmx": "hx-request" in request.headers,
         },
     )
 

@@ -6,15 +6,49 @@
     {% endif %}>
     <h2>Job Status - {{ jid }}</h2>
     {% if job_status <= 2 %}
-    <p>Your job is currently being processed, please wait a bit {% if htmx %}longer{% else %}and click <a href="">here</a> to refresh{% endif %}.</p>
+        <div class="text-center">
+            <p>Your job is currently being processed, please wait a bit {% if htmx %}longer{% else %}and click <a href="">here</a> to refresh{% endif %}.</p>
+            <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
     {% elif job_status == 4 %}
-    <p>There was an error while processing your job.</p>
+        <p>There was an error while processing your job.</p>
     {% else %}
-    <p>Your job was processed successfully. Click <a href="/jobs/{{ jid }}/result" download>here</a> to download the result.</p>
-    <h3>Metadata before:</h3>
-    <p>{{ meta_src }}</p>
-    <h3>Metadata after:</h3>
-    <p>{{ meta_result }}</p>
+        <p>Your job was processed successfully.</p>
+        <div class="d-grid">
+            <a class="btn btn-primary mb-3" href="/jobs/{{ jid }}/result" download>Download result</a>
+        </div>
+        <div class="row">
+            <div class="col">
+                <h3>Original Metadata</h3>
+                <dl class="row">
+                {% for key, val in meta_src.items() %}
+                        <dt class="col-3">{{ key|e }}</dt>
+                        <dd class="col-9">{{ val|e }}</dd>
+                    {% endfor %}
+                </dl>
+            </div>
+            <div class="col">
+                <h3>Remaining Metadata</h3>
+                <dl class="row">
+                    {% for key, val in meta_src.items() %}
+                        <dt class="col-3">{{ key|e }}</dt>
+                        {% if key in meta_result %}
+                            <dd class="col-9 {% if val != meta_result[key] %}text-success{% endif %}">{{ meta_result[key]|e }}</dd>
+                        {% else %}
+                            <dd class="col-9 text-danger">{{ meta_result[key]|e }}&nbsp;</dd>
+                        {% endif %}
+                    {% endfor %}
+                    {% for key, val in meta_result.items() %}
+                        {% if key not in meta_src %}
+                            <dt class="col-3">{{ key|e }}</dt>
+                            <dd class="col-9 text-success">{{ val|e }}</dd>
+                        {% endif %}
+                    {% endfor %}
+                </dl>
+            </div>
+        </div>
+        <a href="/" hx-boost="true">Upload another document</a>
     {% endif %}
-    <a href="/" hx-boost="true">Upload another document</a>
 </div>

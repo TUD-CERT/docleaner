@@ -28,7 +28,7 @@ async def test_clean_document_workflow(web_app: str, sample_pdf: bytes) -> None:
         while "Your job was processed successfully" not in r2.text:
             await asyncio.sleep(0.2)
             r2 = await client.send(r1_next)
-        jid_match = re.search(r"<a href=\"/jobs/(\S+)/result\"", r2.text)
+        jid_match = re.search(r"href=\"/jobs/(\S+)/result\"", r2.text)
         assert jid_match is not None
         jid = jid_match.group(1)
         assert len(jid) > 0

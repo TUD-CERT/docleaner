@@ -7,7 +7,14 @@
         <title>docleaner</title>
     </head>
     <body>
-        {% block content %}{% endblock %}
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <h1>docleaner</h1>
+                    {% block content %}{% endblock %}
+                </div>
+            </div>
+        </div>
         <script src="/static/dist/bundle.js"></script>
     </body>
 </html>
