@@ -1,19 +1,7 @@
-{% extends "base.html" %}
+{% extends base_template|default("base.html") %}
 {% block content %}
 <div class="container py-4 px-3 mx-auto">
     <h1>docleaner</h1>
-    <h2>Job Status - {{ jid }}</h2>
-    {% if job_status <= 2 %}
-        <p>Your job is currently being processed, please wait a bit longer.</p>
-    {% elif job_status == 4 %}
-        <p>There was an error while processing your job.</p>
-    {% else %}
-        <p>Your job was processed successfully. Click <a href="/jobs/{{ jid }}/result" download>here</a> to download the result.</p>
-        <h3>Metadata before:</h3>
-        <p>{{ meta_src }}</p>
-        <h3>Metadata after:</h3>
-        <p>{{ meta_result }}</p>
-    {% endif %}
-    <a href="/">Back to the landing page</a>
+    {% include "job_status.html" %}
 </div>
 {% endblock %}

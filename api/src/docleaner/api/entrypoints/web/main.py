@@ -1,9 +1,9 @@
 import os
-from typing import Optional
+from typing import Optional, Union
 
-from fastapi import FastAPI, HTTPException, Request, UploadFile
+from fastapi import FastAPI, HTTPException, Request, Response, UploadFile
 from fastapi.exception_handlers import http_exception_handler
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -49,7 +49,9 @@ def landing_get(request: Request) -> _TemplateResponse:
 
 
 @app.post("/", response_model=None)
-async def landing_post(doc_src: UploadFile) -> RedirectResponse:
+async def landing_post(
+    request: Request, response: Response, doc_src: UploadFile
+) -> Union[_TemplateResponse, RedirectResponse]:
     assert isinstance(adapters, Adapters)
     try:
         jid, _ = await create_job(
@@ -59,7 +61,14 @@ async def landing_post(doc_src: UploadFile) -> RedirectResponse:
             adapters.queue,
             adapters.file_identifier,
         )
-        return RedirectResponse(f"/jobs/{jid}", status_code=status.HTTP_302_FOUND)
+        if "hx-request" in request.headers:
+            return templates.TemplateResponse(
+                "job_status.html",
+                {"request": request, "jid": jid, "job_status": 0, "htmx": True},
+                headers={"hx-push-url": f"/jobs/{jid}"},
+            )
+        else:
+            return RedirectResponse(f"/jobs/{jid}", status_code=status.HTTP_302_FOUND)
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -77,13 +86,14 @@ async def jobs_get(request: Request, jid: str) -> _TemplateResponse:
     except ValueError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return templates.TemplateResponse(
-        "job_details.html",
+        "job_status.html" if "hx-request" in request.headers else "job_details.html",
         {
             "request": request,
             "jid": jid,
             "job_status": job_status,
             "meta_src": job_meta_src,
             "meta_result": job_meta_result,
+            "htmx": "hx-request" in request.headers
         },
     )
 
