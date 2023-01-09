@@ -41,7 +41,9 @@ class ContainerizedSandbox(Sandbox):
                 f.write(source)
             with tarfile.open(source_tar, "w") as tar:
                 tar.add(source_path, arcname="source")
-            container = podman.containers.create(image=self._image, auto_remove=True)
+                container = podman.containers.create(
+                    image=self._image, auto_remove=True
+                )
             container.start()
             with open(source_tar, "rb") as tar_raw:
                 container.put_archive("/tmp", tar_raw)

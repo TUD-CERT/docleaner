@@ -43,12 +43,12 @@ async def template_exception_handler(
         return await http_exception_handler(request, exc)
 
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/", response_class=HTMLResponse, response_model=None)
 def landing_get(request: Request) -> _TemplateResponse:
     return templates.TemplateResponse("landing.html", {"request": request})
 
 
-@app.post("/")
+@app.post("/", response_model=None)
 async def landing_post(doc_src: UploadFile) -> RedirectResponse:
     assert isinstance(adapters, Adapters)
     try:
@@ -67,7 +67,7 @@ async def landing_post(doc_src: UploadFile) -> RedirectResponse:
         )
 
 
-@app.get("/jobs/{jid}", response_class=HTMLResponse)
+@app.get("/jobs/{jid}", response_class=HTMLResponse, response_model=None)
 async def jobs_get(request: Request, jid: str) -> _TemplateResponse:
     assert isinstance(adapters, Adapters)
     try:
@@ -88,7 +88,7 @@ async def jobs_get(request: Request, jid: str) -> _TemplateResponse:
     )
 
 
-@app.get("/jobs/{jid}/result", response_class=Response)
+@app.get("/jobs/{jid}/result", response_class=Response, response_model=None)
 async def jobs_get_result(jid: str) -> Response:
     assert isinstance(adapters, Adapters)
     try:
