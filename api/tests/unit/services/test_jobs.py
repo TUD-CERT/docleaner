@@ -143,15 +143,21 @@ async def test_purge_jobs(
     """Purge jobs after some time of inactivity as long as they are not in a RUNNING state."""
     clock = DummyClock()
     repo._clock = clock  # type: ignore
-    jid1, _ = await create_job(sample_pdf, "sample.pdf", repo, queue, file_identifier)
-    jid2, _ = await create_job(sample_pdf, "sample.pdf", repo, queue, file_identifier)
+    finished_jid, _ = await create_job(
+        sample_pdf, "sample.pdf", repo, queue, file_identifier
+    )
+    await await_job(finished_jid, repo, queue)
     running_jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
     await repo.update_job(running_jid, status=JobStatus.RUNNING)
+    created_jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+    queued_jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+    await repo.update_job(queued_jid, status=JobStatus.QUEUED)
     clock.advance(60)
     newer_jid, _ = await create_job(
         sample_pdf, "sample.pdf", repo, queue, file_identifier
     )
+    await await_job(newer_jid, repo, queue)
     purged_ids = await purge_jobs(timedelta(seconds=30), repo, clock)
-    assert purged_ids == {jid1, jid2}
+    assert purged_ids == {finished_jid}
     jids = {job.id for job in await repo.find_jobs()}
-    assert jids == {newer_jid, running_jid}
+    assert jids == {newer_jid, running_jid, created_jid, queued_jid}

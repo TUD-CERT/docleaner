@@ -72,7 +72,10 @@ async def purge_jobs(delta: timedelta, repo: Repository, clock: Clock) -> Set[st
     now = clock.now()
     purged_jobs = set()
     for job in await repo.find_jobs():
-        if job.status != JobStatus.RUNNING and now - job.updated > delta:
+        if (
+            job.status in [JobStatus.SUCCESS, JobStatus.ERROR]
+            and now - job.updated > delta
+        ):
             purged_jobs.add(job.id)
             await repo.delete_job(job.id)
     return purged_jobs
