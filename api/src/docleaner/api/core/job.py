@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import IntEnum
-from typing import Dict, List
+from typing import Any, Dict, List
 
 
 class JobStatus(IntEnum):
@@ -29,9 +29,9 @@ class Job:
     # Log data for progress monitoring and debugging
     log: List[str] = field(default_factory=list)
     # Document metadata associated with the resulting document
-    metadata_result: Dict[str, str] = field(default_factory=dict)
+    metadata_result: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     # Document metadata associated with the source document
-    metadata_src: Dict[str, str] = field(default_factory=dict)
+    metadata_src: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     result: bytes = field(default=b"", repr=False)  # Resulting cleaned document
     status: JobStatus = JobStatus.CREATED
 

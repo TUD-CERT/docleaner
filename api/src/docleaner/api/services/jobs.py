@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import Dict, List, Set, Tuple
+from typing import Any, Dict, List, Set, Tuple
 
 from docleaner.api.core.job import JobStatus, JobType
 from docleaner.api.services.clock import Clock
@@ -34,7 +34,9 @@ async def create_job(
 
 async def await_job(
     jid: str, repo: Repository, queue: JobQueue
-) -> Tuple[JobStatus, JobType, List[str], Dict[str, str], Dict[str, str]]:
+) -> Tuple[
+    JobStatus, JobType, List[str], Dict[str, Dict[str, Any]], Dict[str, Dict[str, Any]]
+]:
     """Blocks until the job identified by jid has been processed.
     Returns the job's final status, type, log data, source metadata and resulting metadata."""
     await queue.wait_for(jid)
@@ -46,7 +48,9 @@ async def await_job(
 
 async def get_job(
     jid: str, repo: Repository
-) -> Tuple[JobStatus, JobType, List[str], Dict[str, str], Dict[str, str]]:
+) -> Tuple[
+    JobStatus, JobType, List[str], Dict[str, Dict[str, Any]], Dict[str, Dict[str, Any]]
+]:
     """Returns details for the job identified by jid."""
     job = await repo.find_job(jid)
     if job is None:

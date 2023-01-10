@@ -40,8 +40,8 @@ async def test_update_job(repo: Repository, sample_pdf: bytes) -> None:
     await repo.update_job(
         jid,
         status=JobStatus.RUNNING,
-        metadata_src={"author": "Alice", "year": "2000"},
-        metadata_result={"year": "2000"},
+        metadata_src={"doc": {"author": "Alice", "year": "2000"}, "embeds": {}},
+        metadata_result={"doc": {"year": "2000"}, "embeds": {}},
     )
     found_job = await repo.find_job(jid)
     assert isinstance(found_job, Job)
@@ -49,8 +49,11 @@ async def test_update_job(repo: Repository, sample_pdf: bytes) -> None:
     await repo.update_job(jid, result=b"TEST", status=JobStatus.SUCCESS)
     assert found_job.status == JobStatus.SUCCESS
     assert found_job.result == b"TEST"
-    assert found_job.metadata_result == {"year": "2000"}
-    assert found_job.metadata_src == {"author": "Alice", "year": "2000"}
+    assert found_job.metadata_result == {"doc": {"year": "2000"}, "embeds": {}}
+    assert found_job.metadata_src == {
+        "doc": {"author": "Alice", "year": "2000"},
+        "embeds": {},
+    }
 
 
 async def test_update_job_log(repo: Repository, sample_pdf: bytes) -> None:

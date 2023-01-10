@@ -1,18 +1,52 @@
 #!/usr/bin/env python3
 import json
+import subprocess
 import sys
+from typing import Any, Dict
 
-from PyPDF2 import PdfReader
+
+def parse_exiftool_metadata(src: bytes) -> Dict[str, Dict[str, Any]]:
+    """Parses JSON document metadata returned by exiftool into a dictionary
+    of the form {'doc': {primary document metadata}, 'embeds': {<id>: <metadata of embedded document>}}."""
+    metadata = {"doc": {}, "embeds": {}}
+    src_json = json.loads(src.decode("utf-8"))
+    if len(src_json) == 0:
+        return metadata
+    for key, val in src_json.pop().items():
+        if key.startswith("File:"):
+            # Ignore all File keys except FileSize
+            if key == "File:FileSize":
+                metadata["doc"]["FileSize"] = val
+            continue
+        if key.startswith("SourceFile") or key.startswith("ExifTool") or key.startswith("EXIF"):
+            # Ignore exiftool-specific metadata
+            continue
+        doc_id = category = tag = None
+        key_parts = key.split(":")
+        if len(key_parts) == 2:
+            doc_id, tag = key_parts
+        elif len(key_parts) == 3:
+            doc_id, category, tag = key_parts
+        else:
+            continue
+        if doc_id == "PDF":
+            metadata["doc"][tag] = val
+        else:
+            metadata["embeds"].setdefault(doc_id, {})
+            if category is not None:
+                metadata["embeds"][doc_id].setdefault(category, {})
+                metadata["embeds"][doc_id][category][tag] = val
+            else:
+                metadata["embeds"][doc_id][tag] = val
+    return metadata
 
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Usage: analyze <path_to_pdf>")
         sys.exit(1)
-    reader = PdfReader(sys.argv[1])
-    metadata = {}
-    for key, val in dict(reader.metadata).items():
-        if key.startswith("/"):
-            key = key[1:]
-        metadata[key] = val
-    print(json.dumps(metadata))
+    result = subprocess.run(["exiftool", "-ee", "-G3:0", "-j", sys.argv[1]], capture_output=True)
+    if result.returncode != 0:
+        print(f"Error: {result.stderr}")
+        sys.exit(1)
+    print(json.dumps(parse_exiftool_metadata(result.stdout)))

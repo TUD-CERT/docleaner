@@ -1,6 +1,6 @@
 import abc
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from docleaner.api.core.job import JobStatus
 from docleaner.api.services.repository import Repository
@@ -15,8 +15,8 @@ class SandboxResult:
     success: bool
     log: List[str]  # A list of collected log lines
     result: bytes = field(repr=False)  # Raw result document
-    metadata_result: Dict[str, str]  # Document metadata after conversion
-    metadata_src: Dict[str, str]  # Document metadata prior to conversion
+    metadata_result: Dict[str, Dict[str, Any]]  # Document metadata after conversion
+    metadata_src: Dict[str, Dict[str, Any]]  # Document metadata prior to conversion
 
 
 class Sandbox(abc.ABC):

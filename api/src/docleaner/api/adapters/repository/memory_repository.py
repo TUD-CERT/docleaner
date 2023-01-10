@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Set
+from typing import Any, Dict, Optional, Set
 
 from docleaner.api.core.job import Job, JobStatus, JobType
 from docleaner.api.services.clock import Clock
@@ -30,8 +30,8 @@ class MemoryRepository(Repository):
     async def update_job(
         self,
         jid: str,
-        metadata_result: Optional[Dict[str, str]] = None,
-        metadata_src: Optional[Dict[str, str]] = None,
+        metadata_result: Optional[Dict[str, Dict[str, Any]]] = None,
+        metadata_src: Optional[Dict[str, Dict[str, Any]]] = None,
         result: Optional[bytes] = None,
         status: Optional[JobStatus] = None,
     ) -> None:

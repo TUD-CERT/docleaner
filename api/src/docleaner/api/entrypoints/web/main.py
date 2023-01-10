@@ -91,6 +91,7 @@ async def jobs_get(request: Request, jid: str) -> _TemplateResponse:
             "request": request,
             "jid": jid,
             "job_status": job_status,
+            "job_log": job_log,
             "meta_src": job_meta_src,
             "meta_result": job_meta_result,
             "htmx": "hx-request" in request.headers,
