@@ -42,11 +42,12 @@ def parse_exiftool_metadata(src: bytes) -> Dict[str, Dict[str, Any]]:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: analyze <path_to_pdf>")
+    if len(sys.argv) != 3:
+        print("Usage: analyze <path_to_pdf> <result_path>")
         sys.exit(1)
     result = subprocess.run(["exiftool", "-ee", "-G3:0", "-j", sys.argv[1]], capture_output=True)
     if result.returncode != 0:
         print(f"Error: {result.stderr}")
         sys.exit(1)
-    print(json.dumps(parse_exiftool_metadata(result.stdout)))
+    with open(sys.argv[2], "w") as f:
+        json.dump(parse_exiftool_metadata(result.stdout), f)

@@ -6,6 +6,7 @@ import traceback
 from tempfile import TemporaryDirectory
 
 from podman import PodmanClient  # type: ignore
+from podman.domain.containers import Container  # type: ignore
 
 from docleaner.api.services.sandbox import Sandbox, SandboxResult
 
@@ -51,12 +52,11 @@ class ContainerizedSandbox(Sandbox):
             try:
                 # Pre-process metadata analysis
                 process_status, process_out = container.exec_run(
-                    ["/opt/analyze", "/tmp/source"]
+                    ["/opt/analyze", "/tmp/source", "/tmp/meta_src"]
                 )
                 if process_status != 0:
                     log.append(process_out.decode("utf-8"))
                     raise ValueError()
-                metadata_src = json.loads(process_out.decode("utf-8"))
                 # Metadata processing
                 process_status, process_out = container.exec_run(
                     ["/opt/process", "/tmp/source", "/tmp/result"]
@@ -64,24 +64,21 @@ class ContainerizedSandbox(Sandbox):
                 log.append(process_out.decode("utf-8"))
                 if process_status != 0:
                     raise ValueError()
-                # Retrieve result from container
-                result_iterator, _ = container.get_archive("/tmp/result")
-                result_tar_raw = b"".join(result_iterator)
-                result_tar = os.path.join(tmpdir, "result.tar")
-                with open(result_tar, "wb") as f:
-                    f.write(result_tar_raw)
-                with tarfile.open(result_tar, "r") as tar:
-                    tar.extract("result", path=tmpdir)
-                with open(os.path.join(tmpdir, "result"), "rb") as f:
-                    result_document = f.read()
                 # Post-process metadata analysis
                 process_status, process_out = container.exec_run(
-                    ["/opt/analyze", "/tmp/result"]
+                    ["/opt/analyze", "/tmp/result", "/tmp/meta_result"]
                 )
                 if process_status != 0:
                     log.append(process_out.decode("utf-8"))
                     raise ValueError()
-                metadata_result = json.loads(process_out.decode("utf-8"))
+                # Retrieve result from container
+                result_document = self._retrieve_file("/tmp/result", container, tmpdir)
+                metadata_src = json.loads(
+                    self._retrieve_file("/tmp/meta_src", container, tmpdir)
+                )
+                metadata_result = json.loads(
+                    self._retrieve_file("/tmp/meta_result", container, tmpdir)
+                )
                 success = True
             except ValueError:
                 traceback.print_exc()
@@ -95,3 +92,16 @@ class ContainerizedSandbox(Sandbox):
                     metadata_result=metadata_result,
                     metadata_src=metadata_src,
                 )
+
+    @staticmethod
+    def _retrieve_file(path: str, container: Container, tmpdir: str) -> bytes:
+        """Retrieves and returns a file by its path from a running container."""
+        result_iterator, _ = container.get_archive(path)
+        result_tar_raw = b"".join(result_iterator)
+        result_tar = os.path.join(tmpdir, "retrieval.tar")
+        with open(result_tar, "wb") as f:
+            f.write(result_tar_raw)
+        with tarfile.open(result_tar, "r") as tar:
+            tar.extract(os.path.basename(path), path=tmpdir)
+        with open(os.path.join(tmpdir, os.path.basename(path)), "rb") as f:
+            return f.read()
