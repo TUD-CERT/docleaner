@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import tarfile
+import traceback
 from tempfile import TemporaryDirectory
 
 from podman import PodmanClient  # type: ignore
@@ -83,6 +84,7 @@ class ContainerizedSandbox(Sandbox):
                 metadata_result = json.loads(process_out.decode("utf-8"))
                 success = True
             except ValueError:
+                traceback.print_exc()
                 result_document = b""
             finally:
                 container.stop(timeout=10)
