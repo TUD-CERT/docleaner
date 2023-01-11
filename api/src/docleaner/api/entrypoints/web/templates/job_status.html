@@ -15,6 +15,7 @@
     {% elif job_status == 4 %}
         <p>There was an error while processing your job.</p>
         <pre>{% for log in job_log %}{{ log|e }}{% endfor %}</pre>
+        <a href="/" hx-boost="true">Upload another document</a>
     {% else %}
         <p>Your job was processed successfully.</p>
         <div class="d-grid">
