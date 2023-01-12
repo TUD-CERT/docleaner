@@ -50,7 +50,7 @@ def landing_get(request: Request) -> _TemplateResponse:
 
 @app.post("/", response_model=None)
 async def landing_post(
-    request: Request, response: Response, doc_src: UploadFile
+    request: Request, doc_src: UploadFile
 ) -> Union[_TemplateResponse, RedirectResponse]:
     assert isinstance(adapters, Adapters)
     try:
@@ -60,6 +60,7 @@ async def landing_post(
             adapters.repo,
             adapters.queue,
             adapters.file_identifier,
+            adapters.job_types,
         )
         if "hx-request" in request.headers:
             return templates.TemplateResponse(

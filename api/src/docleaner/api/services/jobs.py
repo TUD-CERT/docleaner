@@ -5,6 +5,7 @@ from docleaner.api.core.job import JobStatus, JobType
 from docleaner.api.services.clock import Clock
 from docleaner.api.services.file_identifier import FileIdentifier
 from docleaner.api.services.job_queue import JobQueue
+from docleaner.api.services.job_types import SupportedJobType
 from docleaner.api.services.repository import Repository
 
 
@@ -14,15 +15,19 @@ async def create_job(
     repo: Repository,
     queue: JobQueue,
     file_identifier: FileIdentifier,
+    job_types: List[SupportedJobType],
 ) -> Tuple[str, JobType]:
     """Creates and schedules a job to clean the given source document.
     Returns the job id and (identified) type."""
     # Identify source MIME type
-    match file_identifier.identify(source):
-        case "application/pdf":
-            source_type = JobType.PDF
-        case _:
-            raise ValueError("Unsupported document")
+    source_mimetype = file_identifier.identify(source)
+    source_type = None
+    for jt in job_types:
+        if source_mimetype in jt.mimetypes:
+            source_type = jt.type
+            break
+    if source_type is None:
+        raise ValueError("Unsupported document type")
     # Create and schedule job
     jid = await repo.add_job(source, source_name, source_type)
     job = await repo.find_job(jid)

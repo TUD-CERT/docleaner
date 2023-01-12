@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import List, Optional
 
 from docleaner.api.adapters.clock.system_clock import SystemClock
 from docleaner.api.adapters.file_identifier.magic_file_identifier import (
@@ -8,11 +8,13 @@ from docleaner.api.adapters.file_identifier.magic_file_identifier import (
 from docleaner.api.adapters.job_queue.async_job_queue import AsyncJobQueue
 from docleaner.api.adapters.repository.memory_repository import MemoryRepository
 from docleaner.api.adapters.sandbox.containerized_sandbox import ContainerizedSandbox
+from docleaner.api.core.job import JobType
 from docleaner.api.services.clock import Clock
 from docleaner.api.services.file_identifier import FileIdentifier
 from docleaner.api.services.job_queue import JobQueue
+from docleaner.api.services.job_types import SupportedJobType
+from docleaner.api.services.metadata import process_pdf_metadata
 from docleaner.api.services.repository import Repository
-from docleaner.api.services.sandbox import Sandbox
 
 
 @dataclass(eq=False, kw_only=True)
@@ -22,17 +24,17 @@ class Adapters:
 
     clock: Clock
     file_identifier: FileIdentifier
+    job_types: List[SupportedJobType]
     queue: JobQueue
     repo: Repository
-    sandbox: Sandbox
 
 
 def bootstrap(
     clock: Optional[Clock] = None,
     file_identifier: Optional[FileIdentifier] = None,
+    job_types: Optional[List[SupportedJobType]] = None,
     queue: Optional[JobQueue] = None,
     repo: Optional[Repository] = None,
-    sandbox: Optional[Sandbox] = None,
 ) -> Adapters:
     """Initializes adapters and service components.
     Returns a composite object with all adapters attached."""
@@ -42,17 +44,24 @@ def bootstrap(
         file_identifier = MagicFileIdentifier()
     if repo is None:
         repo = MemoryRepository(clock)
-    if sandbox is None:
-        sandbox = ContainerizedSandbox(
-            container_image="localhost/docleaner/pdf_cleaner",
-            podman_uri="unix:///run/podman.sock",
-        )
+    if job_types is None:
+        job_types = [
+            SupportedJobType(
+                type=JobType.PDF,
+                mimetypes=["application/pdf"],
+                sandbox=ContainerizedSandbox(
+                    container_image="localhost/docleaner/pdf_cleaner",
+                    podman_uri="unix:///run/podman.sock",
+                ),
+                metadata_processor=process_pdf_metadata,
+            )
+        ]
     if queue is None:
-        queue = AsyncJobQueue(repo, sandbox)
+        queue = AsyncJobQueue(repo, job_types)
     return Adapters(
         clock=clock,
         file_identifier=file_identifier,
+        job_types=job_types,
         queue=queue,
         repo=repo,
-        sandbox=sandbox,
     )

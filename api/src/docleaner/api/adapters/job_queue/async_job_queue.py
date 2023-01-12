@@ -1,18 +1,20 @@
 import asyncio
+from typing import List
 
 from docleaner.api.core.job import Job, JobStatus
 from docleaner.api.services.job_queue import JobQueue
+from docleaner.api.services.job_types import SupportedJobType
 from docleaner.api.services.repository import Repository
-from docleaner.api.services.sandbox import process_job_in_sandbox, Sandbox
+from docleaner.api.services.sandbox import process_job_in_sandbox
 
 
 class AsyncJobQueue(JobQueue):
     """In-process job queue using Python's native asyncio library.
     Executes each job in its own coroutine."""
 
-    def __init__(self, repo: Repository, sandbox: Sandbox):
+    def __init__(self, repo: Repository, job_types: List[SupportedJobType]):
         self._repo = repo
-        self._sandbox = sandbox
+        self._job_types = job_types
 
     async def enqueue(self, job: Job) -> None:
         """Creates a new coroutine for job execution."""
@@ -23,7 +25,7 @@ class AsyncJobQueue(JobQueue):
                 f"Can't enqueue job {job.id} due to its invalid status {job.status}"
             )
         await self._repo.update_job(job.id, status=JobStatus.QUEUED)
-        asyncio.create_task(process_job_in_sandbox(job.id, self._sandbox, self._repo))
+        asyncio.create_task(process_job_in_sandbox(job.id, self._job_types, self._repo))
 
     async def wait_for(self, jid: str) -> None:
         job = await self._repo.find_job(jid)

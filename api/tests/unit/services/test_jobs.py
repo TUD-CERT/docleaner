@@ -1,4 +1,5 @@
 from datetime import timedelta
+from typing import List
 
 import magic
 import pytest
@@ -7,6 +8,7 @@ from docleaner.api.adapters.clock.dummy_clock import DummyClock
 from docleaner.api.core.job import JobStatus, JobType
 from docleaner.api.services.file_identifier import FileIdentifier
 from docleaner.api.services.job_queue import JobQueue
+from docleaner.api.services.job_types import SupportedJobType
 from docleaner.api.services.jobs import (
     await_job,
     create_job,
@@ -22,10 +24,11 @@ async def test_process_pdf_job(
     repo: Repository,
     queue: JobQueue,
     file_identifier: FileIdentifier,
+    job_types: List[SupportedJobType],
 ) -> None:
     """Creating a PDF cleaning job, waiting until processing is complete and retrieving the result."""
     jid, job_type = await create_job(
-        sample_pdf, "sample.pdf", repo, queue, file_identifier
+        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types
     )
     assert isinstance(jid, str) and len(jid) > 0
     assert job_type == JobType.PDF
@@ -46,12 +49,15 @@ async def test_process_pdf_job(
 
 
 async def test_process_invalid_job(
-    repo: Repository, queue: JobQueue, file_identifier: FileIdentifier
+    repo: Repository,
+    queue: JobQueue,
+    file_identifier: FileIdentifier,
+    job_types: List[SupportedJobType],
 ) -> None:
     """Attempting to create a job from an unsupported document type raises an exception."""
     with pytest.raises(ValueError, match=r".*Unsupported document.*"):
         await create_job(
-            b"INVALID_DOCUMENT", "sample.pdf", repo, queue, file_identifier
+            b"INVALID_DOCUMENT", "sample.pdf", repo, queue, file_identifier, job_types
         )
 
 
@@ -66,10 +72,13 @@ async def test_await_again(
     repo: Repository,
     queue: JobQueue,
     file_identifier: FileIdentifier,
+    job_types: List[SupportedJobType],
 ) -> None:
     """Attempting to await a job that has been successfully awaited before
     succeeds and returns identical results."""
-    jid, _ = await create_job(sample_pdf, "sample.pdf", repo, queue, file_identifier)
+    jid, _ = await create_job(
+        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types
+    )
     r1_status, r1_type, r1_log, r1_meta_src, r1_meta_result = await await_job(
         jid, repo, queue
     )
@@ -101,10 +110,11 @@ async def test_get_finished_job_details(
     repo: Repository,
     queue: JobQueue,
     file_identifier: FileIdentifier,
+    job_types: List[SupportedJobType],
 ) -> None:
     """Retrieving details for a job that has been finished."""
     jid, job_type = await create_job(
-        sample_pdf, "sample.pdf", repo, queue, file_identifier
+        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types
     )
     await await_job(jid, repo, queue)
     job_status, job_type, job_log, job_meta_src, job_meta_result = await get_job(
@@ -139,12 +149,13 @@ async def test_purge_jobs(
     repo: Repository,
     queue: JobQueue,
     file_identifier: FileIdentifier,
+    job_types: List[SupportedJobType],
 ) -> None:
     """Purge jobs after some time of inactivity as long as they are not in a RUNNING state."""
     clock = DummyClock()
     repo._clock = clock  # type: ignore
     finished_jid, _ = await create_job(
-        sample_pdf, "sample.pdf", repo, queue, file_identifier
+        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types
     )
     await await_job(finished_jid, repo, queue)
     running_jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
@@ -154,7 +165,7 @@ async def test_purge_jobs(
     await repo.update_job(queued_jid, status=JobStatus.QUEUED)
     clock.advance(60)
     newer_jid, _ = await create_job(
-        sample_pdf, "sample.pdf", repo, queue, file_identifier
+        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types
     )
     await await_job(newer_jid, repo, queue)
     purged_ids = await purge_jobs(timedelta(seconds=30), repo, clock)

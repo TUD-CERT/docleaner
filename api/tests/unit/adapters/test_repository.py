@@ -4,7 +4,6 @@ import pytest
 
 from docleaner.api.adapters.clock.dummy_clock import DummyClock
 from docleaner.api.core.job import Job, JobStatus, JobType
-from docleaner.api.services.clock import Clock
 from docleaner.api.services.repository import Repository
 from docleaner.api.utils import generate_token
 
@@ -87,7 +86,7 @@ async def test_with_nonexisting_job(repo: Repository) -> None:
 
 
 async def test_job_timestamp_is_updated_after_updates(
-    sample_pdf: bytes, repo: Repository, clock: Clock
+    sample_pdf: bytes, repo: Repository
 ) -> None:
     """Updating a job also updates its 'updated' timestamp."""
     clock = DummyClock()
