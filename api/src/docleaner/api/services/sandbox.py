@@ -1,5 +1,6 @@
 import abc
 from dataclasses import dataclass, field
+import traceback
 from typing import Any, Dict, List
 
 from docleaner.api.core.job import JobStatus
@@ -47,12 +48,23 @@ async def process_job_in_sandbox(
     result = await job_type.sandbox.process(job.src)
     for logline in result.log:
         await repo.add_to_job_log(jid, logline)
-    metadata_result = job_type.metadata_processor(result.metadata_result)
-    metadata_src = job_type.metadata_processor(result.metadata_src)
-    await repo.update_job(
-        jid=jid,
-        status=JobStatus.SUCCESS if result.success else JobStatus.ERROR,
-        result=result.result,
-        metadata_result=metadata_result,
-        metadata_src=metadata_src,
-    )
+    try:
+        metadata_result = job_type.metadata_processor(result.metadata_result)
+        metadata_src = job_type.metadata_processor(result.metadata_src)
+        await repo.update_job(
+            jid=jid,
+            status=JobStatus.SUCCESS if result.success else JobStatus.ERROR,
+            result=result.result,
+            metadata_result=metadata_result,
+            metadata_src=metadata_src,
+        )
+    except Exception:
+        traceback.print_exc()
+        await repo.add_to_job_log(jid, "Error during metadata post-processing")
+        await repo.update_job(
+            jid=jid,
+            status=JobStatus.ERROR,
+            result=None,
+            metadata_result=None,
+            metadata_src=None,
+        )
