@@ -1,3 +1,5 @@
+import asyncio
+
 from docleaner.api.services.sandbox import Sandbox, SandboxResult
 
 
@@ -6,9 +8,12 @@ class DummySandbox(Sandbox):
 
     def __init__(self, simulate_errors: bool = False):
         """Set simulate_errors to True to force this sandbox to simulate an error on each job."""
+        self._running = asyncio.Event()
+        self._running.set()
         self._simulate_errors = simulate_errors
 
     async def process(self, source: bytes) -> SandboxResult:
+        await self._running.wait()
         return SandboxResult(
             success=not self._simulate_errors,
             log=["Executing job in dummy sandbox"],
@@ -22,3 +27,11 @@ class DummySandbox(Sandbox):
                 "embeds": {},
             },  # Assumes the sandbox didn't purge all metadata
         )
+
+    async def halt(self) -> None:
+        """For testing, stops job processing. Processing will resume after resume() has been called."""
+        self._running.clear()
+
+    async def resume(self) -> None:
+        """For testing, resumes job processing."""
+        self._running.set()

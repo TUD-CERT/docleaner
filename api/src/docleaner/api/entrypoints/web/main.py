@@ -29,6 +29,13 @@ def on_startup() -> None:
     adapters = bootstrap()
 
 
+@app.on_event("shutdown")
+async def on_shutdown() -> None:
+    global adapters
+    assert adapters is not None
+    await adapters.queue.shutdown()
+
+
 @app.exception_handler(StarletteHTTPException)
 async def template_exception_handler(
     request: Request, exc: StarletteHTTPException

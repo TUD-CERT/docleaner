@@ -45,6 +45,7 @@ async def process_job_in_sandbox(
             f"Can't execute job {jid}, because it's not in QUEUED state (state is {job.status})"
         )
     job_type = next(jt for jt in job_types if jt.type == job.type)
+    await repo.update_job(jid, status=JobStatus.RUNNING)
     result = await job_type.sandbox.process(job.src)
     for logline in result.log:
         await repo.add_to_job_log(jid, logline)

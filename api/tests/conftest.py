@@ -1,4 +1,4 @@
-from typing import List
+from typing import AsyncGenerator, List
 
 import pytest
 
@@ -59,5 +59,9 @@ def job_types(sandbox: Sandbox) -> List[SupportedJobType]:
 
 
 @pytest.fixture
-def queue(repo: Repository, job_types: List[SupportedJobType]) -> JobQueue:
-    return AsyncJobQueue(repo=repo, job_types=job_types)
+async def queue(
+    repo: Repository, job_types: List[SupportedJobType]
+) -> AsyncGenerator[JobQueue, None]:
+    q = AsyncJobQueue(repo=repo, job_types=job_types, max_concurrent_jobs=3)
+    yield q
+    await q.shutdown()

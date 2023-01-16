@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import os
 from typing import List, Optional
 
 from docleaner.api.adapters.clock.system_clock import SystemClock
@@ -57,7 +58,8 @@ def bootstrap(
             )
         ]
     if queue is None:
-        queue = AsyncJobQueue(repo, job_types)
+        available_cpu_cores = len(os.sched_getaffinity(0))
+        queue = AsyncJobQueue(repo, job_types, available_cpu_cores)
     return Adapters(
         clock=clock,
         file_identifier=file_identifier,
