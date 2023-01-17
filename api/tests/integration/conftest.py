@@ -1,11 +1,30 @@
 import asyncio
 from typing import AsyncGenerator
 
+from motor import motor_asyncio
 import pytest
 import uvicorn
 
+from docleaner.api.adapters.repository.mongodb_repository import MongoDBRepository
 from docleaner.api.adapters.sandbox.containerized_sandbox import ContainerizedSandbox
+from docleaner.api.services.clock import Clock
+from docleaner.api.services.repository import Repository
 from docleaner.api.services.sandbox import Sandbox
+
+
+@pytest.fixture
+async def repo(clock: Clock) -> AsyncGenerator[Repository, None]:
+    # Delete existing database (if it exists)
+    db_host = "database"
+    db_port = 27017
+    db_name = "docleaner"
+    mongo = motor_asyncio.AsyncIOMotorClient(db_host, db_port)
+    if db_name in await mongo.list_database_names():
+        await mongo.drop_database(db_name)
+    mongo.close()
+    repo = MongoDBRepository(clock, db_host, db_port, db_name)
+    yield repo
+    await repo.disconnect()
 
 
 @pytest.fixture

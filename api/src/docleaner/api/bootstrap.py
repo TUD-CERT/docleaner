@@ -7,7 +7,7 @@ from docleaner.api.adapters.file_identifier.magic_file_identifier import (
     MagicFileIdentifier,
 )
 from docleaner.api.adapters.job_queue.async_job_queue import AsyncJobQueue
-from docleaner.api.adapters.repository.memory_repository import MemoryRepository
+from docleaner.api.adapters.repository.mongodb_repository import MongoDBRepository
 from docleaner.api.adapters.sandbox.containerized_sandbox import ContainerizedSandbox
 from docleaner.api.core.job import JobType
 from docleaner.api.services.clock import Clock
@@ -44,7 +44,7 @@ def bootstrap(
     if file_identifier is None:
         file_identifier = MagicFileIdentifier()
     if repo is None:
-        repo = MemoryRepository(clock)
+        repo = MongoDBRepository(clock, "database", 27017)
     if job_types is None:
         job_types = [
             SupportedJobType(

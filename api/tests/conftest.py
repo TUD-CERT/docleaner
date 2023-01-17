@@ -32,8 +32,10 @@ def sample_pdf() -> bytes:
 
 
 @pytest.fixture
-def repo(clock: Clock) -> Repository:
-    return MemoryRepository(clock)
+async def repo(clock: Clock) -> AsyncGenerator[Repository, None]:
+    repo = MemoryRepository(clock)
+    yield repo
+    await repo.disconnect()
 
 
 @pytest.fixture

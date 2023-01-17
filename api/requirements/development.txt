@@ -3,6 +3,7 @@
 black
 flake8
 httpx
+motor-stubs
 mypy == 0.961
 pytest
 pytest-asyncio

@@ -1,5 +1,6 @@
 fastapi
 jinja2
+motor
 podman
 python-magic
 python-multipart

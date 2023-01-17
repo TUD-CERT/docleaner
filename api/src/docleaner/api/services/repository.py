@@ -45,3 +45,7 @@ class Repository(abc.ABC):
     async def delete_job(self, jid: str) -> None:
         """Deletes a job, identified by its jid, from the repository."""
         raise NotImplementedError()
+
+    async def disconnect(self) -> None:
+        """Instruct the repository to disconnect from its backend and perform cleanup work."""
+        pass

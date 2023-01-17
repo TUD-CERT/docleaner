@@ -4,6 +4,16 @@ services:
     build:
       context: ${PWD}
       dockerfile: deployment/docker/Dockerfile.api.dev
+    networks:
+      - docleaner-dev
     volumes:
       - ${PWD}/api:/mnt
       - ${DOCLEANER_PODMAN_SOCKET}:/run/podman.sock
+
+  database:
+    image: mongo:6
+    networks:
+      - docleaner-dev
+
+networks:
+  docleaner-dev:
