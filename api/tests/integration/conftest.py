@@ -1,4 +1,5 @@
 import asyncio
+import os
 from typing import AsyncGenerator
 
 from motor import motor_asyncio
@@ -39,12 +40,14 @@ def sandbox() -> Sandbox:
 async def web_app(unused_tcp_port: int) -> AsyncGenerator[str, None]:
     """Launches a temporary instance of the web entrypoint,
     taken from the uvicorn test suite. Returns the server's base URL."""
+    base_url = f"http://127.0.0.1:{unused_tcp_port}"
+    os.environ["DOCLEANER_URL"] = base_url
     cfg = uvicorn.Config("docleaner.api.entrypoints.web.main:app", port=unused_tcp_port)
     server = uvicorn.Server(cfg)
     task = asyncio.ensure_future(server.serve())
     await asyncio.sleep(0.1)
     try:
-        yield f"http://127.0.0.1:{unused_tcp_port}"
+        yield base_url
     finally:
         await server.shutdown()
         task.cancel()

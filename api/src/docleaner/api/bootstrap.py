@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import os
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from docleaner.api.adapters.clock.system_clock import SystemClock
 from docleaner.api.adapters.file_identifier.magic_file_identifier import (
@@ -18,27 +18,14 @@ from docleaner.api.services.metadata import process_pdf_metadata
 from docleaner.api.services.repository import Repository
 
 
-@dataclass(eq=False, kw_only=True)
-class Adapters:
-    """Instantiates an evil god object that holds adapter instances
-    the entrypoints need for calling the service layer."""
-
-    clock: Clock
-    file_identifier: FileIdentifier
-    job_types: List[SupportedJobType]
-    queue: JobQueue
-    repo: Repository
-
-
 def bootstrap(
     clock: Optional[Clock] = None,
     file_identifier: Optional[FileIdentifier] = None,
     job_types: Optional[List[SupportedJobType]] = None,
     queue: Optional[JobQueue] = None,
     repo: Optional[Repository] = None,
-) -> Adapters:
-    """Initializes adapters and service components.
-    Returns a composite object with all adapters attached."""
+) -> Tuple[Clock, FileIdentifier, List[SupportedJobType], JobQueue, Repository]:
+    """Initializes and returns adapters and service components."""
     if clock is None:
         clock = SystemClock()
     if file_identifier is None:
@@ -60,10 +47,4 @@ def bootstrap(
     if queue is None:
         available_cpu_cores = len(os.sched_getaffinity(0))
         queue = AsyncJobQueue(repo, job_types, available_cpu_cores)
-    return Adapters(
-        clock=clock,
-        file_identifier=file_identifier,
-        job_types=job_types,
-        queue=queue,
-        repo=repo,
-    )
+    return clock, file_identifier, job_types, queue, repo
