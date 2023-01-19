@@ -22,7 +22,7 @@ class AsyncJobQueue(JobQueue):
         self._repo = repo
         self._job_types = job_types
         self._max_concurrent_jobs = max_concurrent_jobs
-        self._queue: asyncio.Queue[Job] = asyncio.Queue()
+        self._queue: asyncio.Queue[str] = asyncio.Queue()
         self._worker_task = asyncio.create_task(self._worker())
 
     async def enqueue(self, job: Job) -> None:
@@ -34,7 +34,7 @@ class AsyncJobQueue(JobQueue):
                 f"Can't enqueue job {job.id} due to its invalid status {job.status}"
             )
         await self._repo.update_job(job.id, status=JobStatus.QUEUED)
-        await self._queue.put(job)
+        await self._queue.put(job.id)
 
     async def wait_for(self, jid: str) -> None:
         job = await self._repo.find_job(jid)
@@ -52,7 +52,7 @@ class AsyncJobQueue(JobQueue):
 
     async def _worker(self) -> None:
         running_tasks: Set[asyncio.Task[None]] = set()
-        await_shutdown: asyncio.Task[Union[Literal[True], Job]] = asyncio.create_task(
+        await_shutdown: asyncio.Task[Union[Literal[True], str]] = asyncio.create_task(
             self._ev_shutdown.wait()
         )
         while True:
@@ -67,17 +67,17 @@ class AsyncJobQueue(JobQueue):
                     running_tasks.remove(t)
             else:
                 await_job: asyncio.Task[
-                    Union[Literal[True], Job]
+                    Union[Literal[True], str]
                 ] = asyncio.create_task(self._queue.get())
                 done, pending = await asyncio.wait(
                     [await_job, await_shutdown], return_when=asyncio.FIRST_COMPLETED
                 )
                 if await_job in done:
-                    job = await_job.result()
-                    assert isinstance(job, Job)
+                    jid = await_job.result()
+                    assert isinstance(jid, str)
                     running_tasks.add(
                         asyncio.create_task(
-                            process_job_in_sandbox(job.id, self._job_types, self._repo)
+                            process_job_in_sandbox(jid, self._job_types, self._repo)
                         )
                     )
                     self._queue.task_done()
