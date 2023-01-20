@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import IntEnum
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 
 class JobStatus(IntEnum):
@@ -34,6 +34,7 @@ class Job:
     metadata_src: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     result: bytes = field(default=b"", repr=False)  # Resulting cleaned document
     status: JobStatus = JobStatus.CREATED
+    session_id: Optional[str] = None  # Associated session (optional)
 
     def __post_init__(self) -> None:
         self.updated = self.created

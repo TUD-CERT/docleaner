@@ -61,10 +61,14 @@ async def test_process_invalid_job(
         )
 
 
-async def test_await_nonexisting_job(repo: Repository, queue: JobQueue) -> None:
-    """Attempting to await an invalid job raises an exception."""
+async def test_services_with_nonexisting_job(repo: Repository, queue: JobQueue) -> None:
+    """Attempting to call various services with a nonexistent job raises exceptions."""
     with pytest.raises(ValueError, match=r".*does not exist.*"):
         await await_job("invalid", repo, queue)
+    with pytest.raises(ValueError, match=r".*does not exist.*"):
+        await get_job("invalid", repo)
+    with pytest.raises(ValueError, match=r".*does not exist.*"):
+        await get_job_result("invalid", repo)
 
 
 async def test_await_again(
@@ -125,23 +129,11 @@ async def test_get_finished_job_details(
     assert len(job_meta_src) > 0
 
 
-async def test_get_nonexisting_job_details(repo: Repository) -> None:
-    """Attempting to retrieve details for an invalid job raises an exception."""
-    with pytest.raises(ValueError, match=r".*does not exist.*"):
-        await get_job("invalid", repo)
-
-
 async def test_get_unfinished_job_result(sample_pdf: bytes, repo: Repository) -> None:
     """Attempting to retrieve the result of a yet unfinished job raises an exception."""
     jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
     with pytest.raises(ValueError, match=r".*didn't complete.*"):
         await get_job_result(jid, repo)
-
-
-async def test_get_nonexisting_job_result(repo: Repository) -> None:
-    """Attempting to retrieve the result of an invalid job raises an exception."""
-    with pytest.raises(ValueError, match=r".*does not exist.*"):
-        await get_job_result("invalid", repo)
 
 
 async def test_purge_jobs(

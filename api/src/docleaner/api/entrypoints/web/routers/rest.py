@@ -1,5 +1,4 @@
-import os
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple, Union
 
 from fastapi import APIRouter, Depends, HTTPException, Response, UploadFile
 from pydantic import BaseModel
@@ -21,6 +20,7 @@ from docleaner.api.services.job_queue import JobQueue
 from docleaner.api.services.job_types import SupportedJobType
 from docleaner.api.services.jobs import create_job, get_job
 from docleaner.api.services.repository import Repository
+from docleaner.api.services.sessions import create_session, get_session
 
 
 rest_api = APIRouter(prefix="/api/v1")
@@ -35,6 +35,19 @@ class JobDetails(BaseModel):
     status: JobStatus
 
 
+class JobAbbreviatedDetails(BaseModel):
+    id: str
+    type: JobType
+    status: JobStatus
+
+
+class SessionDetails(BaseModel):
+    id: str
+    jobs_total: int
+    jobs_finished: int
+    jobs: List[JobAbbreviatedDetails]
+
+
 class RESTException(HTTPException):
     pass
 
@@ -43,6 +56,7 @@ class RESTException(HTTPException):
 async def jobs_create(
     response: Response,
     doc_src: UploadFile,
+    session: Union[str, None] = None,
     base_url: str = Depends(get_base_url),
     file_identifier: FileIdentifier = Depends(get_file_identifier),
     job_types: List[SupportedJobType] = Depends(get_job_types),
@@ -57,6 +71,7 @@ async def jobs_create(
             queue,
             file_identifier,
             job_types,
+            session,
         )
         (
             job_status,
@@ -106,3 +121,31 @@ async def jobs_get(jid: str, repo: Repository = Depends(get_repo)) -> Any:
 @rest_api.get("/jobs/{jid}/result", response_model=None)
 async def jobs_get_result(jid: str, repo: Repository = Depends(get_repo)) -> Response:
     return await web_jobs_get_result(jid, repo)
+
+
+@rest_api.post("/sessions", response_model=SessionDetails, status_code=201)
+async def sessions_create(
+    response: Response,
+    base_url: str = Depends(get_base_url),
+    repo: Repository = Depends(get_repo),
+) -> Any:
+    sid = await create_session(repo)
+    response.headers["Location"] = f"{base_url}/api/v1/sessions/{sid}"
+    return {"id": sid, "jobs_total": 0, "jobs_finished": 0, "jobs": []}
+
+
+@rest_api.get("/sessions/{sid}", response_model=SessionDetails)
+async def sessions_get(sid: str, repo: Repository = Depends(get_repo)) -> Any:
+    try:
+        jobs_total, jobs_finished, jobs = await get_session(sid, repo)
+    except ValueError:
+        raise RESTException(status_code=status.HTTP_404_NOT_FOUND)
+    return {
+        "id": sid,
+        "jobs_total": jobs_total,
+        "jobs_finished": jobs_finished,
+        "jobs": [
+            {"id": jid, "type": job_type, "status": job_status}
+            for jid, job_status, job_type, job_log, job_meta_src, job_meta_result in jobs
+        ],
+    }

@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from docleaner.api.core.job import JobStatus, JobType
 from docleaner.api.services.clock import Clock
@@ -16,8 +16,10 @@ async def create_job(
     queue: JobQueue,
     file_identifier: FileIdentifier,
     job_types: List[SupportedJobType],
+    sid: Optional[str] = None,
 ) -> Tuple[str, JobType]:
     """Creates and schedules a job to clean the given source document.
+    Can optionally be added to a session by providing a session id (sid).
     Returns the job id and (identified) type."""
     # Identify source MIME type
     source_mimetype = file_identifier.identify(source)
@@ -29,7 +31,7 @@ async def create_job(
     if source_type is None:
         raise ValueError("Unsupported document type")
     # Create and schedule job
-    jid = await repo.add_job(source, source_name, source_type)
+    jid = await repo.add_job(source, source_name, source_type, sid)
     job = await repo.find_job(jid)
     if job is None:
         raise RuntimeError(f"Race condition: added job {jid} is now gone")

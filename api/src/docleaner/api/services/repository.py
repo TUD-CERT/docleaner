@@ -2,15 +2,18 @@ import abc
 from typing import Any, Dict, Optional, Set
 
 from docleaner.api.core.job import Job, JobStatus, JobType
+from docleaner.api.core.session import Session
 
 
 class Repository(abc.ABC):
     """Repository to store and retrieve job data without support for transactions."""
 
     @abc.abstractmethod
-    async def add_job(self, src: bytes, src_name: str, job_type: JobType) -> str:
-        """Creates a job of a specific type for a given
-        source document and returns the resulting job id."""
+    async def add_job(
+        self, src: bytes, src_name: str, job_type: JobType, sid: Optional[str] = None
+    ) -> str:
+        """Creates a job of a specific type for a given source document and returns the
+        resulting job id. If sid is given, the job is association with that session."""
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -19,8 +22,9 @@ class Repository(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    async def find_jobs(self) -> Set[Job]:
-        """Returns a set of all currently registered jobs."""
+    async def find_jobs(self, sid: Optional[str] = None) -> Set[Job]:
+        """Returns a set of all currently registered jobs. If a session id (sid) is given,
+        this returns only jobs associated with that session."""
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -33,7 +37,8 @@ class Repository(abc.ABC):
         status: Optional[JobStatus] = None,
     ) -> None:
         """Updates a job's result and/or status flag.
-        In addition, transparently refreshes the 'updated' field."""
+        In addition, transparently refreshes the 'updated' field of the job itself and its
+        session (in case its associated with one)."""
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -44,6 +49,27 @@ class Repository(abc.ABC):
     @abc.abstractmethod
     async def delete_job(self, jid: str) -> None:
         """Deletes a job, identified by its jid, from the repository."""
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    async def add_session(self) -> str:
+        """Creates a session and returns the resulting session id."""
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    async def find_session(self, sid: str) -> Optional[Session]:
+        """Returns the session identified by sid, if it exists. Otherwise, this returns None."""
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    async def find_sessions(self) -> Set[Session]:
+        """Returns a set of all currently registered sessions."""
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    async def delete_session(self, sid: str) -> None:
+        """Deletes a session, identified by its sid, from the repository.
+        In addition, deletes all jobs associated with that session regardless of their status."""
         raise NotImplementedError()
 
     async def disconnect(self) -> None:

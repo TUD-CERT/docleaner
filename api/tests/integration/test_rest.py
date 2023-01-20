@@ -12,7 +12,7 @@ from docleaner.api.core.job import JobStatus, JobType
 async def test_clean_document_workflow(web_app: str, sample_pdf: bytes) -> None:
     """End-to-end test uploading a PDF via the REST API, polling until success and downloading the result."""
     async with httpx.AsyncClient() as client:
-        # Upload document via HTTP POST
+        # Upload document
         upload_resp = await client.post(
             f"{web_app}/api/v1/jobs", files={"doc_src": ("test.pdf", sample_pdf)}
         )
@@ -59,3 +59,49 @@ async def test_request_invalid_job_details(web_app: str) -> None:
         assert r_details.status_code == 404
         r_result = await client.get(f"{web_app}/api/v1/jobs/invalid/result")
         assert r_result.status_code == 404
+
+
+async def test_clean_multiple_documents_with_session_workflow(
+    web_app: str, sample_pdf: bytes
+) -> None:
+    """End-to-end test creating a session, then uploading multiple PDFs via the REST API
+    into that session. Polling until success and downloading one of the results."""
+    async with httpx.AsyncClient() as client:
+        # Create session and receive sid
+        create_session_resp = await client.post(f"{web_app}/api/v1/sessions")
+        assert create_session_resp.status_code == 201  # Created
+        assert create_session_resp.headers["content-type"] == "application/json"
+        create_session_json = create_session_resp.json()
+        sid = create_session_json["id"]
+        session_url = f"{web_app}/api/v1/sessions/{sid}"
+        assert create_session_resp.headers["location"] == session_url
+        # Upload two documents
+        upload1_resp = await client.post(
+            f"{web_app}/api/v1/jobs?session={sid}",
+            files={"doc_src": ("test.pdf", sample_pdf)},
+        )
+        assert upload1_resp.status_code == 201  # Created
+        jid1 = upload1_resp.json()["id"]
+        upload2_resp = await client.post(
+            f"{web_app}/api/v1/jobs?session={sid}",
+            files={"doc_src": ("test.pdf", sample_pdf)},
+        )
+        assert upload2_resp.status_code == 201  # Created
+        jid2 = upload2_resp.json()["id"]
+        # Poll session details until all jobs have been executed
+        while True:
+            session_data = (await client.get(session_url)).json()
+            assert session_data["jobs_total"] == len(session_data["jobs"]) == 2
+            if session_data["jobs_finished"] == 2:
+                break
+            await asyncio.sleep(0.2)
+        # Verify job data
+        for job_data in session_data["jobs"]:
+            assert job_data["id"] in {jid1, jid2}
+            assert job_data["status"] == JobStatus.SUCCESS
+            assert job_data["type"] == JobType.PDF
+        # Download one of the results
+        dl_resp = await client.get(f"{web_app}/api/v1/jobs/{jid2}/result")
+        assert dl_resp.status_code == 200
+        assert dl_resp.headers["content-type"] == "application/octet-stream"
+        assert "PDF" in dl_resp.text

@@ -1,0 +1,81 @@
+from typing import List
+
+import pytest
+
+from docleaner.api.core.job import JobStatus, JobType
+from docleaner.api.services.file_identifier import FileIdentifier
+from docleaner.api.services.job_queue import JobQueue
+from docleaner.api.services.jobs import create_job, get_job_result
+from docleaner.api.services.repository import Repository
+from docleaner.api.services.sessions import await_session, create_session, get_session
+from docleaner.api.services.job_types import SupportedJobType
+from docleaner.api.utils import generate_token
+
+
+async def test_process_multiple_jobs_via_session(
+    sample_pdf: bytes,
+    repo: Repository,
+    queue: JobQueue,
+    file_identifier: FileIdentifier,
+    job_types: List[SupportedJobType],
+) -> None:
+    """Creating a session, then associating multiple jobs with
+    it and waiting until processing of all jobs is complete."""
+    sid = await create_session(repo)
+    assert isinstance(sid, str) and len(sid) > 0
+    jid1, _ = await create_job(
+        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid
+    )
+    jid2, _ = await create_job(
+        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid
+    )
+    # Wait until job completion
+    await await_session(sid, repo, queue)
+    # Retrieve session and job details
+    total_jobs, finished_jobs, jobs = await get_session(sid, repo)
+    assert total_jobs == finished_jobs == 2
+    assert len(jobs) == 2
+    assert {j[0] for j in jobs} == {jid1, jid2}
+    assert {j[1] for j in jobs} == {JobStatus.SUCCESS}
+    assert {j[2] for j in jobs} == {JobType.PDF}
+    # Retrieve one of the results
+    result, document_name = await get_job_result(jid2, repo)
+    assert document_name == "sample.pdf"
+    assert isinstance(result, bytes)
+    assert len(result) > 0
+
+
+async def test_get_unfinished_session_details(
+    sample_pdf: bytes, repo: Repository
+) -> None:
+    """Retrieving session details for a session with yet unfinished jobs."""
+    sid = await create_session(repo)
+    jid1 = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF, sid)
+    await repo.update_job(jid1, status=JobStatus.QUEUED)
+    jid2 = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF, sid)
+    await repo.update_job(jid2, status=JobStatus.SUCCESS)
+    jid3 = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF, sid)
+    await repo.update_job(jid3, status=JobStatus.ERROR)
+    total_jobs, finished_jobs, jobs = await get_session(sid, repo)
+    assert total_jobs == 3
+    assert finished_jobs == 2
+    assert len(jobs) == 3
+
+
+async def test_with_nonexistent_session(
+    sample_pdf: bytes,
+    repo: Repository,
+    queue: JobQueue,
+    file_identifier: FileIdentifier,
+    job_types: List[SupportedJobType],
+) -> None:
+    """Attempting to call various services with a nonexistent session raises exceptions."""
+    sid = generate_token()
+    with pytest.raises(ValueError):
+        await create_job(
+            sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid
+        )
+    with pytest.raises(ValueError):
+        await await_session(sid, repo, queue)
+    with pytest.raises(ValueError, match="Invalid session id"):
+        await get_session(sid, repo)
