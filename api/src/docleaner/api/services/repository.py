@@ -1,5 +1,6 @@
 import abc
-from typing import Any, Dict, Optional, Set
+from datetime import timedelta
+from typing import Any, Dict, List, Optional, Set
 
 from docleaner.api.core.job import Job, JobStatus, JobType
 from docleaner.api.core.session import Session
@@ -22,9 +23,17 @@ class Repository(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    async def find_jobs(self, sid: Optional[str] = None) -> Set[Job]:
-        """Returns a set of all currently registered jobs. If a session id (sid) is given,
-        this returns only jobs associated with that session."""
+    async def find_jobs(
+        self,
+        sid: Optional[str] = None,
+        status: Optional[List[JobStatus]] = None,
+        not_updated_for: Optional[timedelta] = None,
+    ) -> Set[Job]:
+        """Returns a set of all currently registered jobs, optionally filtered by different criteria:
+        * a session id to find all jobs associated with that session
+        * a list of status flags to only find jobs that have one of the given statuses
+        * a timedelta to find jobs that haven't been updated for a given amount of time.
+        """
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -62,8 +71,11 @@ class Repository(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    async def find_sessions(self) -> Set[Session]:
-        """Returns a set of all currently registered sessions."""
+    async def find_sessions(
+        self, not_updated_for: Optional[timedelta] = None
+    ) -> Set[Session]:
+        """Returns a set of all currently registered sessions, optionally filtered by
+        a timedelta to find sessions that haven't been updated for a given amount of time."""
         raise NotImplementedError()
 
     @abc.abstractmethod

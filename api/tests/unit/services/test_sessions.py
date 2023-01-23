@@ -1,13 +1,20 @@
+from datetime import timedelta
 from typing import List
 
 import pytest
 
+from docleaner.api.adapters.clock.dummy_clock import DummyClock
 from docleaner.api.core.job import JobStatus, JobType
 from docleaner.api.services.file_identifier import FileIdentifier
 from docleaner.api.services.job_queue import JobQueue
-from docleaner.api.services.jobs import create_job, get_job_result
+from docleaner.api.services.jobs import await_job, create_job, get_job_result
 from docleaner.api.services.repository import Repository
-from docleaner.api.services.sessions import await_session, create_session, get_session
+from docleaner.api.services.sessions import (
+    await_session,
+    create_session,
+    get_session,
+    purge_sessions,
+)
 from docleaner.api.services.job_types import SupportedJobType
 from docleaner.api.utils import generate_token
 
@@ -79,3 +86,38 @@ async def test_with_nonexistent_session(
         await await_session(sid, repo, queue)
     with pytest.raises(ValueError, match="Invalid session id"):
         await get_session(sid, repo)
+
+
+async def test_purge_sessions(
+    sample_pdf: bytes,
+    repo: Repository,
+    queue: JobQueue,
+    file_identifier: FileIdentifier,
+    job_types: List[SupportedJobType],
+) -> None:
+    """Purge finished (all associated jobs in SUCCESS or ERROR state) sessions
+    after some time of inactivity. Standalone jobs - not associated with a session - are ignored."""
+    clock = DummyClock()
+    repo._clock = clock  # type: ignore
+    sid = await create_session(repo)
+    standalone_jid, _ = await create_job(
+        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types
+    )
+    await await_job(standalone_jid, repo, queue)
+    finished_jid, _ = await create_job(
+        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid
+    )
+    await await_job(finished_jid, repo, queue)
+    # Job that remains in QUEUED state
+    await create_job(
+        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid
+    )
+    clock.advance(60)
+    purged_sids = await purge_sessions(timedelta(seconds=30), repo)
+    assert len(purged_sids) == 0  # Session is not stale, there is still a queued job
+    await await_session(sid, repo, queue)
+    clock.advance(60)
+    purged_sids = await purge_sessions(timedelta(seconds=30), repo)
+    assert purged_sids == {sid}
+    jids = {job.id for job in await repo.find_jobs()}
+    assert jids == {standalone_jid}

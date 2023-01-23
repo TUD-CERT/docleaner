@@ -35,6 +35,48 @@ async def test_fetch_all_jobs(repo: Repository, sample_pdf: bytes) -> None:
     assert set(map(lambda job: job.id, jobs)) == jids
 
 
+async def test_filter_jobs(repo: Repository, sample_pdf: bytes) -> None:
+    """Fetching jobs using various filter criteria."""
+    # session (sid) filtering is covered by session-specific tests
+    clock = DummyClock()
+    repo._clock = clock  # type: ignore
+    queued_jids = set()
+    for i in range(2):
+        jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+        await repo.update_job(jid, status=JobStatus.QUEUED)
+        queued_jids.add(jid)
+    running_jids = set()
+    for i in range(2):
+        jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+        await repo.update_job(jid, status=JobStatus.RUNNING)
+        running_jids.add(jid)
+    clock.advance(30)
+    successful_jids = set()
+    for i in range(2):
+        jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+        await repo.update_job(jid, status=JobStatus.SUCCESS)
+        successful_jids.add(jid)
+    # Filter by status flags
+    assert running_jids == {
+        job.id for job in await repo.find_jobs(status=[JobStatus.RUNNING])
+    }
+    assert queued_jids | successful_jids == {
+        job.id
+        for job in await repo.find_jobs(status=[JobStatus.QUEUED, JobStatus.SUCCESS])
+    }
+    # Filter by not_updated_for
+    assert queued_jids | running_jids == {
+        job.id for job in await repo.find_jobs(not_updated_for=timedelta(seconds=10))
+    }
+    # Filter by multiple criteria
+    assert queued_jids == {
+        job.id
+        for job in await repo.find_jobs(
+            status=[JobStatus.QUEUED], not_updated_for=timedelta(seconds=10)
+        )
+    }
+
+
 async def test_update_job(repo: Repository, sample_pdf: bytes) -> None:
     """Updating a job's result, status and metadata."""
     jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
@@ -122,6 +164,21 @@ async def test_fetch_all_sessions(repo: Repository) -> None:
     sessions = await repo.find_sessions()
     assert len(sessions) == 2
     assert set(map(lambda session: session.id, sessions)) == sids
+
+
+async def test_filter_sessions(repo: Repository) -> None:
+    """Fetching sessions by their last updated timestamp."""
+    clock = DummyClock()
+    repo._clock = clock  # type: ignore
+    old_sid1 = await repo.add_session()
+    old_sid2 = await repo.add_session()
+    clock.advance(30)
+    await repo.add_session()
+    await repo.add_session()
+    assert {old_sid1, old_sid2} == {
+        session.id
+        for session in await repo.find_sessions(not_updated_for=timedelta(seconds=10))
+    }
 
 
 async def test_delete_session(repo: Repository) -> None:

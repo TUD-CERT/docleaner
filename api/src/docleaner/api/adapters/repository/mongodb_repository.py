@@ -1,5 +1,6 @@
 from dataclasses import asdict
-from typing import Optional, Dict, Any, Set
+from datetime import timedelta
+from typing import Any, Dict, List, Optional, Set
 
 from motor import motor_asyncio
 
@@ -45,21 +46,27 @@ class MongoDBRepository(Repository):
             return None
         return self._create_job_from_job_data(job_data)
 
-    async def find_jobs(self, sid: Optional[str] = None) -> Set[Job]:
+    async def find_jobs(
+        self,
+        sid: Optional[str] = None,
+        status: Optional[List[JobStatus]] = None,
+        not_updated_for: Optional[timedelta] = None,
+    ) -> Set[Job]:
+        if sid is not None and await self._db.sessions.find_one({"_id": sid}) is None:
+            raise ValueError(
+                f"Can't fetch jobs from session {sid}, because the ID doesn't exist"
+            )
+        conditions: Dict[str, Any] = {}
         if sid is not None:
-            if await self._db.sessions.find_one({"_id": sid}) is None:
-                raise ValueError(
-                    f"Can't fetch jobs from session {sid}, because the ID doesn't exist"
-                )
-            return {
-                self._create_job_from_job_data(job_data)
-                async for job_data in self._db.jobs.find({"session_id": sid})
-            }
-        else:
-            return {
-                self._create_job_from_job_data(job_data)
-                async for job_data in self._db.jobs.find()
-            }
+            conditions["session_id"] = sid
+        if status is not None:
+            conditions["status"] = {"$in": status}
+        if not_updated_for is not None:
+            conditions["updated"] = {"$lt": self._clock.now() - not_updated_for}
+        return {
+            self._create_job_from_job_data(job_data)
+            async for job_data in self._db.jobs.find(conditions)
+        }
 
     async def update_job(
         self,
@@ -118,10 +125,15 @@ class MongoDBRepository(Repository):
             return None
         return self._create_session_from_session_data(session_data)
 
-    async def find_sessions(self) -> Set[Session]:
+    async def find_sessions(
+        self, not_updated_for: Optional[timedelta] = None
+    ) -> Set[Session]:
+        conditions = {}
+        if not_updated_for is not None:
+            conditions["updated"] = {"$lt": self._clock.now() - not_updated_for}
         return {
             self._create_session_from_session_data(session_data)
-            async for session_data in self._db.sessions.find()
+            async for session_data in self._db.sessions.find(conditions)
         }
 
     async def delete_session(self, sid: str) -> None:

@@ -1,4 +1,5 @@
-from typing import Any, Dict, Optional, Set
+from datetime import timedelta
+from typing import Any, Dict, List, Optional, Set
 
 from docleaner.api.core.job import Job, JobStatus, JobType
 from docleaner.api.core.session import Session
@@ -35,15 +36,29 @@ class MemoryRepository(Repository):
     async def find_job(self, jid: str) -> Optional[Job]:
         return self._jobs.get(jid)
 
-    async def find_jobs(self, sid: Optional[str] = None) -> Set[Job]:
-        if sid is not None:
-            if sid not in self._sessions:
-                raise ValueError(
-                    f"Can't fetch jobs from session {sid}, because the ID doesn't exist"
-                )
-            return {j for j in self._jobs.values() if j.session_id == sid}
-        else:
-            return {j for j in self._jobs.values()}
+    async def find_jobs(
+        self,
+        sid: Optional[str] = None,
+        status: Optional[List[JobStatus]] = None,
+        not_updated_for: Optional[timedelta] = None,
+    ) -> Set[Job]:
+        result = set()
+        if sid is not None and sid not in self._sessions:
+            raise ValueError(
+                f"Can't fetch jobs from session {sid}, because the ID doesn't exist"
+            )
+        for job in self._jobs.values():
+            if sid is not None and job.session_id != sid:
+                continue
+            if status is not None and job.status not in status:
+                continue
+            if (
+                not_updated_for is not None
+                and self._clock.now() - job.updated < not_updated_for
+            ):
+                continue
+            result.add(job)
+        return result
 
     async def update_job(
         self,
@@ -93,8 +108,18 @@ class MemoryRepository(Repository):
     async def find_session(self, sid: str) -> Optional[Session]:
         return self._sessions.get(sid)
 
-    async def find_sessions(self) -> Set[Session]:
-        return {s for s in self._sessions.values()}
+    async def find_sessions(
+        self, not_updated_for: Optional[timedelta] = None
+    ) -> Set[Session]:
+        result = set()
+        for session in self._sessions.values():
+            if (
+                not_updated_for is not None
+                and self._clock.now() - session.updated < not_updated_for
+            ):
+                continue
+            result.add(session)
+        return result
 
     async def delete_session(self, sid: str) -> None:
         if sid not in self._sessions:

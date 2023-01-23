@@ -17,6 +17,7 @@ from docleaner.api.services.jobs import (
     purge_jobs,
 )
 from docleaner.api.services.repository import Repository
+from docleaner.api.services.sessions import create_session
 
 
 async def test_process_pdf_job(
@@ -143,7 +144,8 @@ async def test_purge_jobs(
     file_identifier: FileIdentifier,
     job_types: List[SupportedJobType],
 ) -> None:
-    """Purge jobs after some time of inactivity as long as they are not in a RUNNING state."""
+    """Purge individual finished (in SUCCESS or ERROR state) standalone jobs
+    after some time of inactivity. Jobs associated with a session are ignored."""
     clock = DummyClock()
     repo._clock = clock  # type: ignore
     finished_jid, _ = await create_job(
@@ -155,12 +157,17 @@ async def test_purge_jobs(
     created_jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
     queued_jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
     await repo.update_job(queued_jid, status=JobStatus.QUEUED)
+    sid = await create_session(repo)
+    session_jid, _ = await create_job(
+        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid
+    )
+    await await_job(session_jid, repo, queue)
     clock.advance(60)
     newer_jid, _ = await create_job(
         sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types
     )
     await await_job(newer_jid, repo, queue)
-    purged_ids = await purge_jobs(timedelta(seconds=30), repo, clock)
+    purged_ids = await purge_jobs(timedelta(seconds=30), repo)
     assert purged_ids == {finished_jid}
     jids = {job.id for job in await repo.find_jobs()}
-    assert jids == {newer_jid, running_jid, created_jid, queued_jid}
+    assert jids == {newer_jid, running_jid, created_jid, queued_jid, session_jid}

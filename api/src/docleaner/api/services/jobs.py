@@ -2,7 +2,6 @@ from datetime import timedelta
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from docleaner.api.core.job import JobStatus, JobType
-from docleaner.api.services.clock import Clock
 from docleaner.api.services.file_identifier import FileIdentifier
 from docleaner.api.services.job_queue import JobQueue
 from docleaner.api.services.job_types import SupportedJobType
@@ -77,16 +76,14 @@ async def get_job_result(jid: str, repo: Repository) -> Tuple[bytes, str]:
     return job.result, job.name
 
 
-async def purge_jobs(delta: timedelta, repo: Repository, clock: Clock) -> Set[str]:
-    """Deletes all jobs that haven't been updated within the timeframe specified by delta.
-    Returns the identifiers of all deleted jobs."""
-    now = clock.now()
+async def purge_jobs(purge_after: timedelta, repo: Repository) -> Set[str]:
+    """Deletes all finished standalone (not associated with a session) jobs that haven't been
+    updated within the timeframe specified by purge_after. Returns the identifiers of all deleted jobs."""
     purged_jobs = set()
-    for job in await repo.find_jobs():
-        if (
-            job.status in [JobStatus.SUCCESS, JobStatus.ERROR]
-            and now - job.updated > delta
-        ):
+    for job in await repo.find_jobs(
+        status=[JobStatus.SUCCESS, JobStatus.ERROR], not_updated_for=purge_after
+    ):
+        if job.session_id is None:
             purged_jobs.add(job.id)
             await repo.delete_job(job.id)
     return purged_jobs
