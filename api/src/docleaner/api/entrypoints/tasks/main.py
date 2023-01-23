@@ -9,23 +9,28 @@ from docleaner.api.services.jobs import purge_jobs
 from docleaner.api.services.sessions import purge_sessions
 
 
-async def purge(no_standalone_job_purging: bool, no_session_purging: bool) -> None:
+async def purge(
+    no_standalone_job_purging: bool,
+    no_session_purging: bool,
+    job_keepalive: int,
+    session_keepalive: int,
+) -> None:
     clock, file_identifier, job_types, queue, repo = bootstrap()
     if not no_standalone_job_purging:
         purged_jids = await purge_jobs(
-            purge_after=timedelta(minutes=args.job_keepalive), repo=repo
+            purge_after=timedelta(minutes=job_keepalive), repo=repo
         )
         if len(purged_jids) > 0:
             print(f"Purged standalone jobs: {len(purged_jids)}")
     if not no_session_purging:
         purged_sids = await purge_sessions(
-            purge_after=timedelta(minutes=args.session_keepalive), repo=repo
+            purge_after=timedelta(minutes=session_keepalive), repo=repo
         )
         if len(purged_sids) > 0:
             print(f"Purged sessions: {len(purged_sids)}")
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="docleaner maintenance utility")
     parser.add_argument(
         "-j",
@@ -52,4 +57,15 @@ if __name__ == "__main__":
         help="Do not purge standalone jobs",
     )
     args = parser.parse_args()
-    asyncio.run(purge(args.no_standalone_job_purging, args.no_session_purging))
+    asyncio.run(
+        purge(
+            args.no_standalone_job_purging,
+            args.no_session_purging,
+            args.job_keepalive,
+            args.session_keepalive,
+        )
+    )
+
+
+if __name__ == "__main__":
+    main()
