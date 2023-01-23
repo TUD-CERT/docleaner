@@ -20,6 +20,7 @@ class MongoDBRepository(Repository):
         self._clock = clock
         self._mongo = motor_asyncio.AsyncIOMotorClient(db_host, db_port)
         self._db = self._mongo[db_name]
+        self._fs = motor_asyncio.AsyncIOMotorGridFSBucket(self._db)  # type: ignore
 
     async def add_job(
         self, src: bytes, src_name: str, job_type: JobType, sid: Optional[str] = None
@@ -30,8 +31,15 @@ class MongoDBRepository(Repository):
             )
         jid = generate_token()
         now = self._clock.now()
+        # Save source document in GridFS
+        src_id = await self._fs.upload_from_stream(jid, src)
         job = Job(
-            id=jid, src=src, name=src_name, type=job_type, created=now, session_id=sid
+            id=jid,
+            src=src_id,
+            name=src_name,
+            type=job_type,
+            created=now,
+            session_id=sid,
         )
         serialized_job = asdict(job)
         serialized_job["_id"] = serialized_job.pop("id")
@@ -44,7 +52,7 @@ class MongoDBRepository(Repository):
         job_data = await self._db.jobs.find_one({"_id": jid})
         if job_data is None:
             return None
-        return self._create_job_from_job_data(job_data)
+        return await self._create_job_from_job_data(job_data)
 
     async def find_jobs(
         self,
@@ -64,7 +72,7 @@ class MongoDBRepository(Repository):
         if not_updated_for is not None:
             conditions["updated"] = {"$lt": self._clock.now() - not_updated_for}
         return {
-            self._create_job_from_job_data(job_data)
+            await self._create_job_from_job_data(job_data)
             async for job_data in self._db.jobs.find(conditions)
         }
 
@@ -76,7 +84,7 @@ class MongoDBRepository(Repository):
         result: Optional[bytes] = None,
         status: Optional[JobStatus] = None,
     ) -> None:
-        job = await self.find_job(jid)
+        job = await self._db.jobs.find_one({"_id": jid})
         if job is None:
             raise ValueError(f"No job with ID {jid}")
         now = self._clock.now()
@@ -86,29 +94,36 @@ class MongoDBRepository(Repository):
         if metadata_src is not None:
             update_fields["metadata_src"] = metadata_src
         if result is not None:
-            update_fields["result"] = result
+            # Save result document in GridFS
+            result_id = await self._fs.upload_from_stream(jid, result)
+            update_fields["result"] = result_id
         if status is not None:
             update_fields["status"] = status
         await self._db.jobs.update_one({"_id": jid}, {"$set": update_fields})
         # If associated with a session, also update that session
-        if job.session_id is not None:
+        if job["session_id"] is not None:
             await self._db.sessions.update_one(
-                {"_id": job.session_id}, {"$set": {"updated": now}}
+                {"_id": job["session_id"]}, {"$set": {"updated": now}}
             )
 
     async def add_to_job_log(self, jid: str, entry: str) -> None:
-        if await self.find_job(jid) is None:
+        if await self._db.jobs.find_one({"_id": jid}) is None:
             raise ValueError(f"No job with ID {jid}")
         await self._db.jobs.update_one({"_id": jid}, {"$push": {"log": entry}})
 
     async def delete_job(self, jid: str) -> None:
-        job = await self.find_job(jid)
-        if job is None:
+        job_data = await self._db.jobs.find_one({"_id": jid})
+        if job_data is None:
             raise ValueError(f"Can't delete job {jid}, because the ID doesn't exist")
-        if job.session_id is not None:
+        if job_data["session_id"] is not None:
             await self._db.sessions.update_one(
-                {"_id": job.session_id}, {"$set": {"updated": self._clock.now()}}
+                {"_id": job_data["session_id"]},
+                {"$set": {"updated": self._clock.now()}},
             )
+        # Delete associated fragments in GridFS
+        self._fs.delete(job_data["src"])
+        if job_data["result"] != b"":
+            self._fs.delete(job_data["result"])
         await self._db.jobs.delete_one({"_id": jid})
 
     async def add_session(self) -> str:
@@ -148,11 +163,18 @@ class MongoDBRepository(Repository):
     async def disconnect(self) -> None:
         self._mongo.close()
 
-    @staticmethod
-    def _create_job_from_job_data(job_data: Dict[str, Any]) -> Job:
+    async def _create_job_from_job_data(self, job_data: Dict[str, Any]) -> Job:
         """Creates Job instances from raw job data as returned by MongoDB."""
         job_data["id"] = job_data.pop("_id")
         updated = job_data.pop("updated")
+        # Retrieve src and result documents from GridFS
+        job_data["src"] = await (
+            await self._fs.open_download_stream(job_data["src"])
+        ).read()
+        if job_data["result"] != b"":
+            job_data["result"] = await (
+                await self._fs.open_download_stream(job_data["result"])
+            ).read()
         job = Job(**job_data)
         job.updated = updated
         return job
