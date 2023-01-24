@@ -6,6 +6,7 @@ import starlette.status as status
 from starlette.templating import _TemplateResponse
 
 from docleaner.api.entrypoints.web.dependencies import (
+    get_base_url,
     get_file_identifier,
     get_job_types,
     get_queue,
@@ -128,3 +129,8 @@ async def sessions_get(
             "jobs": jobs,
         },
     )
+
+
+@web_api.get("/api/usage", response_class=HTMLResponse, response_model=None)
+async def doc_api_usage(request: Request, base_url: str = Depends(get_base_url)) -> _TemplateResponse:
+    return templates.TemplateResponse("doc/api.html", {"request": request, "base_url": get_base_url()})
