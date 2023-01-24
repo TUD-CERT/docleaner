@@ -132,5 +132,9 @@ async def sessions_get(
 
 
 @web_api.get("/api/usage", response_class=HTMLResponse, response_model=None)
-async def doc_api_usage(request: Request, base_url: str = Depends(get_base_url)) -> _TemplateResponse:
-    return templates.TemplateResponse("doc/api.html", {"request": request, "base_url": get_base_url()})
+async def doc_api_usage(
+    request: Request, base_url: str = Depends(get_base_url)
+) -> _TemplateResponse:
+    return templates.TemplateResponse(
+        "doc/api.html", {"request": request, "base_url": base_url}
+    )
