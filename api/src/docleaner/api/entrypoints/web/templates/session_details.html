@@ -1,0 +1,45 @@
+<div class="dc-content"
+    hx-get="/sessions/{{ sid }}"
+    hx-trigger="load delay:1s"
+    hx-swap="outerHTML">
+<h2>Session overview - {{ sid }}</h2>
+    <p>Completed/Total jobs: {{ jobs_finished }}/{{ jobs_total }}<br />This session was created at {{ created.strftime("%Y-%m-%d %H:%M") }} (UTC).</p>
+    {% if jobs|length == 0 %}
+        There are currently no jobs associated with that session.
+    {% else %}
+        <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Job ID</th>
+                        <th scope="col">Created (UTC)</th>
+                        <th scope="col">Type</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Result</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for jid, created, updated, status, type in jobs %}
+                        <tr>
+                            <td>{{ jid }}</td>
+                            <td>{{ created.strftime("%Y-%m-%d %H:%M") }}</td>
+                            <td>{{ {0: "PDF"}[type] }}</td>
+                            <td>
+                                <span class="{% if status == 2 %}text-warning
+                                             {% elif status == 3 %}text-success
+                                             {% elif status == 4 %}text-danger
+                                             {% endif %}">
+                                    {{ {0: "Created",
+                                        1: "Queued",
+                                        2: "Running",
+                                        3: "Done",
+                                        4: "Error"}[status]
+                                    }}
+                                </span>
+                            </td>
+                            <td>{% if status == 3 %}<a href="/jobs/{{ jid }}">Details</a>{% endif %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+        </table>
+    {% endif %}
+</div>

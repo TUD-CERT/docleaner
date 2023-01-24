@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any, Dict, List, Tuple, Union
 
 from fastapi import APIRouter, Depends, HTTPException, Response, UploadFile
@@ -37,12 +38,16 @@ class JobDetails(BaseModel):
 
 class JobAbbreviatedDetails(BaseModel):
     id: str
+    created: datetime
+    updated: datetime
     type: JobType
     status: JobStatus
 
 
 class SessionDetails(BaseModel):
     id: str
+    created: datetime
+    updated: datetime
     jobs_total: int
     jobs_finished: int
     jobs: List[JobAbbreviatedDetails]
@@ -131,21 +136,37 @@ async def sessions_create(
 ) -> Any:
     sid = await create_session(repo)
     response.headers["Location"] = f"{base_url}/api/v1/sessions/{sid}"
-    return {"id": sid, "jobs_total": 0, "jobs_finished": 0, "jobs": []}
+    created, updated, jobs_total, jobs_finished, jobs = await get_session(sid, repo)
+    return {
+        "id": sid,
+        "created": created,
+        "updated": updated,
+        "jobs_total": jobs_total,
+        "jobs_finished": jobs_finished,
+        "jobs": jobs,
+    }
 
 
 @rest_api.get("/sessions/{sid}", response_model=SessionDetails)
 async def sessions_get(sid: str, repo: Repository = Depends(get_repo)) -> Any:
     try:
-        jobs_total, jobs_finished, jobs = await get_session(sid, repo)
+        created, updated, jobs_total, jobs_finished, jobs = await get_session(sid, repo)
     except ValueError:
         raise RESTException(status_code=status.HTTP_404_NOT_FOUND)
     return {
         "id": sid,
+        "created": created,
+        "updated": updated,
         "jobs_total": jobs_total,
         "jobs_finished": jobs_finished,
         "jobs": [
-            {"id": jid, "type": job_type, "status": job_status}
-            for jid, job_status, job_type, job_log, job_meta_src, job_meta_result in jobs
+            {
+                "id": jid,
+                "created": job_created,
+                "updated": job_updated,
+                "type": job_type,
+                "status": job_status,
+            }
+            for jid, job_created, job_updated, job_status, job_type in jobs
         ],
     }

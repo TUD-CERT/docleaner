@@ -91,6 +91,8 @@ async def test_clean_multiple_documents_with_session_workflow(
         # Poll session details until all jobs have been executed
         while True:
             session_data = (await client.get(session_url)).json()
+            assert isinstance(session_data["created"], str)
+            assert isinstance(session_data["updated"], str)
             assert session_data["jobs_total"] == len(session_data["jobs"]) == 2
             if session_data["jobs_finished"] == 2:
                 break
@@ -100,6 +102,8 @@ async def test_clean_multiple_documents_with_session_workflow(
             assert job_data["id"] in {jid1, jid2}
             assert job_data["status"] == JobStatus.SUCCESS
             assert job_data["type"] == JobType.PDF
+            assert isinstance(job_data["created"], str)
+            assert isinstance(job_data["updated"], str)
         # Download one of the results
         dl_resp = await client.get(f"{web_app}/api/v1/jobs/{jid2}/result")
         assert dl_resp.status_code == 200

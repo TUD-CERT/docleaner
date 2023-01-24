@@ -26,13 +26,24 @@ async def test_add_and_fetch_job(repo: Repository, sample_pdf: bytes) -> None:
 
 
 async def test_fetch_all_jobs(repo: Repository, sample_pdf: bytes) -> None:
-    """Adding multiple jobs and fetching all of them at once."""
-    jids = set()
-    for i in range(2):
-        jids.add(await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF))
+    """Adding multiple jobs and fetching all of them at once,
+    expecting a list ordered descending by job creation date.
+    For performance reasons, the returned job objects do not contain
+    any metadata, no job log and no source or resulting documents."""
+    jids = []
+    for i in range(5):
+        jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+        await repo.add_to_job_log(jid, "debug log entry")
+        jids.append(jid)
     jobs = await repo.find_jobs()
-    assert len(jobs) == 2
-    assert set(map(lambda job: job.id, jobs)) == jids
+    assert len(jobs) == 5
+    assert list(map(lambda job: job.id, jobs)) == jids
+    for job in jobs:
+        assert job.metadata_result == {}
+        assert job.metadata_src == {}
+        assert job.result == b""
+        assert job.src == b""
+        assert job.log == []
 
 
 async def test_filter_jobs(repo: Repository, sample_pdf: bytes) -> None:
@@ -116,7 +127,7 @@ async def test_delete_job(repo: Repository, sample_pdf: bytes) -> None:
     jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
     await repo.delete_job(jid)
     assert await repo.find_job(jid) is None
-    assert await repo.find_jobs() == set()
+    assert await repo.find_jobs() == []
 
 
 async def test_with_nonexisting_job(repo: Repository) -> None:

@@ -3,6 +3,7 @@ from datetime import timedelta
 from typing import Any, Dict, List, Optional, Set
 
 from motor import motor_asyncio
+import pymongo
 
 from docleaner.api.core.job import JobStatus, Job, JobType
 from docleaner.api.core.session import Session
@@ -59,7 +60,7 @@ class MongoDBRepository(Repository):
         sid: Optional[str] = None,
         status: Optional[List[JobStatus]] = None,
         not_updated_for: Optional[timedelta] = None,
-    ) -> Set[Job]:
+    ) -> List[Job]:
         if sid is not None and await self._db.sessions.find_one({"_id": sid}) is None:
             raise ValueError(
                 f"Can't fetch jobs from session {sid}, because the ID doesn't exist"
@@ -71,10 +72,12 @@ class MongoDBRepository(Repository):
             conditions["status"] = {"$in": status}
         if not_updated_for is not None:
             conditions["updated"] = {"$lt": self._clock.now() - not_updated_for}
-        return {
-            await self._create_job_from_job_data(job_data)
-            async for job_data in self._db.jobs.find(conditions)
-        }
+        return [
+            await self._create_job_from_job_data(job_data, True)
+            async for job_data in self._db.jobs.find(conditions).sort(
+                "created", pymongo.DESCENDING
+            )
+        ]
 
     async def update_job(
         self,
@@ -163,18 +166,28 @@ class MongoDBRepository(Repository):
     async def disconnect(self) -> None:
         self._mongo.close()
 
-    async def _create_job_from_job_data(self, job_data: Dict[str, Any]) -> Job:
-        """Creates Job instances from raw job data as returned by MongoDB."""
+    async def _create_job_from_job_data(
+        self, job_data: Dict[str, Any], summary_only: bool = False
+    ) -> Job:
+        """Creates Job instances from raw job data as returned by MongoDB.
+        If summary_only is True, omit metadata, the job log, src and result document data from the result."""
         job_data["id"] = job_data.pop("_id")
         updated = job_data.pop("updated")
-        # Retrieve src and result documents from GridFS
-        job_data["src"] = await (
-            await self._fs.open_download_stream(job_data["src"])
-        ).read()
-        if job_data["result"] != b"":
-            job_data["result"] = await (
-                await self._fs.open_download_stream(job_data["result"])
+        if summary_only:
+            job_data["src"] = b""
+            job_data["result"] = b""
+            job_data["log"] = []
+            job_data["metadata_result"] = {}
+            job_data["metadata_src"] = {}
+        else:
+            # Retrieve src and result documents from GridFS
+            job_data["src"] = await (
+                await self._fs.open_download_stream(job_data["src"])
             ).read()
+            if job_data["result"] != b"":
+                job_data["result"] = await (
+                    await self._fs.open_download_stream(job_data["result"])
+                ).read()
         job = Job(**job_data)
         job.updated = updated
         return job

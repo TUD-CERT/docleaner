@@ -28,11 +28,14 @@ class Repository(abc.ABC):
         sid: Optional[str] = None,
         status: Optional[List[JobStatus]] = None,
         not_updated_for: Optional[timedelta] = None,
-    ) -> Set[Job]:
-        """Returns a set of all currently registered jobs, optionally filtered by different criteria:
+    ) -> List[Job]:
+        """Returns a list of all currently registered jobs, optionally filtered by different criteria:
         * a session id to find all jobs associated with that session
         * a list of status flags to only find jobs that have one of the given statuses
         * a timedelta to find jobs that haven't been updated for a given amount of time.
+        The result is sorted descending by job creation date.
+        To improve performance, the resulting Job objects hold no metadata, no job log
+        and no src/result document data. Those attributes have to be fetched individually via find_job().
         """
         raise NotImplementedError()
 

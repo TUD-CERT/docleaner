@@ -63,3 +63,26 @@ async def test_request_invalid_job_details(web_app: str) -> None:
         assert r_details.status_code == 404
         r_result = await client.get(f"{web_app}/jobs/invalid/result")
         assert r_result.status_code == 404
+
+
+async def test_get_session_details(web_app: str, sample_pdf: bytes) -> None:
+    """End-to-end test creating a session with associated jobs,
+    then monitoring session progress via the web interface."""
+    async with httpx.AsyncClient() as client:
+        # Create session (via REST API)
+        create_session_resp = await client.post(f"{web_app}/api/v1/sessions")
+        create_session_json = create_session_resp.json()
+        sid = create_session_json["id"]
+        # Create a job within that session (via REST API)
+        upload1_resp = await client.post(
+            f"{web_app}/api/v1/jobs?session={sid}",
+            files={"doc_src": ("test.pdf", sample_pdf)},
+        )
+        assert upload1_resp.status_code == 201  # Created
+        jid = upload1_resp.json()["id"]
+        # Retrieve session details
+        session_url = f"{web_app}/sessions/{sid}"
+        r = await client.get(session_url)
+        assert r.status_code == 200
+        assert "Session overview" in r.text
+        assert jid in r.text

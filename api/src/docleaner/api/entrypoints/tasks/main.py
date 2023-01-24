@@ -30,7 +30,7 @@ async def purge(
             print(f"Purged sessions: {len(purged_sids)}")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="docleaner maintenance utility")
     parser.add_argument(
         "-j",

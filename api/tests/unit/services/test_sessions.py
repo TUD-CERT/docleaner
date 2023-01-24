@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import List
 
 import pytest
@@ -39,12 +39,16 @@ async def test_process_multiple_jobs_via_session(
     # Wait until job completion
     await await_session(sid, repo, queue)
     # Retrieve session and job details
-    total_jobs, finished_jobs, jobs = await get_session(sid, repo)
+    created, updated, total_jobs, finished_jobs, jobs = await get_session(sid, repo)
+    assert isinstance(created, datetime)
+    assert isinstance(updated, datetime)
     assert total_jobs == finished_jobs == 2
     assert len(jobs) == 2
     assert {j[0] for j in jobs} == {jid1, jid2}
-    assert {j[1] for j in jobs} == {JobStatus.SUCCESS}
-    assert {j[2] for j in jobs} == {JobType.PDF}
+    assert all({isinstance(j[1], datetime) for j in jobs})
+    assert all({isinstance(j[2], datetime) for j in jobs})
+    assert {j[3] for j in jobs} == {JobStatus.SUCCESS}
+    assert {j[4] for j in jobs} == {JobType.PDF}
     # Retrieve one of the results
     result, document_name = await get_job_result(jid2, repo)
     assert document_name == "sample.pdf"
@@ -63,7 +67,7 @@ async def test_get_unfinished_session_details(
     await repo.update_job(jid2, status=JobStatus.SUCCESS)
     jid3 = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF, sid)
     await repo.update_job(jid3, status=JobStatus.ERROR)
-    total_jobs, finished_jobs, jobs = await get_session(sid, repo)
+    created, updated, total_jobs, finished_jobs, jobs = await get_session(sid, repo)
     assert total_jobs == 3
     assert finished_jobs == 2
     assert len(jobs) == 3

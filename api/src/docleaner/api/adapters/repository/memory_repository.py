@@ -1,3 +1,5 @@
+from collections import OrderedDict
+import dataclasses
 from datetime import timedelta
 from typing import Any, Dict, List, Optional, Set
 
@@ -13,7 +15,9 @@ class MemoryRepository(Repository):
 
     def __init__(self, clock: Clock) -> None:
         self._clock = clock
-        self._jobs: Dict[str, Job] = {}
+        self._jobs: Dict[
+            str, Job
+        ] = OrderedDict()  # Preserve insertion order (job creation)
         self._sessions: Dict[str, Session] = {}
 
     async def add_job(
@@ -41,8 +45,8 @@ class MemoryRepository(Repository):
         sid: Optional[str] = None,
         status: Optional[List[JobStatus]] = None,
         not_updated_for: Optional[timedelta] = None,
-    ) -> Set[Job]:
-        result = set()
+    ) -> List[Job]:
+        result = []
         if sid is not None and sid not in self._sessions:
             raise ValueError(
                 f"Can't fetch jobs from session {sid}, because the ID doesn't exist"
@@ -57,7 +61,12 @@ class MemoryRepository(Repository):
                 and self._clock.now() - job.updated < not_updated_for
             ):
                 continue
-            result.add(job)
+            # Strip metadata, src and result document
+            j = dataclasses.replace(
+                job, src=b"", result=b"", log=[], metadata_result={}, metadata_src={}
+            )
+            j.updated = job.updated
+            result.append(j)
         return result
 
     async def update_job(

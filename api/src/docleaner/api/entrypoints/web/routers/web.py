@@ -17,6 +17,7 @@ from docleaner.api.services.job_queue import JobQueue
 from docleaner.api.services.job_types import SupportedJobType
 from docleaner.api.services.jobs import create_job, get_job, get_job_result
 from docleaner.api.services.repository import Repository
+from docleaner.api.services.sessions import get_session
 
 
 web_api = APIRouter()
@@ -51,7 +52,7 @@ async def landing_post(
         )
         if "hx-request" in request.headers:
             return templates.TemplateResponse(
-                "job_status.html",
+                "job_details.html",
                 {"request": request, "jid": jid, "job_status": 0, "htmx": True},
                 headers={"hx-push-url": f"/jobs/{jid}"},
             )
@@ -75,7 +76,9 @@ async def jobs_get(
     except ValueError:
         raise WebException(status_code=status.HTTP_404_NOT_FOUND)
     return templates.TemplateResponse(
-        "job_status.html" if "hx-request" in request.headers else "job_details.html",
+        "job_details.html"
+        if "hx-request" in request.headers
+        else "job_details_full.html",
         {
             "request": request,
             "jid": jid,
@@ -101,4 +104,27 @@ async def jobs_get_result(jid: str, repo: Repository = Depends(get_repo)) -> Res
         content=job_result,
         media_type="application/octet-stream",
         headers=response_headers,
+    )
+
+
+@web_api.get("/sessions/{sid}", response_class=HTMLResponse, response_model=None)
+async def sessions_get(
+    request: Request, sid: str, repo: Repository = Depends(get_repo)
+) -> _TemplateResponse:
+    try:
+        created, updated, jobs_total, jobs_finished, jobs = await get_session(sid, repo)
+    except ValueError:
+        raise WebException(status_code=status.HTTP_404_NOT_FOUND)
+    return templates.TemplateResponse(
+        "session_details.html"
+        if "hx-request" in request.headers
+        else "session_details_full.html",
+        {
+            "request": request,
+            "sid": sid,
+            "created": created,
+            "jobs_total": jobs_total,
+            "jobs_finished": jobs_finished,
+            "jobs": jobs,
+        },
     )

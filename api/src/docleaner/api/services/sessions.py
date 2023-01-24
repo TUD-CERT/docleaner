@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Set, Tuple
 
 from docleaner.api.core.job import JobStatus, JobType
@@ -21,21 +21,15 @@ async def await_session(sid: str, repo: Repository, queue: JobQueue) -> None:
 async def get_session(
     sid: str, repo: Repository
 ) -> Tuple[
+    datetime,
+    datetime,
     int,
     int,
-    List[
-        Tuple[
-            str,
-            JobStatus,
-            JobType,
-            List[str],
-            Dict[str, Dict[str, Any]],
-            Dict[str, Dict[str, Any]],
-        ]
-    ],
+    List[Tuple[str, datetime, datetime, JobStatus, JobType]],
 ]:
     """Returns session details: The number of total associated jobs,
-    the number of finished (success/error) jobs and a list with job details."""
+    the number of finished (success/error) jobs and a list with
+    abbreviated job details (jid, created, updated, status, type)."""
     session = await repo.find_session(sid)
     if session is None:
         raise ValueError("Invalid session id")
@@ -44,17 +38,8 @@ async def get_session(
     for job in await repo.find_jobs(sid):
         if job.status in [JobStatus.SUCCESS, JobStatus.ERROR]:
             finished_jobs += 1
-        jobs.append(
-            (
-                job.id,
-                job.status,
-                job.type,
-                job.log,
-                job.metadata_src,
-                job.metadata_result,
-            )
-        )
-    return len(jobs), finished_jobs, jobs
+        jobs.append((job.id, job.created, job.updated, job.status, job.type))
+    return session.created, session.updated, len(jobs), finished_jobs, jobs
 
 
 async def purge_sessions(purge_after: timedelta, repo: Repository) -> Set[str]:
