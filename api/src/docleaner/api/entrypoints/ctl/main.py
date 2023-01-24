@@ -15,19 +15,20 @@ async def purge(
     no_session_purging: bool,
     job_keepalive: int,
     session_keepalive: int,
+    quiet: bool = False
 ) -> None:
     clock, file_identifier, job_types, queue, repo = bootstrap()
     if not no_standalone_job_purging:
         purged_jids = await purge_jobs(
             purge_after=timedelta(minutes=job_keepalive), repo=repo
         )
-        if len(purged_jids) > 0:
+        if len(purged_jids) > 0 and not quiet:
             print(f"Purged standalone jobs: {len(purged_jids)}")
     if not no_session_purging:
         purged_sids = await purge_sessions(
             purge_after=timedelta(minutes=session_keepalive), repo=repo
         )
-        if len(purged_sids) > 0:
+        if len(purged_sids) > 0 and not quiet:
             print(f"Purged sessions: {len(purged_sids)}")
 
 
@@ -47,6 +48,7 @@ def cmd_tasks(args: argparse.Namespace) -> None:
             args.no_session_purging,
             args.job_keepalive,
             args.session_keepalive,
+            args.quiet
         )
     )
 
@@ -59,7 +61,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="docleaner management utility")
     subparsers = parser.add_subparsers(help="command")
     tasks_parser = subparsers.add_parser(
-        "tasks", help="Run management tasks (jobs/session purging, logging)"
+        "tasks", help="Run management tasks (jobs/session purging)"
+    )
+    tasks_parser.add_argument(
+        "-q",
+        "--quiet",
+        action="store_true",
+        help="Suppress output of deleted jobs and sessions",
     )
     tasks_parser.add_argument(
         "-j",
