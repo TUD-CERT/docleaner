@@ -4,7 +4,7 @@
          hx-trigger="load delay:1s"
          hx-swap="outerHTML"
     {% endif %}>
-    <h2>Job Status - {{ jid }}</h2>
+    <h2 {% if job_status <= 2 %}class="text-center"{% endif %}>Job Status - {{ jid }}</h2>
     {% if job_status <= 2 %}
         <div class="text-center">
             <p>Your job is currently being processed, please wait a bit {% if htmx %}longer{% else %}and click <a href="">here</a> to refresh{% endif %}.</p>
@@ -17,6 +17,7 @@
         <pre>{% for log in job_log %}{{ log|e }}{% endfor %}</pre>
         <a href="/" hx-boost="true">Upload another document</a>
     {% else %}
+        <a class="float-end" href="/" hx-boost="true">Upload another document</a>
         <p>Your job was processed successfully.</p>
         <div class="d-grid">
             <a class="btn btn-primary mb-3" href="/jobs/{{ jid }}/result" download>Download result</a>
@@ -123,6 +124,5 @@
                 </dl>
             </div>
         </div>
-<a href="/" hx-boost="true">Upload another document</a>
 {% endif %}
 </div>

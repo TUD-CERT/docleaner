@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
 <form method="post" autocomplete="off" enctype="multipart/form-data" hx-boost="true" hx-target="form">
+    <p>This webservice cleans documents from potentially privacy-invasive metadata.</p>
     <div class="mb-3">
-        <label for="doc_src">Choose document to upload.</label>
+        <label for="doc_src">Choose a document to upload.</label>
         <input class="form-control form-control-lg" id="doc_src" name="doc_src" type="file" required />
     </div>
     <p>Supported document format(s): PDF</p>
