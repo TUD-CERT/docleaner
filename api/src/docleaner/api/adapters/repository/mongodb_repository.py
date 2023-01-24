@@ -47,6 +47,10 @@ class MongoDBRepository(Repository):
         await self._db.jobs.insert_one(serialized_job)
         if sid is not None:
             await self._db.sessions.update_one({"_id": sid}, {"$set": {"updated": now}})
+        # Increment total job count
+        self._db.stats.update_one(
+            {"type": "jobs"}, {"$inc": {"total_count": 1}}, upsert=True
+        )
         return jid
 
     async def find_job(self, jid: str) -> Optional[Job]:
@@ -128,6 +132,13 @@ class MongoDBRepository(Repository):
         if job_data["result"] != b"":
             self._fs.delete(job_data["result"])
         await self._db.jobs.delete_one({"_id": jid})
+
+    async def get_total_job_count(self) -> int:
+        job_stats = await self._db.stats.find_one({"type": "jobs"})
+        if job_stats is None:
+            return 0
+        assert isinstance(job_stats["total_count"], int)
+        return job_stats["total_count"]
 
     async def add_session(self) -> str:
         sid = generate_token()

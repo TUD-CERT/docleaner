@@ -1,8 +1,7 @@
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Set, Tuple
+from typing import List, Set, Tuple
 
 from docleaner.api.core.job import JobStatus, JobType
-from docleaner.api.services.clock import Clock
 from docleaner.api.services.job_queue import JobQueue
 from docleaner.api.services.repository import Repository
 

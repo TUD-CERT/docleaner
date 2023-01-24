@@ -157,6 +157,17 @@ async def test_job_timestamp_is_updated_after_updates(
     assert advanced_time - result.updated <= timedelta(seconds=1)
 
 
+async def test_get_total_job_count(sample_pdf: bytes, repo: Repository) -> None:
+    """Retrieving the total number of jobs after some jobs have been deleted."""
+    assert await repo.get_total_job_count() == 0
+    for i in range(3):
+        jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+        await repo.delete_job(jid)
+    for i in range(5):
+        await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+    assert await repo.get_total_job_count() == 8
+
+
 async def test_add_and_fetch_session(repo: Repository) -> None:
     """Adding and retrieving a session."""
     sid = await repo.add_session()

@@ -64,6 +64,12 @@ class Repository(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
+    async def get_total_job_count(self) -> int:
+        """Returns the total number of jobs this database has processed,
+        no matter the job status or whether those jobs still exist in the repository."""
+        raise NotImplementedError()
+
+    @abc.abstractmethod
     async def add_session(self) -> str:
         """Creates a session and returns the resulting session id."""
         raise NotImplementedError()

@@ -19,6 +19,7 @@ class MemoryRepository(Repository):
             str, Job
         ] = OrderedDict()  # Preserve insertion order (job creation)
         self._sessions: Dict[str, Session] = {}
+        self._total_jobs = 0
 
     async def add_job(
         self, src: bytes, src_name: str, job_type: JobType, sid: Optional[str] = None
@@ -35,6 +36,7 @@ class MemoryRepository(Repository):
         self._jobs[jid] = job
         if sid is not None:
             self._sessions[sid].updated = now
+        self._total_jobs += 1
         return jid
 
     async def find_job(self, jid: str) -> Optional[Job]:
@@ -107,6 +109,9 @@ class MemoryRepository(Repository):
         if sid is not None:
             self._sessions[sid].updated = self._clock.now()
         del self._jobs[jid]
+
+    async def get_total_job_count(self) -> int:
+        return self._total_jobs
 
     async def add_session(self) -> str:
         sid = generate_token()

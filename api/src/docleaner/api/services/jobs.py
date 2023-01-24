@@ -76,6 +76,28 @@ async def get_job_result(jid: str, repo: Repository) -> Tuple[bytes, str]:
     return job.result, job.name
 
 
+async def get_job_stats(repo: Repository) -> Tuple[int, int, int, int, int, int]:
+    """Returns the number of overall total and currently registered jobs differentiated by their status:
+    # total jobs ever seen, # created, # queued, # running, # successful, # error."""
+    result: Dict[JobStatus, int] = {
+        JobStatus.CREATED: 0,
+        JobStatus.QUEUED: 0,
+        JobStatus.RUNNING: 0,
+        JobStatus.SUCCESS: 0,
+        JobStatus.ERROR: 0,
+    }
+    for job in await repo.find_jobs():
+        result[job.status] += 1
+    return (
+        await repo.get_total_job_count(),
+        result[JobStatus.CREATED],
+        result[JobStatus.QUEUED],
+        result[JobStatus.RUNNING],
+        result[JobStatus.SUCCESS],
+        result[JobStatus.ERROR],
+    )
+
+
 async def purge_jobs(purge_after: timedelta, repo: Repository) -> Set[str]:
     """Deletes all finished standalone (not associated with a session) jobs that haven't been
     updated within the timeframe specified by purge_after. Returns the identifiers of all deleted jobs."""

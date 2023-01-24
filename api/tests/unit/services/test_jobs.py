@@ -14,6 +14,7 @@ from docleaner.api.services.jobs import (
     create_job,
     get_job,
     get_job_result,
+    get_job_stats,
     purge_jobs,
 )
 from docleaner.api.services.repository import Repository
@@ -135,6 +136,27 @@ async def test_get_unfinished_job_result(sample_pdf: bytes, repo: Repository) ->
     jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
     with pytest.raises(ValueError, match=r".*didn't complete.*"):
         await get_job_result(jid, repo)
+
+
+async def test_get_job_stats(
+    sample_pdf: bytes,
+    repo: Repository,
+    queue: JobQueue,
+    file_identifier: FileIdentifier,
+    job_types: List[SupportedJobType],
+) -> None:
+    """Retrieving global job statistics."""
+    assert await get_job_stats(repo) == (0, 0, 0, 0, 0, 0)
+    finished_jid, _ = await create_job(
+        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types
+    )
+    await await_job(finished_jid, repo, queue)
+    running_jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+    await repo.update_job(running_jid, status=JobStatus.RUNNING)
+    await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)  # in CREATED state
+    queued_jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+    await repo.update_job(queued_jid, status=JobStatus.QUEUED)
+    assert await get_job_stats(repo) == (4, 1, 1, 1, 1, 0)
 
 
 async def test_purge_jobs(
