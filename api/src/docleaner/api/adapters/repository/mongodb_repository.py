@@ -48,7 +48,7 @@ class MongoDBRepository(Repository):
         if sid is not None:
             await self._db.sessions.update_one({"_id": sid}, {"$set": {"updated": now}})
         # Increment total job count
-        self._db.stats.update_one(
+        await self._db.stats.update_one(
             {"type": "jobs"}, {"$inc": {"total_count": 1}}, upsert=True
         )
         return jid
