@@ -104,7 +104,7 @@ async def test_await_again(
 async def test_get_unfinished_job_details(sample_pdf: bytes, repo: Repository) -> None:
     """Retrieving details for a job that hasn't been finished yet."""
     jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
-    job_status, job_type, job_log, job_meta_src, job_meta_result = await get_job(
+    job_status, job_type, job_log, job_meta_src, job_meta_result, _ = await get_job(
         jid, repo
     )
     assert job_status == JobStatus.CREATED
@@ -123,7 +123,7 @@ async def test_get_finished_job_details(
         sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types
     )
     await await_job(jid, repo, queue)
-    job_status, job_type, job_log, job_meta_src, job_meta_result = await get_job(
+    job_status, job_type, job_log, job_meta_src, job_meta_result, _ = await get_job(
         jid, repo
     )
     assert job_status == JobStatus.SUCCESS

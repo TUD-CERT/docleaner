@@ -84,6 +84,7 @@ async def jobs_create(
             job_log,
             job_metadata_src,
             job_metadata_result,
+            _
         ) = await get_job(jid, repo)
         response.headers["Location"] = f"{base_url}/api/v1/jobs/{jid}"
         return {
@@ -110,6 +111,7 @@ async def jobs_get(jid: str, repo: Repository = Depends(get_repo)) -> Any:
             job_log,
             job_metadata_src,
             job_metadata_result,
+            _
         ) = await get_job(jid, repo)
     except ValueError:
         raise RESTException(status_code=status.HTTP_404_NOT_FOUND)

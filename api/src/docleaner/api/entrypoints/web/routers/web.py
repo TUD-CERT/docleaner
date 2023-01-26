@@ -79,7 +79,7 @@ async def jobs_get(
     version: str = Depends(get_version),
 ) -> _TemplateResponse:
     try:
-        job_status, job_type, job_log, job_meta_src, job_meta_result = await get_job(
+        job_status, job_type, job_log, job_meta_src, job_meta_result, job_sid = await get_job(
             jid, repo
         )
     except ValueError:
@@ -93,6 +93,7 @@ async def jobs_get(
             "jid": jid,
             "job_status": job_status,
             "job_log": job_log,
+            "job_sid": job_sid,
             "meta_src": job_meta_src,
             "meta_result": job_meta_result,
             "htmx": "hx-request" in request.headers,

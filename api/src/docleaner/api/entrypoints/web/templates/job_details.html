@@ -18,7 +18,8 @@
         <a href="/" hx-boost="true">Upload another document</a>
     {% else %}
         <a class="float-end" href="/" hx-boost="true">Upload another document</a>
-        <p>Your job was processed successfully.</p>
+        <p>Your job was processed successfully.<br />
+        {% if job_sid is none %}This document will remain available for download for roughly 10 minutes and then be purged from this server.{% endif %}</p>
         <div class="d-grid">
             <a class="btn btn-primary mb-3" href="/jobs/{{ jid }}/result" download>Download result</a>
         </div>
