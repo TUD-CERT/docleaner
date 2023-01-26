@@ -11,6 +11,7 @@ from docleaner.api.entrypoints.web.dependencies import (
     get_job_types,
     get_queue,
     get_repo,
+    get_version,
     templates,
 )
 from docleaner.api.services.file_identifier import FileIdentifier
@@ -29,8 +30,12 @@ class WebException(HTTPException):
 
 
 @web_api.get("/", response_class=HTMLResponse, response_model=None)
-def landing_get(request: Request) -> _TemplateResponse:
-    return templates.TemplateResponse("landing.html", {"request": request})
+def landing_get(
+    request: Request, version: str = Depends(get_version)
+) -> _TemplateResponse:
+    return templates.TemplateResponse(
+        "landing.html", {"request": request, "version": version}
+    )
 
 
 @web_api.post("/", response_model=None)
@@ -68,7 +73,10 @@ async def landing_post(
 
 @web_api.get("/jobs/{jid}", response_class=HTMLResponse, response_model=None)
 async def jobs_get(
-    request: Request, jid: str, repo: Repository = Depends(get_repo)
+    request: Request,
+    jid: str,
+    repo: Repository = Depends(get_repo),
+    version: str = Depends(get_version),
 ) -> _TemplateResponse:
     try:
         job_status, job_type, job_log, job_meta_src, job_meta_result = await get_job(
@@ -88,6 +96,7 @@ async def jobs_get(
             "meta_src": job_meta_src,
             "meta_result": job_meta_result,
             "htmx": "hx-request" in request.headers,
+            "version": version,
         },
     )
 
@@ -110,7 +119,10 @@ async def jobs_get_result(jid: str, repo: Repository = Depends(get_repo)) -> Res
 
 @web_api.get("/sessions/{sid}", response_class=HTMLResponse, response_model=None)
 async def sessions_get(
-    request: Request, sid: str, repo: Repository = Depends(get_repo)
+    request: Request,
+    sid: str,
+    repo: Repository = Depends(get_repo),
+    version: str = Depends(get_version),
 ) -> _TemplateResponse:
     try:
         created, updated, jobs_total, jobs_finished, jobs = await get_session(sid, repo)
@@ -127,14 +139,17 @@ async def sessions_get(
             "jobs_total": jobs_total,
             "jobs_finished": jobs_finished,
             "jobs": jobs,
+            "version": version,
         },
     )
 
 
 @web_api.get("/api/usage", response_class=HTMLResponse, response_model=None)
 async def doc_api_usage(
-    request: Request, base_url: str = Depends(get_base_url)
+    request: Request,
+    base_url: str = Depends(get_base_url),
+    version: str = Depends(get_version),
 ) -> _TemplateResponse:
     return templates.TemplateResponse(
-        "doc/api.html", {"request": request, "base_url": base_url}
+        "doc/api.html", {"request": request, "base_url": base_url, "version": version}
     )

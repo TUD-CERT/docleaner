@@ -15,7 +15,7 @@ async def purge(
     no_session_purging: bool,
     job_keepalive: int,
     session_keepalive: int,
-    quiet: bool = False
+    quiet: bool = False,
 ) -> None:
     clock, file_identifier, job_types, queue, repo = bootstrap()
     if not no_standalone_job_purging:
@@ -48,7 +48,7 @@ def cmd_tasks(args: argparse.Namespace) -> None:
             args.no_session_purging,
             args.job_keepalive,
             args.session_keepalive,
-            args.quiet
+            args.quiet,
         )
     )
 

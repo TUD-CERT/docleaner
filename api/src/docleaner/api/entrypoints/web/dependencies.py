@@ -1,4 +1,5 @@
 import os
+from importlib.metadata import version
 from typing import List
 
 from fastapi.templating import Jinja2Templates
@@ -17,17 +18,19 @@ _file_identifier: FileIdentifier
 _job_types: List[SupportedJobType]
 _queue: JobQueue
 _repo: Repository
+_version: str
 
 base_path = os.path.dirname(os.path.realpath(__file__))
 templates = Jinja2Templates(directory=os.path.join(base_path, "templates"))
 
 
 def init() -> None:
-    global _clock, _file_identifier, _job_types, _queue, _repo, _base_url
+    global _clock, _file_identifier, _job_types, _queue, _repo, _base_url, _version
     _clock, _file_identifier, _job_types, _queue, _repo = bootstrap()
     if "DOCLEANER_URL" not in os.environ:
         raise ValueError("Environment variable DOCLEANER_URL is not set!")
     _base_url = os.environ["DOCLEANER_URL"]
+    _version = version("docleaner-api")
 
 
 def get_clock() -> Clock:
@@ -52,3 +55,7 @@ def get_repo() -> Repository:
 
 def get_base_url() -> str:
     return _base_url
+
+
+def get_version() -> str:
+    return _version

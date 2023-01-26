@@ -7,3 +7,4 @@ motor-stubs
 mypy == 0.961
 pytest
 pytest-asyncio
+wheel

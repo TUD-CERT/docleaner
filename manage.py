@@ -12,24 +12,31 @@ from typing import List, Optional, Tuple
 dev_env_process: Optional[subprocess.Popen] = None
 
 
-def build_compose_cmdline(config: str) -> List[str]:
+def build_compose_cmdline(config: str, project: str = "docleaner") -> List[str]:
     """Returns a subprocess-ready docker-compose command line."""
     docker_compose_file = os.path.join("deployment/docker", f"{config}.yml")
     if not os.path.isfile(docker_compose_file):
         raise ValueError(f"The file {docker_compose_file} does not exist")
-    return ["docker-compose", "-p", "docleaner", "-f", docker_compose_file]
+    return ["docker-compose", "-p", project, "-f", docker_compose_file]
 
 
-def wait_for_service(service: str, config: str = "development") -> None:
+def wait_for_service(service: str, logline: str, config: str = "development", project: str = "docleaner") -> None:
     """Blocks until the named service's container is running."""
     waiting = True
     while waiting:
-        status = json.loads(subprocess.check_output(build_compose_cmdline(config) + ["ps", "--format", "json"]))
+        # Wait for container to start
+        status = json.loads(subprocess.check_output(build_compose_cmdline(config, project) + ["ps", "--format", "json"]))
         for s in status:
             if s["Service"] == service and s["State"] == "running":
                 waiting = False
-                break
         time.sleep(0.2)
+    start_time = int(time.time())
+    while True:
+        # Wait until logline appears in container's output
+        time.sleep(0.2)
+        service_log = subprocess.check_output(build_compose_cmdline(config, project) + ["logs", "--no-log-prefix", "--tail", "1", "--since", str(start_time), service])
+        if logline.encode("utf-8") in service_log:
+            break
 
 
 def run(podman_socket: str, config: str = "development") -> None:
@@ -87,7 +94,7 @@ def test(podman_socket: str) -> None:
     config = "development"
     t = Thread(target=run, args=[podman_socket, config])
     t.start()
-    wait_for_service("api")
+    wait_for_service("api", "Development environment is ready")
     print("Checking coding style")
     stylecheck_cmd = build_compose_cmdline(config) + ["exec", "api", "check_style"]
     subprocess.call(stylecheck_cmd)
@@ -104,6 +111,34 @@ def test(podman_socket: str) -> None:
     shutdown(config)
 
 
+def build() -> None:
+    config = "development"
+    proj = "docleaner-build"
+    os.makedirs("dist", exist_ok=True)
+    print("Launching build environment")
+    env = os.environ.copy()
+    env["DOCLEANER_PODMAN_SOCKET"] = "/tmp"  # Has to be set, but isn't required to build
+    subprocess.run(build_compose_cmdline(config, proj) + ["up", "-d", "api"], env=env)
+    wait_for_service("api", "Development environment is ready", project=proj)
+    print("Building docleaner-api wheel")
+    subprocess.run(build_compose_cmdline(config, proj) + ["exec", "api", "npm", "run", "build-dev"], env=env)
+    subprocess.run(build_compose_cmdline(config, proj) + ["exec", "api", "python3", "setup.py", "bdist_wheel"], env=env)
+    api_version = subprocess.check_output(build_compose_cmdline(config, proj) + [
+        "exec",
+        "api",
+        "python3",
+        "-c",
+        "from importlib.metadata import version; print(version('docleaner-api'))"], env=env).decode("utf-8").strip()
+    subprocess.run(build_compose_cmdline(config, proj) + ["cp", f"api:/srv/dist/docleaner_api-{api_version}-py3-none-any.whl", "dist/"], env=env)
+    print("Building docleaner-api container image")
+    subprocess.run(["docker", "build", "-f", "deployment/docker/Dockerfile.api", "-t", f"docleaner/api:{api_version}", "."])
+    subprocess.run(["docker", "save", "-o", f"dist/docleaner_api-{api_version}.tar", f"docleaner/api:{api_version}"])
+    subprocess.run(["docker", "rmi", f"docleaner/api:{api_version}"])
+    print("Removing build environment")
+    subprocess.run(build_compose_cmdline(config, proj) + ["down"], env=env)
+    subprocess.run(build_compose_cmdline(config, proj) + ["rm"], env=env)
+
+
 def parse_args() -> Tuple[argparse.Namespace, List[str]]:
     """Parses and returns command line arguments."""
     parser = argparse.ArgumentParser(description="Project build and management script")
@@ -118,10 +153,12 @@ def parse_args() -> Tuple[argparse.Namespace, List[str]]:
     shell_parser.add_argument("service", help="Service name")
 
     subparsers.add_parser("shutdown", help="Stops development environment and removes runtime fragments")
-    test_parser = subparsers.add_parser("test", help="Run test suite")
+    test_parser = subparsers.add_parser("test", help="Runs the test suite")
     test_parser.add_argument("--podman-socket", type=str, default="auto",
                              help="podman socket path to bind into containers, 'auto' "
                                   "to launch the podman service or 'none' to disable podman")
+
+    subparsers.add_parser("build", help="Assembles the project into distributable components (to dist/)")
 
     return parser.parse_known_args()
 
@@ -137,3 +174,5 @@ if __name__ == "__main__":
         shutdown()
     elif args.subcmd == "test":
         test(podman_socket=args.podman_socket)
+    elif args.subcmd == "build":
+        build()
