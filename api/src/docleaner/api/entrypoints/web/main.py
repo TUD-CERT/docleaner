@@ -33,11 +33,23 @@ async def on_shutdown() -> None:
     await get_queue().shutdown()
 
 
+@app.exception_handler(web.ValidationException)
+async def validation_exception_handler(
+    request: Request, exc: web.ValidationException
+) -> Response:
+    exc.params["request"] = request
+    return templates.TemplateResponse(
+        exc.template_htmx if "hx-request" in request.headers else exc.template_full,
+        exc.params,
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+    )
+
+
 @app.exception_handler(web.WebException)
 async def web_exception_handler(request: Request, exc: web.WebException) -> Response:
-    if exc.status_code == status.HTTP_400_BAD_REQUEST:
+    if exc.status_code == status.HTTP_404_NOT_FOUND:
         return templates.TemplateResponse(
-            "errors/400.html",
+            "error.html",
             {"request": request, "msg": exc.detail},
             status_code=exc.status_code,
         )
@@ -47,7 +59,4 @@ async def web_exception_handler(request: Request, exc: web.WebException) -> Resp
 
 @app.exception_handler(rest.RESTException)
 async def rest_exception_handler(request: Request, exc: rest.RESTException) -> Response:
-    if exc.status_code == status.HTTP_400_BAD_REQUEST:
-        return JSONResponse(content={"msg": exc.detail}, status_code=exc.status_code)
-    else:
-        return await http_exception_handler(request, exc)
+    return JSONResponse(content={"msg": exc.detail}, status_code=exc.status_code)

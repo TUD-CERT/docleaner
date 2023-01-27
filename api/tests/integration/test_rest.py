@@ -48,17 +48,20 @@ async def test_upload_invalid_document(web_app: str) -> None:
             f"{web_app}/api/v1/jobs", files={"doc_src": ("test.pdf", b"INVALID")}
         )
         assert r.headers["content-type"] == "application/json"
-        assert r.status_code == 400
+        assert r.status_code == 422
         assert "unsupported document type" in r.json()["msg"]
 
 
-async def test_request_invalid_job_details(web_app: str) -> None:
-    """End-to-end test attempting to fetch details or a download for an invalid job id via the REST API."""
+async def test_request_invalid_sids(web_app: str) -> None:
+    """End-to-end test attempting to fetch details or a download for
+    an invalid job or session id via the REST API."""
     async with httpx.AsyncClient() as client:
         r_details = await client.get(f"{web_app}/api/v1/jobs/invalid")
         assert r_details.status_code == 404
         r_result = await client.get(f"{web_app}/api/v1/jobs/invalid/result")
         assert r_result.status_code == 404
+        r_details = await client.get(f"{web_app}/api/v1/sessions/invalid")
+        assert r_details.status_code == 404
 
 
 async def test_clean_multiple_documents_with_session_workflow(
@@ -109,3 +112,15 @@ async def test_clean_multiple_documents_with_session_workflow(
         assert dl_resp.status_code == 200
         assert dl_resp.headers["content-type"] == "application/octet-stream"
         assert "PDF" in dl_resp.text
+
+
+async def test_upload_document_to_invalid_session(
+    web_app: str, sample_pdf: bytes
+) -> None:
+    """End-to-end test attempting to upload a document with a nonexistent session id."""
+    async with httpx.AsyncClient() as client:
+        upload_resp = await client.post(
+            f"{web_app}/api/v1/jobs?session=invalid",
+            files={"doc_src": ("test.pdf", sample_pdf)},
+        )
+        assert upload_resp.status_code == 422

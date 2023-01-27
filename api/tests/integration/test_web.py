@@ -52,16 +52,18 @@ async def test_upload_invalid_document(web_app: str) -> None:
     """End-to-end test attempting to upload an invalid/unsupported document."""
     async with httpx.AsyncClient() as client:
         r = await client.post(web_app, files={"doc_src": ("test.pdf", b"INVALID")})
-        assert r.status_code == 400
+        assert r.status_code == 422
         assert "unsupported document type" in r.text
 
 
-async def test_request_invalid_job_details(web_app: str) -> None:
-    """End-to-end test attempting to fetch details or a download for an invalid job id."""
+async def test_request_invalid_ids(web_app: str) -> None:
+    """End-to-end test attempting to fetch details or a download for an invalid job or session id."""
     async with httpx.AsyncClient() as client:
         r_details = await client.get(f"{web_app}/jobs/invalid")
         assert r_details.status_code == 404
         r_result = await client.get(f"{web_app}/jobs/invalid/result")
+        assert r_result.status_code == 404
+        r_result = await client.get(f"{web_app}/sessions/invalid")
         assert r_result.status_code == 404
 
 

@@ -1,4 +1,5 @@
-from typing import List, Union
+from dataclasses import dataclass
+from typing import Any, Dict, List, Union
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -29,12 +30,22 @@ class WebException(HTTPException):
     pass
 
 
+@dataclass
+class ValidationException(HTTPException):
+    params: Dict[str, Any]
+    template_full: str
+    template_htmx: str
+
+    def __post_init__(self) -> None:
+        super().__init__(status_code=422)
+
+
 @web_api.get("/", response_class=HTMLResponse, response_model=None)
 def landing_get(
     request: Request, version: str = Depends(get_version)
 ) -> _TemplateResponse:
     return templates.TemplateResponse(
-        "landing.html", {"request": request, "version": version}
+        "landing_full.html", {"request": request, "version": version}
     )
 
 
@@ -65,9 +76,13 @@ async def landing_post(
         else:
             return RedirectResponse(f"/jobs/{jid}", status_code=status.HTTP_302_FOUND)
     except ValueError:
-        raise WebException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="You uploaded an unsupported document type.",
+        raise ValidationException(
+            params={
+                "doc_src_invalid": True,
+                "doc_src_feedback": "You uploaded an unsupported document type.",
+            },
+            template_full="landing_full.html",
+            template_htmx="landing.html",
         )
 
 
@@ -79,9 +94,14 @@ async def jobs_get(
     version: str = Depends(get_version),
 ) -> _TemplateResponse:
     try:
-        job_status, job_type, job_log, job_meta_src, job_meta_result, job_sid = await get_job(
-            jid, repo
-        )
+        (
+            job_status,
+            job_type,
+            job_log,
+            job_meta_src,
+            job_meta_result,
+            job_sid,
+        ) = await get_job(jid, repo)
     except ValueError:
         raise WebException(status_code=status.HTTP_404_NOT_FOUND)
     return templates.TemplateResponse(

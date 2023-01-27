@@ -55,13 +55,25 @@ async def await_job(
 async def get_job(
     jid: str, repo: Repository
 ) -> Tuple[
-    JobStatus, JobType, List[str], Dict[str, Dict[str, Any]], Dict[str, Dict[str, Any]], Optional[str]
+    JobStatus,
+    JobType,
+    List[str],
+    Dict[str, Dict[str, Any]],
+    Dict[str, Dict[str, Any]],
+    Optional[str],
 ]:
     """Returns details for the job identified by jid."""
     job = await repo.find_job(jid)
     if job is None:
         raise ValueError(f"A job with jid {jid} does not exist")
-    return job.status, job.type, job.log, job.metadata_src, job.metadata_result, job.session_id
+    return (
+        job.status,
+        job.type,
+        job.log,
+        job.metadata_src,
+        job.metadata_result,
+        job.session_id,
+    )
 
 
 async def get_job_result(jid: str, repo: Repository) -> Tuple[bytes, str]:
