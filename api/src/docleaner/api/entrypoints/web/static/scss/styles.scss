@@ -2,3 +2,19 @@ $primary: #dd2727;
 $dark: #002557;
 
 @import "~bootstrap/scss/bootstrap";
+
+// Hide elements tagged as dc-htmx-hideicator while performing htmx requests
+.htmx-request .dc-htmx-hideicator {
+  display: none;
+}
+
+// Disable form buttons during htmx requests
+form.htmx-request button {
+  pointer-events: none;
+  opacity: 0.65;
+}
+
+// Prevent a spinner that is hidden by default to fade out on page load
+div.htmx-indicator.spinner-border {
+  transition: none;
+}
