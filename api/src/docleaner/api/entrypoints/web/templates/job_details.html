@@ -36,8 +36,8 @@
                     <h3>Original Metadata</h3>
                     <dl class="row">
                         {% for key, val in meta_src["doc"].items() %}
-                            <dt class="col-3">{{ key|e }}</dt>
-                            <dd class="col-9">{{ val|e }}</dd>
+                            <dt class="col-3 overflow-scroll">{{ key|e }}</dt>
+                            <dd class="col-9 overflow-scroll">{{ val|e }}</dd>
                         {% endfor %}
                         <div class="accordion" id="dc-meta-orig">
                             {% for doc_id, doc_data in meta_src["embeds"].items() %}
@@ -58,8 +58,8 @@
                                         <div class="accordion-body">
                                             <dl class="row">
                                                 {% for data_key, data_val in doc_data.items() if data_val is mapping %}
-                                                    <dt class="col-5">{{ data_key|e }}</dt>
-                                                    <dd class="col-7">
+                                                    <dt class="col-5 overflow-scroll">{{ data_key|e }}</dt>
+                                                    <dd class="col-7 overflow-scroll">
                                                         {% if data_val is mapping %}
                                                             {% for tag_name, tag_val in data_val.items() %}
                                                                 <strong>{{ tag_name }}</strong><br />{{ tag_val }}<br />
@@ -81,17 +81,17 @@
                     <h3>Remaining Metadata</h3>
                     <dl class="row">
                         {% for key, val in meta_src["doc"].items() %}
-                            <dt class="col-3">{{ key|e }}</dt>
+                            <dt class="col-3 overflow-scroll">{{ key|e }}</dt>
                             {% if key in meta_result["doc"] %}
-                                <dd class="col-9 {% if val != meta_result["doc"][key] %}text-success{% endif %}">{{ meta_result["doc"][key]|e }}</dd>
+                                <dd class="col-9 overflow-scroll {% if val != meta_result["doc"][key] %}text-success{% endif %}">{{ meta_result["doc"][key]|e }}</dd>
                             {% else %}
-                                <dd class="col-9 text-danger">{{ meta_result["doc"][key]|e }}&nbsp;</dd>
+                                <dd class="col-9 overflow-scroll text-danger">{{ meta_result["doc"][key]|e }}&nbsp;</dd>
                             {% endif %}
                         {% endfor %}
                         {% for key, val in meta_result["doc"].items() %}
                             {% if key not in meta_src["doc"] %}
-                                <dt class="col-3">{{ key|e }}</dt>
-                                <dd class="col-9 text-success">{{ val|e }}</dd>
+                                <dt class="col-3 overflow-scroll">{{ key|e }}</dt>
+                                <dd class="col-9 overflow-scroll text-success">{{ val|e }}</dd>
                             {% endif %}
                         {% endfor %}
                         <div class="accordion" id="dc-meta-result">
@@ -113,8 +113,8 @@
                                         <div class="accordion-body">
                                             <dl class="row">
                                                 {% for data_key, data_val in doc_data.items() if data_val is mapping %}
-                                                    <dt class="col-5">{{ data_key|e }}</dt>
-                                                    <dd class="col-7">
+                                                    <dt class="col-5 overflow-scroll">{{ data_key|e }}</dt>
+                                                    <dd class="col-7 overflow-scroll">
                                                         {% if data_val is mapping %}
                                                             {% for tag_name, tag_val in data_val.items() %}
                                                                 <strong>{{ tag_name }}</strong><br />{{ tag_val }}<br />
