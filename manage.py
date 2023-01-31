@@ -121,7 +121,7 @@ def build() -> None:
     subprocess.run(build_compose_cmdline(config, proj) + ["up", "-d", "api"], env=env)
     wait_for_service("api", "Development environment is ready", project=proj)
     print("Building docleaner-api wheel")
-    subprocess.run(build_compose_cmdline(config, proj) + ["exec", "api", "npm", "run", "build-dev"], env=env)
+    subprocess.run(build_compose_cmdline(config, proj) + ["exec", "api", "npm", "run", "build-prod"], env=env)
     subprocess.run(build_compose_cmdline(config, proj) + ["exec", "api", "python3", "setup.py", "bdist_wheel"], env=env)
     api_version = subprocess.check_output(build_compose_cmdline(config, proj) + [
         "exec",
