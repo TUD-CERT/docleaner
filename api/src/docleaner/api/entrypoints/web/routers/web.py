@@ -23,11 +23,15 @@ from docleaner.api.services.repository import Repository
 from docleaner.api.services.sessions import get_session
 
 
-web_api = APIRouter()
+web_api = APIRouter(include_in_schema=False)
 
 
 class WebException(HTTPException):
     pass
+
+
+class OctetStreamResponse(Response):
+    media_type = "application/octet-stream"
 
 
 @dataclass
@@ -129,7 +133,9 @@ async def jobs_get(
     )
 
 
-@web_api.get("/jobs/{jid}/result", response_class=Response, response_model=None)
+@web_api.get(
+    "/jobs/{jid}/result", response_class=OctetStreamResponse, response_model=None
+)
 async def jobs_get_result(jid: str, repo: Repository = Depends(get_repo)) -> Response:
     try:
         job_result, document_name = await get_job_result(jid, repo)

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Union
 
 from fastapi import APIRouter, Depends, HTTPException, Response, UploadFile
 from pydantic import BaseModel
@@ -14,6 +14,7 @@ from docleaner.api.entrypoints.web.dependencies import (
     get_repo,
 )
 from docleaner.api.entrypoints.web.routers.web import (
+    OctetStreamResponse,
     jobs_get_result as web_jobs_get_result,
 )
 from docleaner.api.services.file_identifier import FileIdentifier
@@ -125,7 +126,9 @@ async def jobs_get(jid: str, repo: Repository = Depends(get_repo)) -> Any:
     }
 
 
-@rest_api.get("/jobs/{jid}/result", response_model=None)
+@rest_api.get(
+    "/jobs/{jid}/result", response_class=OctetStreamResponse, response_model=None
+)
 async def jobs_get_result(jid: str, repo: Repository = Depends(get_repo)) -> Response:
     return await web_jobs_get_result(jid, repo)
 

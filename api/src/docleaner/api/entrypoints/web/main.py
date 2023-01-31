@@ -1,3 +1,4 @@
+from importlib.metadata import version
 import os
 
 from fastapi import FastAPI, Request, Response
@@ -15,7 +16,7 @@ from docleaner.api.entrypoints.web.dependencies import (
 from docleaner.api.entrypoints.web.routers import rest, web
 
 
-app = FastAPI()
+app = FastAPI(version=version("docleaner-api"), title="docleaner API")
 app.mount(
     "/static", StaticFiles(directory=os.path.join(base_path, "static")), name="static"
 )

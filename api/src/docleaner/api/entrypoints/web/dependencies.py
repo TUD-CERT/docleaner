@@ -1,5 +1,5 @@
-import os
 from importlib.metadata import version
+import os
 from typing import List
 
 from fastapi.templating import Jinja2Templates
