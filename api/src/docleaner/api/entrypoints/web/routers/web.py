@@ -70,7 +70,13 @@ async def landing_post(
         if "hx-request" in request.headers:
             return templates.TemplateResponse(
                 "job_details.html",
-                {"request": request, "jid": jid, "job_status": 0, "htmx": True},
+                {
+                    "request": request,
+                    "jid": jid,
+                    "job_status": 0,
+                    "trigger": None,
+                    "htmx": True,
+                },
                 headers={"hx-push-url": f"/jobs/{jid}"},
             )
         else:
@@ -117,6 +123,7 @@ async def jobs_get(
             "meta_src": job_meta_src,
             "meta_result": job_meta_result,
             "htmx": "hx-request" in request.headers,
+            "trigger": request.headers.get("hx-trigger"),
             "version": version,
         },
     )
