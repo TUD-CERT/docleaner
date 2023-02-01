@@ -13,6 +13,8 @@ from docleaner.api.services.jobs import (
     await_job,
     create_job,
     get_job,
+    get_jobs,
+    get_job_src,
     get_job_result,
     get_job_stats,
     purge_jobs,
@@ -71,6 +73,8 @@ async def test_services_with_nonexisting_job(repo: Repository, queue: JobQueue) 
         await get_job("invalid", repo)
     with pytest.raises(ValueError, match=r".*does not exist.*"):
         await get_job_result("invalid", repo)
+    with pytest.raises(ValueError, match=r".*does not exist.*"):
+        await get_job_src("invalid", repo)
 
 
 async def test_await_again(
@@ -80,7 +84,7 @@ async def test_await_again(
     file_identifier: FileIdentifier,
     job_types: List[SupportedJobType],
 ) -> None:
-    """Attempting to await a job that has been successfully awaited before
+    """Attempting to await a job that has been successfully awaited previously
     succeeds and returns identical results."""
     jid, _ = await create_job(
         sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types
@@ -129,6 +133,57 @@ async def test_get_finished_job_details(
     assert job_status == JobStatus.SUCCESS
     assert job_type == JobType.PDF
     assert len(job_meta_src) > 0
+
+
+async def test_get_jobs_with_specific_state(
+    sample_pdf: bytes,
+    repo: Repository,
+    queue: JobQueue,
+    file_identifier: FileIdentifier,
+    job_types: List[SupportedJobType],
+) -> None:
+    """Retrieving a lists of jobs with a specific status."""
+    # Create jobs in various states
+    successful_jids = set()
+    running_jids = set()
+    queued_jids = set()
+    for i in range(2):
+        successful_jid, _ = await create_job(
+            sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types
+        )
+        await await_job(successful_jid, repo, queue)
+        successful_jids.add(successful_jid)
+    for i in range(3):
+        running_jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+        await repo.update_job(running_jid, status=JobStatus.RUNNING)
+        running_jids.add(running_jid)
+    created_jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+    for i in range(4):
+        queued_jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+        await repo.update_job(queued_jid, status=JobStatus.QUEUED)
+        queued_jids.add(queued_jid)
+    # Retrieve jobs by their status
+    assert {j[0] for j in await get_jobs(JobStatus.SUCCESS, repo)} == successful_jids
+    assert {j[0] for j in await get_jobs(JobStatus.RUNNING, repo)} == running_jids
+    assert {j[0] for j in await get_jobs(JobStatus.QUEUED, repo)} == queued_jids
+    assert {j[0] for j in await get_jobs(JobStatus.CREATED, repo)} == {created_jid}
+    assert len(await get_jobs(JobStatus.ERROR, repo)) == 0
+
+
+async def test_get_job_source(
+    sample_pdf: bytes,
+    repo: Repository,
+    queue: JobQueue,
+    file_identifier: FileIdentifier,
+    job_types: List[SupportedJobType],
+) -> None:
+    """Retrieving the source document of a job."""
+    jid, _ = await create_job(
+        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types
+    )
+    job_src, job_name = await get_job_src(jid, repo)
+    assert job_src == sample_pdf
+    assert job_name == "sample.pdf"
 
 
 async def test_get_unfinished_job_result(sample_pdf: bytes, repo: Repository) -> None:

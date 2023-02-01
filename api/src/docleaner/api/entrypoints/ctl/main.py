@@ -4,9 +4,19 @@ Maintenance tasks are intended to be run via a periodic scheduling tool such as 
 import argparse
 import asyncio
 from datetime import timedelta
+import sys
+from typing import Optional
 
 from docleaner.api.bootstrap import bootstrap
-from docleaner.api.services.jobs import get_job_stats, purge_jobs
+from docleaner.api.core.job import JobStatus
+from docleaner.api.entrypoints.ctl.utils import status_to_string
+from docleaner.api.services.jobs import (
+    get_job,
+    get_job_src,
+    get_job_stats,
+    get_jobs,
+    purge_jobs,
+)
 from docleaner.api.services.sessions import purge_sessions
 
 
@@ -32,13 +42,59 @@ async def purge(
             print(f"Purged sessions: {len(purged_sids)}")
 
 
-async def status() -> None:
+async def show_status() -> None:
     clock, file_identifier, job_types, queue, repo = bootstrap()
     total_jobs, created, queued, running, success, error = await get_job_stats(repo)
     current_jobs = created + queued + running + success + error
     print(
         f"{current_jobs} jobs in db (C: {created} | Q: {queued} | R: {running} | S: {success} | E: {error}), {total_jobs} total"
     )
+
+
+async def diag_list(status: JobStatus) -> None:
+    clock, file_identifier, job_types, queue, repo = bootstrap()
+    jobs = await get_jobs(status, repo)
+    print("jid / type")
+    for jid, job_type, job_log in jobs:
+        print(f"{jid} / {job_type}")
+
+
+async def diag_job_details(jid: str, src_out_path: Optional[str] = None) -> None:
+    clock, file_identifier, job_types, queue, repo = bootstrap()
+    try:
+        job_status, job_type, job_log, _, _, sid = await get_job(jid, repo)
+        if job_status in [JobStatus.QUEUED, JobStatus.SUCCESS]:
+            # Prevent inspection of queued and successful jobs
+            # that shouldn't require diagnosis (privacy)
+            raise ValueError(
+                f"Inspection of jid {jid} not possible due to its job status {job_status}"
+            )
+        print(f"jid:    {jid}")
+        print(f"status: {status_to_string(job_status)}")
+        print(f"sid:    {sid}")
+        print(f"--- sandbox log ---")
+        for log in job_log:
+            print(log)
+        if src_out_path is not None:
+            job_src, job_name = await get_job_src(jid, repo)
+            with open(src_out_path, "wb") as f:
+                f.write(job_src)
+            print(
+                f"Source document written to {src_out_path}, original name was {job_name}"
+            )
+    except ValueError as e:
+        print(e)
+        sys.exit(1)
+
+
+async def debug_delete_job(jid: str) -> None:
+    clock, file_identifier, job_types, queue, repo = bootstrap()
+    try:
+        await repo.delete_job(jid)
+        print(f"Job {jid} deleted successfully from the database")
+    except ValueError as e:
+        print(e)
+        sys.exit(1)
 
 
 def cmd_tasks(args: argparse.Namespace) -> None:
@@ -54,7 +110,28 @@ def cmd_tasks(args: argparse.Namespace) -> None:
 
 
 def cmd_status(args: argparse.Namespace) -> None:
-    asyncio.run(status())
+    asyncio.run(show_status())
+
+
+def cmd_diag_err(args: argparse.Namespace) -> None:
+    if args.jid is not None:
+        asyncio.run(diag_job_details(args.jid, args.save_src))
+    else:
+        asyncio.run(diag_list(JobStatus.ERROR))
+
+
+def cmd_diag_run(args: argparse.Namespace) -> None:
+    if args.jid is not None:
+        asyncio.run(diag_job_details(args.jid, args.save_src))
+    else:
+        asyncio.run(diag_list(JobStatus.RUNNING))
+
+
+def cmd_debug(args: argparse.Namespace) -> None:
+    if args.delete_jid is not None:
+        asyncio.run(debug_delete_job(args.delete_jid))
+    else:
+        print("No debug command specified")
 
 
 def main() -> None:
@@ -94,8 +171,44 @@ def main() -> None:
         help="Do not purge standalone jobs",
     )
     tasks_parser.set_defaults(func=cmd_tasks)
-    status_parser = subparsers.add_parser("status", help="Show current job status")
+    status_parser = subparsers.add_parser(
+        "status", help="Show job counters (current and total)"
+    )
     status_parser.set_defaults(func=cmd_status)
+    diag_err_parser = subparsers.add_parser(
+        "diag-err",
+        help="Diagnose job errors. By default, lists jobs that ended in an erroneous state.",
+    )
+    diag_err_parser.add_argument(
+        "-j", "--jid", type=str, help="Show details for a specific job"
+    )
+    diag_err_parser.add_argument(
+        "--save-src",
+        type=str,
+        help="Write a job's source document to the given path (only with -j)",
+    )
+    diag_err_parser.set_defaults(func=cmd_diag_err)
+    diag_run_parser = subparsers.add_parser(
+        "diag-run",
+        help="Diagnose running jobs. By default, lists currently running jobs.",
+    )
+    diag_run_parser.add_argument(
+        "-j", "--jid", type=str, help="Show details for a specific job"
+    )
+    diag_run_parser.add_argument(
+        "--save-src",
+        type=str,
+        help="Write a job's source document to the given path (only with -j)",
+    )
+    diag_run_parser.set_defaults(func=cmd_diag_run)
+    debug_parser = subparsers.add_parser(
+        "debug",
+        help="Debug utilities operating directly on the database. USE WITH CAUTION, does not enforce data consistency!",
+    )
+    debug_parser.add_argument(
+        "-d", "--delete-jid", type=str, help="Deletes a job via its jid"
+    )
+    debug_parser.set_defaults(func=cmd_debug)
     args = parser.parse_args()
     if "func" in args:
         args.func(args)

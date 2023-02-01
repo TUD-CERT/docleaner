@@ -76,6 +76,22 @@ async def get_job(
     )
 
 
+async def get_jobs(
+    status: JobStatus, repo: Repository
+) -> List[Tuple[str, JobType, List[str]]]:
+    """Returns all jobs with a specific status as tuples (jid, type, log)."""
+    jobs = await repo.find_jobs(status=[status])
+    return [(j.id, j.type, j.log) for j in jobs]
+
+
+async def get_job_src(jid: str, repo: Repository) -> Tuple[bytes, str]:
+    """Retrieves the source document and its name for a job identified by jid."""
+    job = await repo.find_job(jid)
+    if job is None:
+        raise ValueError(f"A job with jid {jid} does not exist")
+    return job.src, job.name
+
+
 async def get_job_result(jid: str, repo: Repository) -> Tuple[bytes, str]:
     """Retrieves the result and document name for a successfully completed job identified by jid."""
     job = await repo.find_job(jid)
