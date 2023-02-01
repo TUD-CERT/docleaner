@@ -20,9 +20,9 @@ from docleaner.api.entrypoints.web.routers.web import (
 from docleaner.api.services.file_identifier import FileIdentifier
 from docleaner.api.services.job_queue import JobQueue
 from docleaner.api.services.job_types import SupportedJobType
-from docleaner.api.services.jobs import create_job, get_job
+from docleaner.api.services.jobs import create_job, delete_job, get_job
 from docleaner.api.services.repository import Repository
-from docleaner.api.services.sessions import create_session, get_session
+from docleaner.api.services.sessions import create_session, delete_session, get_session
 
 
 rest_api = APIRouter(prefix="/api/v1")
@@ -133,6 +133,15 @@ async def jobs_get_result(jid: str, repo: Repository = Depends(get_repo)) -> Res
     return await web_jobs_get_result(jid, repo)
 
 
+@rest_api.delete("/jobs/{jid}", response_model=None, status_code=204)
+async def jobs_delete(jid: str, repo: Repository = Depends(get_repo)) -> Response:
+    try:
+        await delete_job(jid, repo)
+    except ValueError:
+        raise RESTException(status_code=status.HTTP_404_NOT_FOUND)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @rest_api.post("/sessions", response_model=SessionDetails, status_code=201)
 async def sessions_create(
     response: Response,
@@ -175,3 +184,12 @@ async def sessions_get(sid: str, repo: Repository = Depends(get_repo)) -> Any:
             for jid, job_created, job_updated, job_status, job_type in jobs
         ],
     }
+
+
+@rest_api.delete("/sessions/{sid}", response_model=None, status_code=204)
+async def sessions_delete(sid: str, repo: Repository = Depends(get_repo)) -> Response:
+    try:
+        await delete_session(sid, repo)
+    except ValueError:
+        raise RESTException(status_code=status.HTTP_404_NOT_FOUND)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

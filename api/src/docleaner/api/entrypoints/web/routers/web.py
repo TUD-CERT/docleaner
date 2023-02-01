@@ -18,7 +18,7 @@ from docleaner.api.entrypoints.web.dependencies import (
 from docleaner.api.services.file_identifier import FileIdentifier
 from docleaner.api.services.job_queue import JobQueue
 from docleaner.api.services.job_types import SupportedJobType
-from docleaner.api.services.jobs import create_job, get_job, get_job_result
+from docleaner.api.services.jobs import create_job, delete_job, get_job, get_job_result
 from docleaner.api.services.repository import Repository
 from docleaner.api.services.sessions import get_session
 
@@ -148,6 +148,25 @@ async def jobs_get_result(jid: str, repo: Repository = Depends(get_repo)) -> Res
         content=job_result,
         media_type="application/octet-stream",
         headers=response_headers,
+    )
+
+
+@web_api.get("/jobs/{jid}/delete", response_class=HTMLResponse, response_model=None)
+async def jobs_delete(
+    request: Request,
+    jid: str,
+    repo: Repository = Depends(get_repo),
+    version: str = Depends(get_version),
+) -> Response:
+    try:
+        await delete_job(jid, repo)
+    except ValueError:
+        raise WebException(status_code=status.HTTP_404_NOT_FOUND)
+    return templates.TemplateResponse(
+        "job_deleted.html"
+        if "hx-request" in request.headers
+        else "job_deleted_full.html",
+        {"request": request, "jid": jid, "version": version},
     )
 
 

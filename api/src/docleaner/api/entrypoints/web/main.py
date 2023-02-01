@@ -51,7 +51,11 @@ async def web_exception_handler(request: Request, exc: web.WebException) -> Resp
     if exc.status_code == status.HTTP_404_NOT_FOUND:
         return templates.TemplateResponse(
             "error.html",
-            {"request": request, "msg": exc.detail},
+            {
+                "request": request,
+                "msg": exc.detail,
+                "version": version("docleaner-api"),
+            },
             status_code=exc.status_code,
         )
     else:

@@ -26,8 +26,11 @@
             <a href="/" hx-boost="true">Upload another document</a>
         {% else %}
             <a class="float-end" href="/" hx-boost="true">Upload another document</a>
-            <p>Your job was processed successfully.<br />
-            {% if job_sid is none %}This document will remain available for download for roughly 10 minutes and then be purged from this server.{% endif %}</p>
+            <p>
+                Your job was processed successfully.<br />
+                {% if job_sid is none %}This document will remain available for download for roughly 10 minutes and then be purged from this server.{% endif %}
+                If you want to have it deleted right now, <a href="/jobs/{{ jid }}/delete" hx-boost="true" hx-target="#dc-job-details">click here</a>.
+            </p>
             <div class="d-grid">
                 <a class="btn btn-primary mb-3" href="/jobs/{{ jid }}/result" download>Download result</a>
             </div>

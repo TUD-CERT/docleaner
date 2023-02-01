@@ -15,7 +15,7 @@ async def test_request_landing_page(web_app: str) -> None:
 
 
 async def test_clean_document_workflow(web_app: str, sample_pdf: bytes) -> None:
-    """End-to-end test uploading a PDF to the web app and download the result."""
+    """End-to-end test uploading a PDF to the web app and downloading the result."""
     async with httpx.AsyncClient() as client:
         # Upload document via HTTP POST
         r1 = await client.post(web_app, files={"doc_src": ("test.pdf", sample_pdf)})
@@ -46,6 +46,11 @@ async def test_clean_document_workflow(web_app: str, sample_pdf: bytes) -> None:
         assert filename_match is not None
         assert filename_match.group(1) == "test.pdf"
         assert "PDF" in r3.text
+        # Delete job manually
+        r4 = await client.get(f"{web_app}/jobs/{jid}/delete")
+        assert r4.status_code == 200
+        r5 = await client.get(f"{web_app}/jobs/{jid}")
+        assert r5.status_code == 404
 
 
 async def test_upload_invalid_document(web_app: str) -> None:
@@ -62,6 +67,8 @@ async def test_request_invalid_ids(web_app: str) -> None:
         r_details = await client.get(f"{web_app}/jobs/invalid")
         assert r_details.status_code == 404
         r_result = await client.get(f"{web_app}/jobs/invalid/result")
+        assert r_result.status_code == 404
+        r_result = await client.get(f"{web_app}/jobs/invalid/delete")
         assert r_result.status_code == 404
         r_result = await client.get(f"{web_app}/sessions/invalid")
         assert r_result.status_code == 404

@@ -126,6 +126,16 @@ async def get_job_stats(repo: Repository) -> Tuple[int, int, int, int, int, int]
     )
 
 
+async def delete_job(jid: str, repo: Repository) -> None:
+    """Deletes a single job if it is in a finished state (SUCCESS or ERROR)."""
+    job = await repo.find_job(jid)
+    if job is None:
+        raise ValueError(f"A job with jid {jid} does not exist")
+    if job.status in [JobStatus.CREATED, JobStatus.QUEUED, JobStatus.RUNNING]:
+        raise ValueError(f"Job {jid} is not in a finished state (SUCCESS or ERROR)")
+    await repo.delete_job(jid)
+
+
 async def purge_jobs(purge_after: timedelta, repo: Repository) -> Set[str]:
     """Deletes all finished standalone (not associated with a session) jobs that haven't been
     updated within the timeframe specified by purge_after. Returns the identifiers of all deleted jobs."""

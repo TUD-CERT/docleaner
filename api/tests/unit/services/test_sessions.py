@@ -7,12 +7,13 @@ from docleaner.api.adapters.clock.dummy_clock import DummyClock
 from docleaner.api.core.job import JobStatus, JobType
 from docleaner.api.services.file_identifier import FileIdentifier
 from docleaner.api.services.job_queue import JobQueue
-from docleaner.api.services.jobs import await_job, create_job, get_job_result
+from docleaner.api.services.jobs import await_job, create_job, get_job, get_job_result
 from docleaner.api.services.repository import Repository
 from docleaner.api.services.sessions import (
     await_session,
     create_session,
     get_session,
+    delete_session,
     purge_sessions,
 )
 from docleaner.api.services.job_types import SupportedJobType
@@ -90,6 +91,65 @@ async def test_with_nonexistent_session(
         await await_session(sid, repo, queue)
     with pytest.raises(ValueError, match="Invalid session id"):
         await get_session(sid, repo)
+    with pytest.raises(ValueError, match="Invalid session id"):
+        await delete_session(sid, repo)
+
+
+async def test_delete_finished_session(
+    sample_pdf: bytes,
+    repo: Repository,
+    queue: JobQueue,
+    file_identifier: FileIdentifier,
+    job_types: List[SupportedJobType],
+) -> None:
+    """Deleting a session that has only associated jobs in state SUCCESS and ERROR."""
+    sid = await create_session(repo)
+    jid1, _ = await create_job(
+        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid
+    )
+    jid2, _ = await create_job(
+        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid
+    )
+    jid3 = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF, sid)
+    await repo.update_job(jid3, status=JobStatus.ERROR)
+    # Wait until job completion
+    await await_session(sid, repo, queue)
+    # Delete session
+    await delete_session(sid, repo)
+    # Verify session and job deletion
+    with pytest.raises(ValueError, match="Invalid session id"):
+        await get_session(sid, repo)
+    for jid in [jid1, jid2, jid3]:
+        with pytest.raises(ValueError, match="does not exist"):
+            await get_job(jid, repo)
+
+
+async def test_delete_running_session(
+    sample_pdf: bytes,
+    repo: Repository,
+    queue: JobQueue,
+    file_identifier: FileIdentifier,
+    job_types: List[SupportedJobType],
+) -> None:
+    """Attempting to delete a session that has running or queued jobs
+    raises an exception until all jobs are finished."""
+    sid = await create_session(repo)
+    jid1 = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF, sid)
+    await repo.update_job(jid1, status=JobStatus.CREATED)
+    jid2 = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF, sid)
+    await repo.update_job(jid2, status=JobStatus.QUEUED)
+    jid3 = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF, sid)
+    await repo.update_job(jid3, status=JobStatus.RUNNING)
+    with pytest.raises(ValueError, match="has unfinished jobs"):
+        await delete_session(sid, repo)
+    await repo.update_job(jid1, status=JobStatus.SUCCESS)
+    with pytest.raises(ValueError, match="has unfinished jobs"):
+        await delete_session(sid, repo)
+    await repo.update_job(jid2, status=JobStatus.SUCCESS)
+    with pytest.raises(ValueError, match="has unfinished jobs"):
+        await delete_session(sid, repo)
+    await repo.update_job(jid3, status=JobStatus.ERROR)
+    await delete_session(sid, repo)
 
 
 async def test_purge_sessions(

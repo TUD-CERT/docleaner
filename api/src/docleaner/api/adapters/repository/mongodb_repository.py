@@ -32,7 +32,7 @@ class MongoDBRepository(Repository):
             )
         jid = generate_token()
         now = self._clock.now()
-        # Save source document in GridFS
+        # Save source document to GridFS
         src_id = await self._fs.upload_from_stream(jid, src)
         job = Job(
             id=jid,
@@ -101,7 +101,7 @@ class MongoDBRepository(Repository):
         if metadata_src is not None:
             update_fields["metadata_src"] = metadata_src
         if result is not None:
-            # Save result document in GridFS
+            # Save result document to GridFS
             result_id = await self._fs.upload_from_stream(jid, result)
             update_fields["result"] = result_id
         if status is not None:
@@ -127,7 +127,7 @@ class MongoDBRepository(Repository):
                 {"_id": job_data["session_id"]},
                 {"$set": {"updated": self._clock.now()}},
             )
-        # Delete associated fragments in GridFS
+        # Delete associated fragments from GridFS
         self._fs.delete(job_data["src"])
         if job_data["result"] != b"":
             self._fs.delete(job_data["result"])
@@ -171,6 +171,12 @@ class MongoDBRepository(Repository):
             raise ValueError(
                 f"Can't delete session {sid}, because the ID doesn't exist"
             )
+        # Delete associated job fragments from GridFS
+        async for job_data in self._db.jobs.find({"session_id": sid}):
+            if job_data["src"] != b"":
+                self._fs.delete(job_data["src"])
+            if job_data["result"] != b"":
+                self._fs.delete(job_data["result"])
         await self._db.jobs.delete_many({"session_id": sid})
         await self._db.sessions.delete_one({"_id": sid})
 

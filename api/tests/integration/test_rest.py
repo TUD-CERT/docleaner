@@ -39,6 +39,10 @@ async def test_clean_document_workflow(web_app: str, sample_pdf: bytes) -> None:
         assert filename_match is not None
         assert filename_match.group(1) == "test.pdf"
         assert "PDF" in dl_resp.text
+        # Delete job manually
+        del_resp = await client.delete(f"{web_app}/api/v1/jobs/{jid}")
+        assert del_resp.status_code == 204
+        assert (await client.get(job_url)).status_code == 404
 
 
 async def test_upload_invalid_document(web_app: str) -> None:
@@ -52,7 +56,7 @@ async def test_upload_invalid_document(web_app: str) -> None:
         assert "unsupported document type" in r.json()["msg"]
 
 
-async def test_request_invalid_sids(web_app: str) -> None:
+async def test_request_invalid_ids(web_app: str) -> None:
     """End-to-end test attempting to fetch details or a download for
     an invalid job or session id via the REST API."""
     async with httpx.AsyncClient() as client:
@@ -60,7 +64,11 @@ async def test_request_invalid_sids(web_app: str) -> None:
         assert r_details.status_code == 404
         r_result = await client.get(f"{web_app}/api/v1/jobs/invalid/result")
         assert r_result.status_code == 404
+        r_details = await client.delete(f"{web_app}/api/v1/jobs/invalid")
+        assert r_details.status_code == 404
         r_details = await client.get(f"{web_app}/api/v1/sessions/invalid")
+        assert r_details.status_code == 404
+        r_details = await client.delete(f"{web_app}/api/v1/sessions/invalid")
         assert r_details.status_code == 404
 
 
@@ -112,6 +120,12 @@ async def test_clean_multiple_documents_with_session_workflow(
         assert dl_resp.status_code == 200
         assert dl_resp.headers["content-type"] == "application/octet-stream"
         assert "PDF" in dl_resp.text
+        # Delete session manually
+        del_resp = await client.delete(session_url)
+        assert del_resp.status_code == 204
+        assert (await client.get(session_url)).status_code == 404
+        for jid in [jid1, jid2]:
+            assert (await client.get(f"{web_app}/api/v1/jobs/{jid}")).status_code == 404
 
 
 async def test_upload_document_to_invalid_session(

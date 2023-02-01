@@ -17,6 +17,7 @@ from docleaner.api.services.jobs import (
     get_job_src,
     get_job_result,
     get_job_stats,
+    delete_job,
     purge_jobs,
 )
 from docleaner.api.services.repository import Repository
@@ -75,6 +76,8 @@ async def test_services_with_nonexisting_job(repo: Repository, queue: JobQueue) 
         await get_job_result("invalid", repo)
     with pytest.raises(ValueError, match=r".*does not exist.*"):
         await get_job_src("invalid", repo)
+    with pytest.raises(ValueError, match=r"does not exist.*"):
+        await delete_job("invalid", repo)
 
 
 async def test_await_again(
@@ -212,6 +215,26 @@ async def test_get_job_stats(
     queued_jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
     await repo.update_job(queued_jid, status=JobStatus.QUEUED)
     assert await get_job_stats(repo) == (4, 1, 1, 1, 1, 0)
+
+
+async def test_delete_jobs(sample_pdf: bytes, repo: Repository) -> None:
+    """Deleting jobs that are in a finished state (SUCCESS or ERROR).
+    Attempting to delete a job in any other state raises an exception."""
+    jid1 = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+    jid2 = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+    with pytest.raises(ValueError, match="not in a finished state"):
+        await delete_job(jid1, repo)
+    await repo.update_job(jid1, status=JobStatus.QUEUED)
+    with pytest.raises(ValueError, match="not in a finished state"):
+        await delete_job(jid1, repo)
+    await repo.update_job(jid1, status=JobStatus.RUNNING)
+    with pytest.raises(ValueError, match="not in a finished state"):
+        await delete_job(jid1, repo)
+    await repo.update_job(jid1, status=JobStatus.SUCCESS)
+    await delete_job(jid1, repo)
+    await repo.update_job(jid2, status=JobStatus.ERROR)
+    await delete_job(jid2, repo)
+    assert len(await repo.find_jobs()) == 0
 
 
 async def test_purge_jobs(

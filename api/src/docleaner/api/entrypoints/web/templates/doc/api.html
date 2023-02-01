@@ -5,12 +5,12 @@
 <p>The examples on this page demonstrate API usage with <a href="https://curl.se">curl</a>, which is available for all major operating systems. For technical details such as available endpoints please have a look at the <a href="/docs" target="_blank">API documentation</a>.</p>
 <h3>Processing a single document</h3>
 <p>Upload the document with</p>
-<p><code>curl -F doc_src=@/some/local/path.pdf "{{ base_url }}/api/v1/jobs</code></p>
+<p><code>curl -F doc_src=@/some/local/path.pdf "{{ base_url }}/api/v1/jobs"</code></p>
 <p>This returns some JSON, which contains a unique job ID (<code>jid</code>) for each uploaded document:</p>
 <p><code>{"id":"(jid)","type":0,"log":[],"metadata_result":{},"metadata_src":{},"status":1}</code></p>
 <p>Depending on the current workload, processing your document may take some time. To check the job status, execute</p>
 <p><code>curl {{base_url}}/api/v1/jobs/(jid)</code></p>
-<p>The returned document might be quite large, because it contains your document's metadata after the job has been processed. To figure out the job's status, have a look at the value of <code>status</code>. These can be interpreted as follows:</p>
+<p>The returned document might be quite large, because it contains your document's metadata after the job has been processed. To figure out the job's status, have a look at the value of <code>status</code>. It should be interpreted as follows:</p>
 <ul>
     <li>0: Job has been created, but not yet put into the work queue</li>
     <li>1: Job is enqueued and waiting to be picked up by a worker</li>
@@ -20,7 +20,7 @@
 </ul>
 <p>After a job has been successfully processed (<code>status</code> is <code>3</code>), download it via</p>
 <p><code>curl -o /download/path.pdf {{ base_url }}/api/v1/jobs/(jid)/result</code></p>
-<p>After they have been processed, jobs are kept on the server for <strong>10 minutes</strong>. Afterwards, the job and the associated documents are purged from the database.</p>
+<p>After they have been processed, jobs are kept on the server for <strong>10 minutes</strong>. Afterwards, the job and all associated documents are purged from the database automatically. Alternatively, a job can be removed immediately with <code>curl -X DELETE "{{ base_url }}/api/v1/jobs/(jid)"</code>.</p>
 <h3>Batch-processing multiple documents</h3>
 <p>Start by creating a new session with <code>curl -X POST {{ base_url }}/api/v1/sessions</code>, which returns an empty session such as</p>
 <p><code>{"id":"(sid)","jobs_total":0,"jobs_finished":0,"jobs":[]}</code></p>
@@ -28,7 +28,7 @@
 <p><code>curl -F doc_src=@/some/local/path.pdf "{{ base_url }}/api/v1/jobs?session=(sid)"</code></p>
 <p>This returns something similar to</p>
 <p><code>{"id":"(jid)","type":0,"log":[],"metadata_result":{},"metadata_src":{},"status":1}</code></p>
-<p>However with using a session, you don't have to remember these individual job IDs (jid). Instead, you can track the status of all jobs associated to a session by either visiting <code>{{ base_url }}/sessions/(sid)</code> in a browser, which shows a periodically self-refreshing status overview and all associated jobs, or receive the same data as JSON via the API: <code>curl {{ base_url }}/api/v1/sessions/(sid)</code>. An example response for a session with two associated jobs is:</p>
+<p>However when using a session, you don't have to remember individual job IDs (jid). Instead, you can track the status of all jobs associated with a session by either visiting <code>{{ base_url }}/sessions/(sid)</code> in a browser, which shows a periodically self-refreshing status overview and all associated jobs, or receive the same data as JSON via the API: <code>curl {{ base_url }}/api/v1/sessions/(sid)</code>. An example response for a session with two associated jobs is:</p>
 <p><code>
     {"id":"(sid)",
     "created":"2023-01-24T15:24:58.636000",
@@ -48,6 +48,6 @@
     "status":2}]}</code></p>
 <p>After each job was processed successfully (<code>status</code> is <code>3</code>), download its resulting metadata-cleaned document with</p>
 <p><code>curl -o /download/path.pdf {{ base_url }}/api/v1/jobs/(jid)/result</code></p>
-<p>In contrast to single document uploads, jobs associated to a session are stored for <strong>24 hours</strong> on the server. Afterwards, the session and all associated jobs are purged from the database.</p>
+<p>In contrast to single document uploads, jobs associated with a session are stored for <strong>24 hours</strong> on the server. Afterwards, the session and all associated jobs are purged from the database. Alternatively, a session and all of its jobs can be removed immediately with <code>curl -X DELETE "{{ base_url }}/api/v1/sessions/(sid)"</code>. Be aware that deleting a session that way requires that all associated jobs have finished pressing (job status SUCCESS/3 or ERROR/4).</p>
 <p>Please report issues with this service to <a href="mailto:cert@tu-dresden.de">cert@tu-dresden.de</a>.</p>
 {% endblock %}
