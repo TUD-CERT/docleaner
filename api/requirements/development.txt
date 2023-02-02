@@ -1,6 +1,6 @@
 -r production.txt
 
-black
+black == 22.12.0
 flake8
 httpx
 motor-stubs
