@@ -47,7 +47,8 @@ async def show_status() -> None:
     total_jobs, created, queued, running, success, error = await get_job_stats(repo)
     current_jobs = created + queued + running + success + error
     print(
-        f"{current_jobs} jobs in db (C: {created} | Q: {queued} | R: {running} | S: {success} | E: {error}), {total_jobs} total"
+        f"{current_jobs} jobs in db (C: {created} | Q: {queued} | R: {running} |"
+        f" S: {success} | E: {error}), {total_jobs} total"
     )
 
 
