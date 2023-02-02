@@ -174,11 +174,14 @@ async def jobs_delete(
 async def sessions_get(
     request: Request,
     sid: str,
+    jobs: bool = True,
     repo: Repository = Depends(get_repo),
     version: str = Depends(get_version),
 ) -> _TemplateResponse:
     try:
-        created, updated, jobs_total, jobs_finished, jobs = await get_session(sid, repo)
+        created, updated, jobs_total, jobs_finished, job_list = await get_session(
+            sid, repo
+        )
     except ValueError:
         raise WebException(status_code=status.HTTP_404_NOT_FOUND)
     return templates.TemplateResponse(
@@ -191,7 +194,7 @@ async def sessions_get(
             "created": created,
             "jobs_total": jobs_total,
             "jobs_finished": jobs_finished,
-            "jobs": jobs,
+            "jobs": job_list if jobs else None,
             "version": version,
         },
     )

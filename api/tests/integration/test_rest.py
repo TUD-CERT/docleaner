@@ -128,6 +128,33 @@ async def test_clean_multiple_documents_with_session_workflow(
             assert (await client.get(f"{web_app}/api/v1/jobs/{jid}")).status_code == 404
 
 
+async def test_show_and_hide_jobs_in_session_details(
+    web_app: str, sample_pdf: bytes
+) -> None:
+    """End-to-end test creating a session, attaching a view jobs and then retrieving
+    the session summary (with and without jobs) via the REST API."""
+    async with httpx.AsyncClient() as client:
+        # Create session and receive sid
+        create_session_resp = await client.post(f"{web_app}/api/v1/sessions")
+        sid = create_session_resp.json()["id"]
+        session_url = f"{web_app}/api/v1/sessions/{sid}"
+        # Upload a document
+        upload_resp = await client.post(
+            f"{web_app}/api/v1/jobs?session={sid}",
+            files={"doc_src": ("test.pdf", sample_pdf)},
+        )
+        jid = upload_resp.json()["id"]
+        # Retrieve session details with job list
+        session_data = (await client.get(session_url)).json()
+        assert session_data["jobs_total"] == 1
+        assert len(session_data["jobs"]) == 1
+        assert session_data["jobs"][0]["id"] == jid
+        # Retrieve session details without job list
+        session_data = (await client.get(f"{session_url}?jobs=false")).json()
+        assert session_data["jobs_total"] == 1
+        assert session_data["jobs"] is None
+
+
 async def test_upload_document_to_invalid_session(
     web_app: str, sample_pdf: bytes
 ) -> None:

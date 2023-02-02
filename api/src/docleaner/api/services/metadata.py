@@ -31,7 +31,7 @@ def process_pdf_metadata(src: Dict[str, Dict[str, Any]]) -> Dict[str, Dict[str, 
                 embed_data["_type"] = embed_meta["File"]["MIMEType"]
             elif (
                 "FileType" in embed_meta["File"]["FileType"]
-                and not "unsupported" in embed_meta["File"]["FileType"]
+                and "unsupported" not in embed_meta["File"]["FileType"]
             ):
                 embed_data["_type"] = embed_meta["File"]["FileType"]
         # Embedded document metadata

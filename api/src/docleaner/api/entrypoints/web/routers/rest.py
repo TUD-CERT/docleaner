@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Response, UploadFile
 from pydantic import BaseModel
@@ -11,7 +11,7 @@ from docleaner.api.entrypoints.web.dependencies import (
     get_file_identifier,
     get_job_types,
     get_queue,
-    get_repo,
+    get_repo
 )
 from docleaner.api.entrypoints.web.routers.web import (
     OctetStreamResponse,
@@ -51,7 +51,7 @@ class SessionDetails(BaseModel):
     updated: datetime
     jobs_total: int
     jobs_finished: int
-    jobs: List[JobAbbreviatedDetails]
+    jobs: Optional[List[JobAbbreviatedDetails]]
 
 
 class RESTException(HTTPException):
@@ -62,7 +62,7 @@ class RESTException(HTTPException):
 async def jobs_create(
     response: Response,
     doc_src: UploadFile,
-    session: Union[str, None] = None,
+    session: Optional[str] = None,
     base_url: str = Depends(get_base_url),
     file_identifier: FileIdentifier = Depends(get_file_identifier),
     job_types: List[SupportedJobType] = Depends(get_job_types),
@@ -162,18 +162,25 @@ async def sessions_create(
 
 
 @rest_api.get("/sessions/{sid}", response_model=SessionDetails)
-async def sessions_get(sid: str, repo: Repository = Depends(get_repo)) -> Any:
+async def sessions_get(
+    sid: str, jobs: bool = True, repo: Repository = Depends(get_repo)
+) -> Any:
     try:
-        created, updated, jobs_total, jobs_finished, jobs = await get_session(sid, repo)
+        created, updated, jobs_total, jobs_finished, job_list = await get_session(
+            sid, repo
+        )
     except ValueError:
         raise RESTException(status_code=status.HTTP_404_NOT_FOUND)
-    return {
+    result = {
         "id": sid,
         "created": created,
         "updated": updated,
         "jobs_total": jobs_total,
         "jobs_finished": jobs_finished,
-        "jobs": [
+        "jobs": None,
+    }
+    if jobs:
+        result["jobs"] = [
             {
                 "id": jid,
                 "created": job_created,
@@ -181,9 +188,9 @@ async def sessions_get(sid: str, repo: Repository = Depends(get_repo)) -> Any:
                 "type": job_type,
                 "status": job_status,
             }
-            for jid, job_created, job_updated, job_status, job_type in jobs
-        ],
-    }
+            for jid, job_created, job_updated, job_status, job_type in job_list
+        ]
+    return result
 
 
 @rest_api.delete("/sessions/{sid}", response_model=None, status_code=204)

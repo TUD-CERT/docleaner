@@ -1,10 +1,12 @@
 <div class="dc-content"
-    hx-get="/sessions/{{ sid }}"
+    hx-get="/sessions/{{ sid }}{% if not jobs %}?jobs=false{% endif %}"
     hx-trigger="load delay:1s"
     hx-swap="outerHTML">
 <h2>Session overview - {{ sid }}</h2>
     <p>Completed/Total jobs: {{ jobs_finished }}/{{ jobs_total }}<br />This session was created at {{ created.strftime("%Y-%m-%d %H:%M") }} (UTC).</p>
-    {% if jobs|length == 0 %}
+    {% if not jobs %}
+        Job listing disabled.
+    {% elif jobs|length == 0 %}
         There are currently no jobs associated with that session.
     {% else %}
         <table class="table">

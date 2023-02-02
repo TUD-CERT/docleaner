@@ -72,7 +72,7 @@ async def diag_job_details(jid: str, src_out_path: Optional[str] = None) -> None
         print(f"jid:    {jid}")
         print(f"status: {status_to_string(job_status)}")
         print(f"sid:    {sid}")
-        print(f"--- sandbox log ---")
+        print("--- sandbox log ---")
         for log in job_log:
             print(log)
         if src_out_path is not None:
