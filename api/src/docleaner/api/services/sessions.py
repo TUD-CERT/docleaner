@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from typing import List, Set, Tuple
 
 from docleaner.api.core.job import JobStatus, JobType
+from docleaner.api.services.jobs import await_job
 from docleaner.api.services.job_queue import JobQueue
 from docleaner.api.services.repository import Repository
 
@@ -14,7 +15,7 @@ async def create_session(repo: Repository) -> str:
 async def await_session(sid: str, repo: Repository, queue: JobQueue) -> None:
     """Blocks until all jobs of the given session have been processed."""
     for job in await repo.find_jobs(sid):
-        await queue.wait_for(job.id)
+        await await_job(job.id, repo)
 
 
 async def get_session(

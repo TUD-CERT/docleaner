@@ -39,7 +39,7 @@ async def test_process_pdf_job(
     assert job_type == JobType.PDF
     # Wait until job completion
     result_status, result_type, log, metadata_src, metadata_result = await await_job(
-        jid, repo, queue
+        jid, repo
     )
     assert result_status == JobStatus.SUCCESS
     assert result_type == JobType.PDF
@@ -69,7 +69,7 @@ async def test_process_invalid_job(
 async def test_services_with_nonexisting_job(repo: Repository, queue: JobQueue) -> None:
     """Attempting to call various services with a nonexistent job raises exceptions."""
     with pytest.raises(ValueError, match=r".*does not exist.*"):
-        await await_job("invalid", repo, queue)
+        await await_job("invalid", repo)
     with pytest.raises(ValueError, match=r".*does not exist.*"):
         await get_job("invalid", repo)
     with pytest.raises(ValueError, match=r".*does not exist.*"):
@@ -92,12 +92,8 @@ async def test_await_again(
     jid, _ = await create_job(
         sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types
     )
-    r1_status, r1_type, r1_log, r1_meta_src, r1_meta_result = await await_job(
-        jid, repo, queue
-    )
-    r2_status, r2_type, r2_log, r2_meta_src, r2_meta_result = await await_job(
-        jid, repo, queue
-    )
+    r1_status, r1_type, r1_log, r1_meta_src, r1_meta_result = await await_job(jid, repo)
+    r2_status, r2_type, r2_log, r2_meta_src, r2_meta_result = await await_job(jid, repo)
     for x, y in [
         (r1_status, r2_status),
         (r1_type, r2_type),
@@ -129,7 +125,7 @@ async def test_get_finished_job_details(
     jid, job_type = await create_job(
         sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types
     )
-    await await_job(jid, repo, queue)
+    await await_job(jid, repo)
     job_status, job_type, job_log, job_meta_src, job_meta_result, _ = await get_job(
         jid, repo
     )
@@ -154,7 +150,7 @@ async def test_get_jobs_with_specific_state(
         successful_jid, _ = await create_job(
             sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types
         )
-        await await_job(successful_jid, repo, queue)
+        await await_job(successful_jid, repo)
         successful_jids.add(successful_jid)
     for i in range(3):
         running_jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
@@ -208,7 +204,7 @@ async def test_get_job_stats(
     finished_jid, _ = await create_job(
         sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types
     )
-    await await_job(finished_jid, repo, queue)
+    await await_job(finished_jid, repo)
     running_jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
     await repo.update_job(running_jid, status=JobStatus.RUNNING)
     await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)  # in CREATED state
@@ -251,7 +247,7 @@ async def test_purge_jobs(
     finished_jid, _ = await create_job(
         sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types
     )
-    await await_job(finished_jid, repo, queue)
+    await await_job(finished_jid, repo)
     running_jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
     await repo.update_job(running_jid, status=JobStatus.RUNNING)
     created_jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
@@ -261,12 +257,12 @@ async def test_purge_jobs(
     session_jid, _ = await create_job(
         sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid
     )
-    await await_job(session_jid, repo, queue)
+    await await_job(session_jid, repo)
     clock.advance(60)
     newer_jid, _ = await create_job(
         sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types
     )
-    await await_job(newer_jid, repo, queue)
+    await await_job(newer_jid, repo)
     purged_ids = await purge_jobs(timedelta(seconds=30), repo)
     assert purged_ids == {finished_jid}
     jids = {job.id for job in await repo.find_jobs()}

@@ -5,6 +5,7 @@ from docleaner.api.adapters.job_queue.async_job_queue import AsyncJobQueue
 from docleaner.api.adapters.sandbox.dummy_sandbox import DummySandbox
 from docleaner.api.core.job import Job, JobStatus, JobType
 from docleaner.api.services.job_types import SupportedJobType
+from docleaner.api.services.jobs import await_job
 from docleaner.api.services.repository import Repository
 
 
@@ -37,7 +38,7 @@ async def test_enforce_concurrent_job_limit(
     # Release jobs
     await sandbox.resume()
     for jid in jids:
-        await queue.wait_for(jid)
+        await await_job(jid, repo)
     await queue.shutdown()
     for job in await repo.find_jobs():
         assert job.status == JobStatus.SUCCESS

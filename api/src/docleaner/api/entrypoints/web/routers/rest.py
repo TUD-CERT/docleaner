@@ -11,7 +11,7 @@ from docleaner.api.entrypoints.web.dependencies import (
     get_file_identifier,
     get_job_types,
     get_queue,
-    get_repo
+    get_repo,
 )
 from docleaner.api.entrypoints.web.routers.web import (
     OctetStreamResponse,

@@ -167,11 +167,11 @@ async def test_purge_sessions(
     standalone_jid, _ = await create_job(
         sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types
     )
-    await await_job(standalone_jid, repo, queue)
+    await await_job(standalone_jid, repo)
     finished_jid, _ = await create_job(
         sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid
     )
-    await await_job(finished_jid, repo, queue)
+    await await_job(finished_jid, repo)
     # Job that remains in QUEUED state
     await create_job(
         sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid

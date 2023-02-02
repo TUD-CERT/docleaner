@@ -2,6 +2,7 @@ import pytest
 
 from docleaner.api.core.job import Job, JobStatus, JobType
 from docleaner.api.services.job_queue import JobQueue
+from docleaner.api.services.jobs import await_job
 from docleaner.api.services.repository import Repository
 
 
@@ -13,7 +14,7 @@ async def test_enqueue_job(
     job = await repo.find_job(jid)
     assert isinstance(job, Job)
     await queue.enqueue(job)
-    await queue.wait_for(jid)
+    await await_job(jid, repo)
 
 
 async def test_enqueue_job_with_invalid_state(

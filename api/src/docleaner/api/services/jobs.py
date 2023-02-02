@@ -1,3 +1,4 @@
+import asyncio
 from datetime import timedelta
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -39,14 +40,20 @@ async def create_job(
 
 
 async def await_job(
-    jid: str, repo: Repository, queue: JobQueue
+    jid: str, repo: Repository
 ) -> Tuple[
     JobStatus, JobType, List[str], Dict[str, Dict[str, Any]], Dict[str, Dict[str, Any]]
 ]:
     """Blocks until the job identified by jid has been processed.
     Returns the job's final status, type, log data, source metadata and resulting metadata."""
-    await queue.wait_for(jid)
     job = await repo.find_job(jid)
+    if job is None:
+        raise ValueError(f"A job with jid {jid} does not exist")
+    while True:
+        if job is None or job.status in [JobStatus.SUCCESS, JobStatus.ERROR]:
+            break
+        job = await repo.find_job(jid)
+        await asyncio.sleep(0.1)
     if job is not None:
         return job.status, job.type, job.log, job.metadata_src, job.metadata_result
     raise RuntimeError(f"Race condition: awaited job {jid} is now gone")

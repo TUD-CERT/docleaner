@@ -36,16 +36,6 @@ class AsyncJobQueue(JobQueue):
         await self._repo.update_job(job.id, status=JobStatus.QUEUED)
         await self._queue.put(job.id)
 
-    async def wait_for(self, jid: str) -> None:
-        job = await self._repo.find_job(jid)
-        if job is None:
-            raise ValueError(f"A job with jid {jid} does not exist")
-        while True:
-            if job is None or job.status in [JobStatus.SUCCESS, JobStatus.ERROR]:
-                break
-            job = await self._repo.find_job(jid)
-            await asyncio.sleep(0.1)
-
     async def shutdown(self) -> None:
         self._ev_shutdown.set()
         await self._worker_task
