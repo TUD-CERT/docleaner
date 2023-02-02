@@ -42,7 +42,7 @@ async def validation_exception_handler(
     return templates.TemplateResponse(
         exc.template_htmx if "hx-request" in request.headers else exc.template_full,
         exc.params,
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        status_code=exc.status_code,
     )
 
 
