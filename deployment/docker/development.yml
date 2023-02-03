@@ -11,6 +11,16 @@ services:
       - ${PWD}/api:/mnt
       - ${DOCLEANER_PODMAN_SOCKET}:/run/podman.sock
 
+  proxy:
+    image: nginx:stable
+    networks:
+      - docleaner-dev
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    volumes:
+      - ${PWD}/deployment/docker/nginx.dev.conf:/etc/nginx/nginx.conf
+
   database:
     image: mongo:6
     networks:

@@ -1,4 +1,4 @@
 #!/usr/bin/env sh
 export DOCLEANER_URL="http://$(hostname -i):8000"
-echo "Serving web application at ${DOCLEANER_URL} - Ctrl+C to stop"
+echo "Serving backend application at ${DOCLEANER_URL} - Ctrl+C to stop"
 uvicorn --host 0.0.0.0 --port 8000 --reload --reload-dir /srv docleaner.api.entrypoints.web.main:app
