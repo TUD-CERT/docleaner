@@ -45,7 +45,14 @@ if __name__ == "__main__":
     if len(sys.argv) != 3:
         print("Usage: analyze <path_to_pdf> <result_path>")
         sys.exit(1)
-    result = subprocess.run(["exiftool", "-ee", "-G3:0", "-j", sys.argv[1]], capture_output=True)
+    result = subprocess.run(["exiftool",
+                             "-config",
+                             "/opt/exiftool.cg",
+                             "-ee",
+                             "-G3:0",
+                             "-j",
+                             sys.argv[1]],
+                            capture_output=True)
     if result.returncode != 0:
         print(f"Error: {result.stderr}")
         sys.exit(1)

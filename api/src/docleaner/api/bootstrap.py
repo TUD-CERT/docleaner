@@ -37,7 +37,7 @@ def bootstrap(
                 type=JobType.PDF,
                 mimetypes=["application/pdf"],
                 sandbox=ContainerizedSandbox(
-                    container_image="localhost/docleaner/pdf_cleaner",
+                    container_image="localhost/docleaner/pdf_cleaner_qpdf",
                     podman_uri="unix:///run/podman.sock",
                 ),
                 metadata_processor=process_pdf_metadata,
