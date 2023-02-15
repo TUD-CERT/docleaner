@@ -37,3 +37,16 @@ async def test_process_invalid_pdf() -> None:
     assert not result.success
     assert result.result == b""
     assert len(result.log) > 0
+
+
+async def test_nonexisting_container_image(sample_pdf: bytes) -> None:
+    """Initializing a sandbox with a nonexisting container image returns unsuccessful jobs."""
+    container_image = "localhost/nonexisting/image"
+    sandbox = ContainerizedSandbox(
+        container_image=container_image,
+        podman_uri="unix:///run/podman.sock",
+    )
+    result = await sandbox.process(sample_pdf)
+    assert not result.success
+    assert result.result == b""
+    assert result.log == [f"Invalid container image {container_image}"]

@@ -6,6 +6,7 @@ import traceback
 from tempfile import TemporaryDirectory
 
 from podman import PodmanClient  # type: ignore
+from podman.errors.exceptions import APIError as PodmanAPIError
 from podman.domain.containers import Container  # type: ignore
 
 from docleaner.api.services.sandbox import Sandbox, SandboxResult
@@ -34,7 +35,7 @@ class ContainerizedSandbox(Sandbox):
         ) as podman, TemporaryDirectory() as tmpdir:
             log = []
             result_document = b""
-            metadata_result = metadata_src = {}
+            metadata_result = metadata_src = {"doc": {}, "embeds": {}}
             success = False
             # Copy source into container
             source_path = os.path.join(tmpdir, "source")
@@ -43,9 +44,18 @@ class ContainerizedSandbox(Sandbox):
                 f.write(source)
             with tarfile.open(source_tar, "w") as tar:
                 tar.add(source_path, arcname="source")
-                container = podman.containers.create(
-                    image=self._image, auto_remove=True, network_mode="none"
-                )
+                try:
+                    container = podman.containers.create(
+                        image=self._image, auto_remove=True, network_mode="none"
+                    )
+                except PodmanAPIError:
+                    return SandboxResult(
+                        success=success,
+                        log=[f"Invalid container image {self._image}"],
+                        result=result_document,
+                        metadata_result=metadata_result,
+                        metadata_src=metadata_src,
+                    )
             container.start()
             with open(source_tar, "rb") as tar_raw:
                 container.put_archive("/tmp", tar_raw)
