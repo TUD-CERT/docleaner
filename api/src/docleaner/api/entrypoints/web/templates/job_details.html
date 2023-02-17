@@ -38,9 +38,9 @@
                 <div class="col-6">
                     <h3>Original Metadata</h3>
                     <dl class="row">
-                        {% for key, val in meta_src["doc"].items() %}
-                            <dt class="col-3 overflow-auto">{{ key|e }}</dt>
-                            <dd class="col-9 overflow-auto">{{ val|e }}</dd>
+                        {% for tag in meta_src["primary"].values() %}
+                            <dt class="col-3 overflow-auto">{{ tag["name"]|e }}</dt>
+                            <dd class="col-9 overflow-auto">{{ tag["value"]|e }}</dd>
                         {% endfor %}
                         <div class="accordion" id="dc-meta-orig">
                             {% for doc_id, doc_data in meta_src["embeds"].items() %}
@@ -49,27 +49,23 @@
                                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#dc-meta-orig-{{ doc_id }}-content" aria-expanded="false" aria-controls="dc-meta-orig-{{ doc_id }}-content">
                                             #{{ doc_id }}
                                             {% if "_type" in doc_data %}
-                                                ({{ doc_data["_type"] }})
+                                                ({{ doc_data["_type"]["value"] }})
                                             {% endif %}
-                                            {% for data_key, data_val in doc_data.items() if data_val is mapping %}
+                                            {% for group in doc_data.values() | map(attribute="group") | unique if group %}
                                                 {{ ":" if loop.first }}
-                                                {{ data_key }}{{ "," if not loop.last }}
+                                                {{ group }}{{ "," if not loop.last }}
                                             {% endfor %}
                                         </button>
                                     </h2>
                                     <div id="dc-meta-orig-{{ doc_id }}-content" class="accordion-collapse collapse" aria-labelledby="dc-meta-orig-{{ doc_id }}-heading" data-bs-parent="#dc-meta-orig">
                                         <div class="accordion-body">
                                             <dl class="row">
-                                                {% for data_key, data_val in doc_data.items() if data_val is mapping %}
-                                                    <dt class="col-5 overflow-auto">{{ data_key|e }}</dt>
+                                                {% for group, group_data in doc_data.values() | rejectattr("group", "none") | groupby("group") %}
+                                                    <dt class="col-5 overflow-auto">{{ group|e }}</dt>
                                                     <dd class="col-7 overflow-auto">
-                                                        {% if data_val is mapping %}
-                                                            {% for tag_name, tag_val in data_val.items() %}
-                                                                <strong>{{ tag_name }}</strong><br />{{ tag_val }}<br />
-                                                            {% endfor %}
-                                                        {% else %}
-                                                            {{ data_val|e }}
-                                                        {% endif %}
+                                                        {% for tag in group_data %}
+                                                            <strong>{{ tag["name"]|e }}</strong><br />{{ tag["value"]|e }}<br />
+                                                        {% endfor %}
                                                     </dd>
                                                 {% endfor %}
                                             </dl>
@@ -83,18 +79,18 @@
                 <div class="col-6">
                     <h3>Remaining Metadata</h3>
                     <dl class="row">
-                        {% for key, val in meta_src["doc"].items() %}
-                            <dt class="col-3 overflow-auto">{{ key|e }}</dt>
-                            {% if key in meta_result["doc"] %}
-                                <dd class="col-9 overflow-auto {% if val != meta_result["doc"][key] %}text-success{% endif %}">{{ meta_result["doc"][key]|e }}</dd>
+                        {% for key, val in meta_src["primary"].items() %}
+                            <dt class="col-3 overflow-auto">{{ val["name"]|e }}</dt>
+                            {% if key in meta_result["primary"] %}
+                                <dd class="col-9 overflow-auto {% if val["value"] != meta_result["primary"][key]["value"] %}text-success{% endif %}">{{ meta_result["primary"][key]["value"]|e }}</dd>
                             {% else %}
-                                <dd class="col-9 overflow-auto text-danger">{{ meta_result["doc"][key]|e }}&nbsp;</dd>
+                                <dd class="col-9 overflow-auto text-danger">&nbsp;</dd>
                             {% endif %}
                         {% endfor %}
-                        {% for key, val in meta_result["doc"].items() %}
-                            {% if key not in meta_src["doc"] %}
-                                <dt class="col-3 overflow-auto">{{ key|e }}</dt>
-                                <dd class="col-9 overflow-auto text-success">{{ val|e }}</dd>
+                        {% for key, val in meta_result["primary"].items() %}
+                            {% if key not in meta_src["primary"] %}
+                                <dt class="col-3 overflow-auto">{{ val["name"]|e }}</dt>
+                                <dd class="col-9 overflow-auto text-success">{{ val["value"]|e }}</dd>
                             {% endif %}
                         {% endfor %}
                         <div class="accordion" id="dc-meta-result">
@@ -104,28 +100,24 @@
                                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#dc-meta-result-{{ doc_id }}-content" aria-expanded="false" aria-controls="dc-meta-result-{{ doc_id }}-content">
                                             #{{ doc_id }}
                                             {% if "_type" in doc_data %}
-                                                ({{ doc_data["_type"] }})
+                                                ({{ doc_data["_type"]["value"] }})
                                             {% endif %}
-                                            {% for data_key, data_val in doc_data.items() if data_val is mapping %}
+                                            {% for group in doc_data.values() | map(attribute="group") | unique if group %}
                                                 {{ ":" if loop.first }}
-                                                {{ data_key }}{{ "," if not loop.last }}
+                                                {{ group }}{{ "," if not loop.last }}
                                             {% endfor %}
                                         </button>
                                     </h2>
                                     <div id="dc-meta-result-{{ doc_id }}-content" class="accordion-collapse collapse" aria-labelledby="dc-meta-result-{{ doc_id }}-heading" data-bs-parent="#dc-meta-result">
                                         <div class="accordion-body">
                                             <dl class="row">
-                                                {% for data_key, data_val in doc_data.items() if data_val is mapping %}
-                                                    <dt class="col-5 overflow-auto">{{ data_key|e }}</dt>
-                                                    <dd class="col-7 overflow-auto">
-                                                        {% if data_val is mapping %}
-                                                            {% for tag_name, tag_val in data_val.items() %}
-                                                                <strong>{{ tag_name }}</strong><br />{{ tag_val }}<br />
-                                                            {% endfor %}
-                                                        {% else %}
-                                                            {{ data_val|e }}
-                                                        {% endif %}
-                                                    </dd>
+                                                {% for group, group_data in doc_data.values() | rejectattr("group", "none") | groupby("group") %}
+                                                <dt class="col-5 overflow-auto">{{ group|e }}</dt>
+                                                <dd class="col-7 overflow-auto">
+                                                    {% for tag in group_data %}
+                                                    <strong>{{ tag["name"]|e }}</strong><br />{{ tag["value"]|e }}<br />
+                                                    {% endfor %}
+                                                </dd>
                                                 {% endfor %}
                                             </dl>
                                         </div>

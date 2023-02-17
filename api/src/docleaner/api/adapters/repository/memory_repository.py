@@ -1,9 +1,10 @@
 from collections import OrderedDict
 import dataclasses
 from datetime import timedelta
-from typing import Any, Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set
 
 from docleaner.api.core.job import Job, JobStatus, JobType
+from docleaner.api.core.metadata import DocumentMetadata
 from docleaner.api.core.session import Session
 from docleaner.api.services.clock import Clock
 from docleaner.api.services.repository import Repository
@@ -65,7 +66,12 @@ class MemoryRepository(Repository):
                 continue
             # Strip metadata, src and result document
             j = dataclasses.replace(
-                job, src=b"", result=b"", log=[], metadata_result={}, metadata_src={}
+                job,
+                src=b"",
+                result=b"",
+                log=[],
+                metadata_result=None,
+                metadata_src=None,
             )
             j.updated = job.updated
             result.append(j)
@@ -74,8 +80,8 @@ class MemoryRepository(Repository):
     async def update_job(
         self,
         jid: str,
-        metadata_result: Optional[Dict[str, Dict[str, Any]]] = None,
-        metadata_src: Optional[Dict[str, Dict[str, Any]]] = None,
+        metadata_result: Optional[DocumentMetadata] = None,
+        metadata_src: Optional[DocumentMetadata] = None,
         result: Optional[bytes] = None,
         status: Optional[JobStatus] = None,
     ) -> None:

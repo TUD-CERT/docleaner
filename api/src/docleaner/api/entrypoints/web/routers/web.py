@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import Any, Dict, List, Union
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, UploadFile
@@ -65,7 +65,7 @@ async def landing_post(
     try:
         jid, _ = await create_job(
             await doc_src.read(),
-            doc_src.filename,
+            doc_src.filename or "",
             repo,
             queue,
             file_identifier,
@@ -124,8 +124,8 @@ async def jobs_get(
             "job_status": job_status,
             "job_log": job_log,
             "job_sid": job_sid,
-            "meta_src": job_meta_src,
-            "meta_result": job_meta_result,
+            "meta_src": None if job_meta_src is None else asdict(job_meta_src),
+            "meta_result": None if job_meta_src is None else asdict(job_meta_result),
             "htmx": "hx-request" in request.headers,
             "trigger": request.headers.get("hx-trigger"),
             "version": version,

@@ -27,7 +27,9 @@ async def test_clean_document_workflow(web_app: str, sample_pdf: bytes) -> None:
         while (await client.get(job_url)).json()["status"] != JobStatus.SUCCESS:
             await asyncio.sleep(0.2)
         job_data = (await client.get(job_url)).json()
-        assert len(job_data["metadata_src"]["doc"]) > 0  # Metadata is present
+        assert len(job_data["metadata_src"]["primary"]) > 0  # Metadata is present
+        assert job_data["metadata_src"]["primary"]["PDF:Author"]["value"] == "John Doe"
+        assert "PDF:Author" not in job_data["metadata_result"]["primary"]
         # Download result
         dl_resp = await client.get(f"{web_app}/api/v1/jobs/{jid}/result")
         assert dl_resp.status_code == 200

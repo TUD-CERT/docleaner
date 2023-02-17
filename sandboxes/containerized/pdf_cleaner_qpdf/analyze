@@ -5,39 +5,30 @@ import sys
 from typing import Any, Dict
 
 
-def parse_exiftool_metadata(src: bytes) -> Dict[str, Dict[str, Any]]:
+def preprocess_exiftool_metadata(src: bytes) -> Dict[str, Dict[str, Any]]:
     """Parses JSON document metadata returned by exiftool into a dictionary
-    of the form {'doc': {primary document metadata}, 'embeds': {<id>: <metadata of embedded document>}}."""
-    metadata = {"doc": {}, "embeds": {}}
+    of the form {'doc': {primary document metadata}, 'embeds': {<id>: <metadata of embedded document>}}.
+    In addition, filters out some system- and tool-specific metadata."""
+    metadata = {"primary": {}, "embeds": {}}
     src_json = json.loads(src.decode("utf-8"))
     if len(src_json) == 0:
         return metadata
     for key, val in src_json.pop().items():
         if key.startswith("File:"):
             # Ignore all File keys except FileSize
-            if key == "File:FileSize":
-                metadata["doc"]["FileSize"] = val
+            if key == "File:System:FileSize":
+                metadata["primary"]["PDF:FileSize"] = val
             continue
         if key.startswith("SourceFile") or key.startswith("ExifTool") or key.startswith("EXIF"):
             # Ignore exiftool-specific metadata
             continue
-        doc_id = category = tag = None
-        key_parts = key.split(":")
-        if len(key_parts) == 2:
-            doc_id, tag = key_parts
-        elif len(key_parts) == 3:
-            doc_id, category, tag = key_parts
+        top_id = key.split(":")[0]
+        if top_id.startswith("Doc"):
+            remaining_key = key[key.find(":") + 1:]
+            metadata["embeds"].setdefault(top_id, {})
+            metadata["embeds"][top_id][remaining_key] = val
         else:
-            continue
-        if doc_id == "PDF":
-            metadata["doc"][tag] = val
-        else:
-            metadata["embeds"].setdefault(doc_id, {})
-            if category is not None:
-                metadata["embeds"][doc_id].setdefault(category, {})
-                metadata["embeds"][doc_id][category][tag] = val
-            else:
-                metadata["embeds"][doc_id][tag] = val
+            metadata["primary"][key] = val
     return metadata
 
 
@@ -49,7 +40,7 @@ if __name__ == "__main__":
                              "-config",
                              "/opt/exiftool.cg",
                              "-ee",
-                             "-G3:0",
+                             "-G3:0:1",
                              "-j",
                              sys.argv[1]],
                             capture_output=True)
@@ -57,4 +48,4 @@ if __name__ == "__main__":
         print(f"Error: {result.stderr}")
         sys.exit(1)
     with open(sys.argv[2], "w") as f:
-        json.dump(parse_exiftool_metadata(result.stdout), f)
+        json.dump(preprocess_exiftool_metadata(result.stdout), f)

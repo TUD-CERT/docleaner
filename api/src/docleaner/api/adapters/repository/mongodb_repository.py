@@ -6,6 +6,7 @@ from motor import motor_asyncio
 import pymongo
 
 from docleaner.api.core.job import JobStatus, Job, JobType
+from docleaner.api.core.metadata import DocumentMetadata, MetadataField
 from docleaner.api.core.session import Session
 from docleaner.api.services.clock import Clock
 from docleaner.api.services.repository import Repository
@@ -86,8 +87,8 @@ class MongoDBRepository(Repository):
     async def update_job(
         self,
         jid: str,
-        metadata_result: Optional[Dict[str, Dict[str, Any]]] = None,
-        metadata_src: Optional[Dict[str, Dict[str, Any]]] = None,
+        metadata_result: Optional[DocumentMetadata] = None,
+        metadata_src: Optional[DocumentMetadata] = None,
         result: Optional[bytes] = None,
         status: Optional[JobStatus] = None,
     ) -> None:
@@ -97,9 +98,9 @@ class MongoDBRepository(Repository):
         now = self._clock.now()
         update_fields: Dict[str, Any] = {"updated": now}
         if metadata_result is not None:
-            update_fields["metadata_result"] = metadata_result
+            update_fields["metadata_result"] = asdict(metadata_result)
         if metadata_src is not None:
-            update_fields["metadata_src"] = metadata_src
+            update_fields["metadata_src"] = asdict(metadata_src)
         if result is not None:
             # Save result document to GridFS
             result_id = await self._fs.upload_from_stream(jid, result)
@@ -183,6 +184,18 @@ class MongoDBRepository(Repository):
     async def disconnect(self) -> None:
         self._mongo.close()
 
+    @staticmethod
+    def _create_document_metadata(
+        raw_data: Dict[str, Dict[str, Any]]
+    ) -> DocumentMetadata:
+        embeds = {}
+        for embed_id, embed_data in raw_data["embeds"].items():
+            embeds[embed_id] = {k: MetadataField(**v) for k, v in embed_data.items()}
+        return DocumentMetadata(
+            primary={k: MetadataField(**v) for k, v in raw_data["primary"].items()},
+            embeds=embeds,
+        )
+
     async def _create_job_from_job_data(
         self, job_data: Dict[str, Any], summary_only: bool = False
     ) -> Job:
@@ -194,8 +207,8 @@ class MongoDBRepository(Repository):
             job_data["src"] = b""
             job_data["result"] = b""
             job_data["log"] = []
-            job_data["metadata_result"] = {}
-            job_data["metadata_src"] = {}
+            job_data["metadata_result"] = None
+            job_data["metadata_src"] = None
         else:
             # Retrieve src and result documents from GridFS
             job_data["src"] = await (
@@ -205,6 +218,15 @@ class MongoDBRepository(Repository):
                 job_data["result"] = await (
                     await self._fs.open_download_stream(job_data["result"])
                 ).read()
+        # Create DocumentMetadata instances
+        if job_data["metadata_result"] is not None:
+            job_data["metadata_result"] = self._create_document_metadata(
+                job_data["metadata_result"]
+            )
+        if job_data["metadata_src"] is not None:
+            job_data["metadata_src"] = self._create_document_metadata(
+                job_data["metadata_src"]
+            )
         job = Job(**job_data)
         job.updated = updated
         return job

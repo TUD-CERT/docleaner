@@ -31,7 +31,7 @@ async def repo(clock: Clock) -> AsyncGenerator[Repository, None]:
 @pytest.fixture
 def sandbox() -> Sandbox:
     return ContainerizedSandbox(
-        container_image="localhost/docleaner/pdf_cleaner",
+        container_image="localhost/docleaner/pdf_cleaner_qpdf",
         podman_uri="unix:///run/podman.sock",
     )
 

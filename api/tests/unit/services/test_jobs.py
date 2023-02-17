@@ -6,6 +6,7 @@ import pytest
 
 from docleaner.api.adapters.clock.dummy_clock import DummyClock
 from docleaner.api.core.job import JobStatus, JobType
+from docleaner.api.core.metadata import DocumentMetadata
 from docleaner.api.services.file_identifier import FileIdentifier
 from docleaner.api.services.job_queue import JobQueue
 from docleaner.api.services.job_types import SupportedJobType
@@ -44,8 +45,11 @@ async def test_process_pdf_job(
     assert result_status == JobStatus.SUCCESS
     assert result_type == JobType.PDF
     assert isinstance(log, list)
-    assert isinstance(metadata_src, dict) and len(metadata_src) > 0
-    assert isinstance(metadata_result, dict)
+    assert isinstance(metadata_src, DocumentMetadata) and len(metadata_src.primary) > 0
+    assert (
+        isinstance(metadata_result, DocumentMetadata)
+        and len(metadata_result.primary) > 0
+    )
     # Retrieve resulting PDF
     result, document_name = await get_job_result(jid, repo)
     assert document_name == "sample.pdf"
@@ -80,7 +84,7 @@ async def test_services_with_nonexisting_job(repo: Repository, queue: JobQueue) 
         await delete_job("invalid", repo)
 
 
-async def test_await_again(
+async def test_await_twice(
     sample_pdf: bytes,
     repo: Repository,
     queue: JobQueue,
@@ -131,7 +135,8 @@ async def test_get_finished_job_details(
     )
     assert job_status == JobStatus.SUCCESS
     assert job_type == JobType.PDF
-    assert len(job_meta_src) > 0
+    assert isinstance(job_meta_src, DocumentMetadata)
+    assert len(job_meta_src.primary) > 0
 
 
 async def test_get_jobs_with_specific_state(

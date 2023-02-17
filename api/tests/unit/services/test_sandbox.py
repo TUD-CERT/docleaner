@@ -4,6 +4,7 @@ import pytest
 
 from docleaner.api.adapters.sandbox.dummy_sandbox import DummySandbox
 from docleaner.api.core.job import Job, JobStatus, JobType
+from docleaner.api.core.metadata import DocumentMetadata
 from docleaner.api.services.job_types import SupportedJobType
 from docleaner.api.services.metadata import process_pdf_metadata
 from docleaner.api.services.repository import Repository
@@ -33,10 +34,11 @@ async def test_process_successful_job_in_sandbox(
     assert found_job.status == JobStatus.SUCCESS
     assert len(found_job.result) > 0  # Result is present
     assert len(found_job.log) > 0  # Something was logged
-    # Presence and structure of attached document metadata
-    assert len(found_job.metadata_src) > 0
-    assert found_job.metadata_src.keys() == {"doc", "embeds"}
-    assert found_job.metadata_result.keys() == {"doc", "embeds"}
+    # Presence and attached document metadata
+    assert isinstance(found_job.metadata_result, DocumentMetadata)
+    assert isinstance(found_job.metadata_src, DocumentMetadata)
+    assert len(found_job.metadata_result.primary) > 0
+    assert len(found_job.metadata_src.primary) > 0
 
 
 async def test_process_unsuccessful_job_in_sandbox(
@@ -92,9 +94,7 @@ async def test_exception_during_metadata_processing(
     """An exception thrown during metadata post-processing isn't re-raised,
     but instead the job finishes with an ERROR status."""
 
-    def failing_postprocessor(
-        src: Dict[str, Dict[str, Any]]
-    ) -> Dict[str, Dict[str, Any]]:
+    def failing_postprocessor(src: Dict[str, Dict[str, Any]]) -> DocumentMetadata:
         raise ValueError()
 
     job_types[0].metadata_processor = failing_postprocessor

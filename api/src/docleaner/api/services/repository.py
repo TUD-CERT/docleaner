@@ -1,8 +1,9 @@
 import abc
 from datetime import timedelta
-from typing import Any, Dict, List, Optional, Set
+from typing import List, Optional, Set
 
 from docleaner.api.core.job import Job, JobStatus, JobType
+from docleaner.api.core.metadata import DocumentMetadata
 from docleaner.api.core.session import Session
 
 
@@ -43,8 +44,8 @@ class Repository(abc.ABC):
     async def update_job(
         self,
         jid: str,
-        metadata_result: Optional[Dict[str, Dict[str, Any]]] = None,
-        metadata_src: Optional[Dict[str, Dict[str, Any]]] = None,
+        metadata_result: Optional[DocumentMetadata] = None,
+        metadata_src: Optional[DocumentMetadata] = None,
         result: Optional[bytes] = None,
         status: Optional[JobStatus] = None,
     ) -> None:

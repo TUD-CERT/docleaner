@@ -19,12 +19,14 @@ class DummySandbox(Sandbox):
             log=["Executing job in dummy sandbox"],
             result=b"" if self._simulate_errors else b"%PDF-1.7",
             metadata_result={
-                "doc": {"author": "Alice", "domain": "example.com"},
-                "embeds": {"XMP": {"author": "Alice", "Domain": "example.com"}},
+                "primary": {"XMP:Author": "Alice", "XMP:Domain": "example.com"},
+                "embeds": {"Doc1": {"XMP:Domain": "example.com"}},
             },
             metadata_src={
-                "doc": {"domain": "example.com"},
-                "embeds": {},
+                "primary": {"XMP:Domain": "example.com"},
+                "embeds": {
+                    "Doc1": {"XMP:Author": "Alice", "XMP:Domain": "example.com"}
+                },
             },  # Assumes the sandbox didn't purge all metadata
         )
 

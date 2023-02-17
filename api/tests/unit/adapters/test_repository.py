@@ -4,6 +4,7 @@ import pytest
 
 from docleaner.api.adapters.clock.dummy_clock import DummyClock
 from docleaner.api.core.job import Job, JobStatus, JobType
+from docleaner.api.core.metadata import DocumentMetadata, MetadataField
 from docleaner.api.core.session import Session
 from docleaner.api.services.repository import Repository
 from docleaner.api.utils import generate_token
@@ -19,7 +20,7 @@ async def test_add_and_fetch_job(repo: Repository, sample_pdf: bytes) -> None:
     assert found_job.src == sample_pdf
     assert found_job.type == JobType.PDF
     assert found_job.status == JobStatus.CREATED
-    assert found_job.metadata_result == found_job.metadata_src == {}
+    assert found_job.metadata_result is found_job.metadata_src is None
     assert isinstance(found_job.created, datetime)
     assert found_job.created == found_job.updated
     assert found_job.session_id is None
@@ -39,8 +40,7 @@ async def test_fetch_all_jobs(repo: Repository, sample_pdf: bytes) -> None:
     assert len(jobs) == 5
     assert list(map(lambda job: job.id, jobs)) == jids
     for job in jobs:
-        assert job.metadata_result == {}
-        assert job.metadata_src == {}
+        assert job.metadata_result is job.metadata_src is None
         assert job.result == b""
         assert job.src == b""
         assert job.log == []
@@ -91,11 +91,20 @@ async def test_filter_jobs(repo: Repository, sample_pdf: bytes) -> None:
 async def test_update_job(repo: Repository, sample_pdf: bytes) -> None:
     """Updating a job's result, status and metadata."""
     jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+    metadata_src = DocumentMetadata(
+        primary={
+            "author": MetadataField(id="author", value="Alice"),
+            "year": MetadataField(id="year", value=2000),
+        }
+    )
+    metadata_result = DocumentMetadata(
+        primary={"author": MetadataField(id="author", value="Alice")}
+    )
     await repo.update_job(
         jid,
         status=JobStatus.RUNNING,
-        metadata_src={"doc": {"author": "Alice", "year": "2000"}, "embeds": {}},
-        metadata_result={"doc": {"year": "2000"}, "embeds": {}},
+        metadata_src=metadata_src,
+        metadata_result=metadata_result,
     )
     found_job = await repo.find_job(jid)
     assert isinstance(found_job, Job)
@@ -105,11 +114,15 @@ async def test_update_job(repo: Repository, sample_pdf: bytes) -> None:
     assert isinstance(updated_job, Job)
     assert updated_job.status == JobStatus.SUCCESS
     assert updated_job.result == b"TEST"
-    assert updated_job.metadata_result == {"doc": {"year": "2000"}, "embeds": {}}
-    assert updated_job.metadata_src == {
-        "doc": {"author": "Alice", "year": "2000"},
-        "embeds": {},
-    }
+    assert isinstance(updated_job.metadata_result, DocumentMetadata)
+    assert isinstance(updated_job.metadata_src, DocumentMetadata)
+    assert len(updated_job.metadata_result.primary) == 1
+    assert updated_job.metadata_result.primary["author"].value == "Alice"
+    assert updated_job.metadata_result.embeds == {}
+    assert len(updated_job.metadata_src.primary) == 2
+    assert updated_job.metadata_src.primary["author"].value == "Alice"
+    assert updated_job.metadata_src.primary["year"].value == 2000
+    assert updated_job.metadata_src.embeds == {}
 
 
 async def test_update_job_log(repo: Repository, sample_pdf: bytes) -> None:

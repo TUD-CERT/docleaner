@@ -1,11 +1,12 @@
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Response, UploadFile
 from pydantic import BaseModel
 import starlette.status as status
 
 from docleaner.api.core.job import JobStatus, JobType
+from docleaner.api.core.metadata import DocumentMetadata
 from docleaner.api.entrypoints.web.dependencies import (
     get_base_url,
     get_file_identifier,
@@ -32,8 +33,8 @@ class JobDetails(BaseModel):
     id: str
     type: JobType
     log: List[str]
-    metadata_result: Dict[str, Dict[str, Any]]
-    metadata_src: Dict[str, Dict[str, Any]]
+    metadata_result: Optional[DocumentMetadata]
+    metadata_src: Optional[DocumentMetadata]
     status: JobStatus
 
 
@@ -72,7 +73,7 @@ async def jobs_create(
     try:
         jid, _ = await create_job(
             await doc_src.read(),
-            doc_src.filename,
+            doc_src.filename or "",
             repo,
             queue,
             file_identifier,

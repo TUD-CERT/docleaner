@@ -1,8 +1,9 @@
 import asyncio
 from datetime import timedelta
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from docleaner.api.core.job import JobStatus, JobType
+from docleaner.api.core.metadata import DocumentMetadata
 from docleaner.api.services.file_identifier import FileIdentifier
 from docleaner.api.services.job_queue import JobQueue
 from docleaner.api.services.job_types import SupportedJobType
@@ -42,7 +43,11 @@ async def create_job(
 async def await_job(
     jid: str, repo: Repository
 ) -> Tuple[
-    JobStatus, JobType, List[str], Dict[str, Dict[str, Any]], Dict[str, Dict[str, Any]]
+    JobStatus,
+    JobType,
+    List[str],
+    Optional[DocumentMetadata],
+    Optional[DocumentMetadata],
 ]:
     """Blocks until the job identified by jid has been processed.
     Returns the job's final status, type, log data, source metadata and resulting metadata."""
@@ -65,8 +70,8 @@ async def get_job(
     JobStatus,
     JobType,
     List[str],
-    Dict[str, Dict[str, Any]],
-    Dict[str, Dict[str, Any]],
+    Optional[DocumentMetadata],
+    Optional[DocumentMetadata],
     Optional[str],
 ]:
     """Returns details for the job identified by jid."""

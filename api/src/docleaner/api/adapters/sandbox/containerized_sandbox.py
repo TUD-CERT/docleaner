@@ -4,9 +4,10 @@ import os
 import tarfile
 import traceback
 from tempfile import TemporaryDirectory
+from typing import Any, Dict
 
 from podman import PodmanClient  # type: ignore
-from podman.errors.exceptions import APIError as PodmanAPIError
+from podman.errors.exceptions import APIError as PodmanAPIError  # type: ignore
 from podman.domain.containers import Container  # type: ignore
 
 from docleaner.api.services.sandbox import Sandbox, SandboxResult
@@ -35,7 +36,8 @@ class ContainerizedSandbox(Sandbox):
         ) as podman, TemporaryDirectory() as tmpdir:
             log = []
             result_document = b""
-            metadata_result = metadata_src = {"doc": {}, "embeds": {}}
+            metadata_result: Dict[str, Dict[str, Any]] = {"primary": {}, "embeds": {}}
+            metadata_src: Dict[str, Dict[str, Any]] = {"primary": {}, "embeds": {}}
             success = False
             # Copy source into container
             source_path = os.path.join(tmpdir, "source")
