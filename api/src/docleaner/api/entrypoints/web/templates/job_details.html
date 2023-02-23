@@ -39,31 +39,38 @@
                     <table class="table">
                         <thead>
                             <tr>
-                                <th scope="col" class="col-2">Tag</th>
+                                <th scope="col" class="col-2"></th>
                                 <th scope="col" class="col-5">Original Metadata</th>
                                 <th scope="col" class="col-5">Remaining Metadata</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for tag, val in meta_src["primary"].items() %}
-                                <tr>
-                                    <td><strong>{{ tag|e }}</strong></td>
-                                    <td>{{ val["value"]|e }}</td>
-                                    <td class="text-success">
-                                        {% if tag in meta_result["primary"] %}
-                                            {{ meta_result["primary"][tag]["value"]|e }}
-                                        {% endif %}
+                            {% for group, group_members in meta_src["primary"].values() | groupby("group") if group %}
+                                <tr class="table-light">
+                                    <td colspan="3" class="text-center">
+                                        {{ group }}
                                     </td>
                                 </tr>
-                            {% endfor %}
-                            {% for tag, val in meta_result["primary"].items() %}
-                                {% if tag not in meta_src["primary"] %}
+                                {% for member in group_members %}
                                     <tr>
-                                        <td><strong>{{ tag|e }}</strong></td>
-                                        <td></td>
-                                        <td class="text-success">{{ val["value"]|e }}</td>
+                                        <td><strong>{{ member["name"]|e }}</strong></td>
+                                        <td>{{ member["value"]|e }}</td>
+                                        <td {% if member["id"] in meta_result["primary"] and member["value"] != meta_result["primary"][member["id"]]["value"] %}class="text-success"{% endif %}>
+                                            {% if member["id"] in meta_result["primary"] %}
+                                                {{ meta_result["primary"][member["id"]]["value"]|e }}
+                                            {% endif %}
+                                        </td>
                                     </tr>
-                                {% endif %}
+                                {% endfor %}
+                                {% for result_member in meta_result["primary"].values() | selectattr("group", "eq", group) %}
+                                    {% if result_member["id"] not in meta_src["primary"] %}
+                                        <tr>
+                                            <td><strong>{{ result_member["name"]|e }}</strong></td>
+                                            <td></td>
+                                            <td class="text-success">{{ result_member["value"]|e }}</td>
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
                             {% endfor %}
                         </tbody>
                     </table>
