@@ -34,28 +34,40 @@
             <div class="d-grid">
                 <a class="btn btn-primary mb-3" href="/jobs/{{ jid }}/result" download>Download result</a>
             </div>
+            <p>The following table compares all detected metadata fields of the original (uploaded) with the resulting document.
+               Fields that were modified or added are shown in a <span class="text-success">green</span> color, while removed ones
+               are written in <span class="text-danger">red</span>. In addition, metadata fields related to noteworthy features
+               (such as accessibility) that could successfully be preserved are labeled with a <span class="badge text-bg-success">green</span> badge.
+               In contrast, features that couldn't be preserved are labeled in <span class="badge text-bg-danger">red</span>.
+            </p>
             <div class="row">
                 <div class="col-12">
                     <table class="table">
                         <thead>
                             <tr>
-                                <th scope="col" class="col-2"></th>
-                                <th scope="col" class="col-5">Original Metadata</th>
-                                <th scope="col" class="col-5">Remaining Metadata</th>
+                                <th scope="col" class="col-3"></th>
+                                <th scope="col" class="col-1"></th>
+                                <th scope="col" class="col-4">Original Metadata</th>
+                                <th scope="col" class="col-4">Remaining Metadata</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for group, group_members in meta_src["primary"].values() | groupby("group") if group %}
                                 <tr class="table-light">
-                                    <td colspan="3" class="text-center">
+                                    <td colspan="4" class="text-center">
                                         {{ group }}
                                     </td>
                                 </tr>
                                 {% for member in group_members %}
                                     <tr>
                                         <td><strong>{{ member["name"]|e }}</strong></td>
-                                        <td>{{ member["value"]|e }}</td>
-                                        <td {% if member["id"] in meta_result["primary"] and member["value"] != meta_result["primary"][member["id"]]["value"] %}class="text-success"{% endif %}>
+                                        <td>
+                                            {% for tag in member["tags"] %}
+                                                <span class="badge {% if member["id"] in meta_result["primary"] and member["value"] == meta_result["primary"][member["id"]]["value"] %}text-bg-success{% else %}text-bg-danger{% endif %}">{{ MetadataTag(tag).name | title }}</span>
+                                            {% endfor %}
+                                        </td>
+                                        <td class="text-break {% if member["id"] not in meta_result["primary"]%}text-danger{% endif %}">{{ member["value"]|e }}</td>
+                                        <td class="text-break {% if member["id"] in meta_result["primary"] and member["value"] != meta_result["primary"][member["id"]]["value"] %}text-success{% endif %}">
                                             {% if member["id"] in meta_result["primary"] %}
                                                 {{ meta_result["primary"][member["id"]]["value"]|e }}
                                             {% endif %}
@@ -67,7 +79,8 @@
                                         <tr>
                                             <td><strong>{{ result_member["name"]|e }}</strong></td>
                                             <td></td>
-                                            <td class="text-success">{{ result_member["value"]|e }}</td>
+                                            <td></td>
+                                            <td class="text-success text-break">{{ result_member["value"]|e }}</td>
                                         </tr>
                                     {% endif %}
                                 {% endfor %}
@@ -79,10 +92,10 @@
             {% if meta_src["embeds"]|length > 0 %}
                 <h3>Embedded Documents</h3>
                 <p>Your document contains embedded documents that might have potentially privacy-invasive metadata attached to them.
-                In an attempt to preserve the original document as much as possible, docleaner did <strong>NOT</strong> modify metadata
-                of these embedded documents. Therefore, the original and remaining metadata in the following columns should be identical.</p>
-                <p>Please review the metadata of the following embedded documents for potentially privacy-invasive information. Click on a document
-                to view its metadata. If you encounter data that should be removed, manually edit the original embedded source documents and
+                To preserve the original document structure, docleaner did <strong>NOT</strong> modify metadata
+                of these embedded documents. Therefore, the original and remaining metadata in the following columns <em>should</em> be identical.</p>
+                <p>Please review the metadata of the following embedded documents for potentially privacy-invasive information by clicking on the
+                numbered boxes. If you encounter data that should be removed, manually edit the original embedded source documents and
                 recreate your final document (e.g. by removing EXIF tags from an embedded picture and then reimporting it into a PDF).</p>
                 <div class="row">
                     <div class="col-6">

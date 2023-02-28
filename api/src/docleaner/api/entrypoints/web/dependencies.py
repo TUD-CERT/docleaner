@@ -5,6 +5,7 @@ from typing import List
 from fastapi.templating import Jinja2Templates
 
 from docleaner.api.bootstrap import bootstrap
+from docleaner.api.core.metadata import MetadataTag
 from docleaner.api.services.clock import Clock
 from docleaner.api.services.file_identifier import FileIdentifier
 from docleaner.api.services.job_queue import JobQueue
@@ -22,6 +23,7 @@ _version: str
 
 base_path = os.path.dirname(os.path.realpath(__file__))
 templates = Jinja2Templates(directory=os.path.join(base_path, "templates"))
+templates.env.globals["MetadataTag"] = MetadataTag
 
 
 def init() -> None:

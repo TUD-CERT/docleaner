@@ -1,6 +1,6 @@
 from typing import Any, Dict
 
-from docleaner.api.core.metadata import DocumentMetadata, MetadataField
+from docleaner.api.core.metadata import DocumentMetadata, MetadataField, MetadataTag
 from docleaner.api.services.metadata import process_pdf_metadata
 
 
@@ -33,6 +33,7 @@ def test_process_pdf() -> None:
             "XMP:XMP-dc:Creator": "John Doe",
             "XMP:XMP-dc:Description": "testing",
             "XMP:XMP-dc:Subject": ["anime", "plane", "generated"],
+            "XMP:XMP-pdfuaid:Part": 1,
         },
         "embeds": {
             "Doc1": {
@@ -169,6 +170,13 @@ def test_process_pdf() -> None:
                 name="XMP-dc:Subject",
                 group="XMP",
                 value=["anime", "plane", "generated"],
+            ),
+            "XMP:XMP-pdfuaid:Part": MetadataField(
+                id="XMP:XMP-pdfuaid:Part",
+                name="XMP-pdfuaid:Part",
+                group="XMP",
+                value=1,
+                tags=[MetadataTag.ACCESSIBILITY],
             ),
         },
         embeds={

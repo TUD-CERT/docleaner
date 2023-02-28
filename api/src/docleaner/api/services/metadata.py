@@ -1,6 +1,9 @@
 from typing import Any, Dict
 
-from docleaner.api.core.metadata import DocumentMetadata, MetadataField
+from docleaner.api.core.metadata import DocumentMetadata, MetadataField, MetadataTag
+
+
+PDF_TAGS = {"XMP:XMP-pdfuaid:Part": [MetadataTag.ACCESSIBILITY]}
 
 
 def process_pdf_metadata(src: Dict[str, Dict[str, Any]]) -> DocumentMetadata:
@@ -18,7 +21,11 @@ def process_pdf_metadata(src: Dict[str, Dict[str, Any]]) -> DocumentMetadata:
         if field_group in ["ICC_Profile", "Composite"]:
             continue
         primary_metadata[field] = MetadataField(
-            id=field, name=field_name, group=field_group, value=value
+            id=field,
+            name=field_name,
+            group=field_group,
+            value=value,
+            tags=PDF_TAGS.get(field, []),
         )
     for embed_name, embed_meta in src["embeds"].items():
         embed_data = {}
@@ -54,6 +61,7 @@ def process_pdf_metadata(src: Dict[str, Dict[str, Any]]) -> DocumentMetadata:
                     name=field_name,
                     value=embed_meta_val,
                     group=field_group,
+                    tags=PDF_TAGS.get(embed_meta_field, []),
                 )
         # Only attach embeddings that contain actual metadata
         if len([tag for tag in embed_data.keys() if not tag.startswith("_")]) > 0:
