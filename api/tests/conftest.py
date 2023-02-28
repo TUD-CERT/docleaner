@@ -25,13 +25,6 @@ def clock() -> Clock:
 
 
 @pytest.fixture
-def sample_pdf() -> bytes:
-    with open("tests/resources/sample.pdf", "rb") as f:
-        result = f.read()
-    return result
-
-
-@pytest.fixture
 async def repo(clock: Clock) -> AsyncGenerator[Repository, None]:
     repo = MemoryRepository(clock)
     yield repo
@@ -67,3 +60,17 @@ async def queue(
     q = AsyncJobQueue(repo=repo, job_types=job_types, max_concurrent_jobs=3)
     yield q
     await q.shutdown()
+
+
+@pytest.fixture
+def sample_pdf() -> bytes:
+    with open("tests/resources/sample.pdf", "rb") as f:
+        result = f.read()
+    return result
+
+
+@pytest.fixture
+def sample_pdfe1() -> bytes:
+    with open("tests/resources/pdf-e1.pdf", "rb") as f:
+        result = f.read()
+    return result
