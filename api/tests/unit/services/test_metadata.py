@@ -34,7 +34,7 @@ def test_process_pdf() -> None:
             "XMP:XMP-dc:Description": "testing",
             "XMP:XMP-dc:Subject": ["anime", "plane", "generated"],
             "XMP:XMP-pdfuaid:Part": 1,
-            "XMP:XMP-pdfe:ISO_PDFEVersion": "PDF/E-1"
+            "XMP:XMP-pdfe:ISO_PDFEVersion": "PDF/E-1",
         },
         "embeds": {
             "Doc1": {
@@ -184,8 +184,8 @@ def test_process_pdf() -> None:
                 name="XMP-pdfe:ISO_PDFEVersion",
                 group="XMP",
                 value="PDF/E-1",
-                tags=[MetadataTag.COMPLIANCE]
-            )
+                tags=[MetadataTag.COMPLIANCE],
+            ),
         },
         embeds={
             "0": {

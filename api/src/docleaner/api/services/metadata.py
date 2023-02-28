@@ -3,8 +3,10 @@ from typing import Any, Dict
 from docleaner.api.core.metadata import DocumentMetadata, MetadataField, MetadataTag
 
 
-PDF_TAGS = {"XMP:XMP-pdfuaid:Part": [MetadataTag.ACCESSIBILITY],
-            "XMP:XMP-pdfe:ISO_PDFEVersion": [MetadataTag.COMPLIANCE]}
+PDF_TAGS = {
+    "XMP:XMP-pdfuaid:Part": [MetadataTag.ACCESSIBILITY],
+    "XMP:XMP-pdfe:ISO_PDFEVersion": [MetadataTag.COMPLIANCE],
+}
 
 
 def process_pdf_metadata(src: Dict[str, Dict[str, Any]]) -> DocumentMetadata:

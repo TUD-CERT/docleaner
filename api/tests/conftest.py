@@ -74,3 +74,10 @@ def sample_pdfe1() -> bytes:
     with open("tests/resources/pdf-e1.pdf", "rb") as f:
         result = f.read()
     return result
+
+
+@pytest.fixture
+def sample_pdfua1() -> bytes:
+    with open("tests/resources/pdf-ua1.pdf", "rb") as f:
+        result = f.read()
+    return result
