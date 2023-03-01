@@ -78,7 +78,11 @@
                                     {% if result_member["id"] not in meta_src["primary"] %}
                                         <tr>
                                             <td><strong>{{ result_member["name"]|e }}</strong></td>
-                                            <td></td>
+                                            <td>
+                                                {% for tag in result_member["tags"] %}
+                                                    <span class="badge text-bg-success">{{ MetadataTag(tag).name | title }}</span>
+                                                {% endfor %}
+                                            </td>
                                             <td></td>
                                             <td class="text-success text-break">{{ result_member["value"]|e }}</td>
                                         </tr>
