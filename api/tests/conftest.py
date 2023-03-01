@@ -93,3 +93,13 @@ def samples_pdfa() -> Tuple[bytes, bytes, bytes]:
     with open("tests/resources/pdf-a3u.pdf", "rb") as f:
         a3 = f.read()
     return a1, a2, a3
+
+
+@pytest.fixture
+def samples_pdfx() -> Tuple[bytes, bytes]:
+    """PDF samples with valid PDF/X-{1,4} metadata."""
+    with open("tests/resources/pdf-x1a.pdf", "rb") as f:
+        x1 = f.read()
+    with open("tests/resources/pdf-x4.pdf", "rb") as f:
+        x4 = f.read()
+    return x1, x4

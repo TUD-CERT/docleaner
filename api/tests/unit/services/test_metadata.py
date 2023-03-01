@@ -5,6 +5,7 @@ from docleaner.api.services.metadata import process_pdf_metadata
 
 
 def test_process_pdf() -> None:
+    """Processing a collection of real-life PDF metadata."""
     metadata: Dict[str, Dict[str, Any]] = {
         "primary": {
             "FileSize": "154 KiB",
@@ -23,6 +24,8 @@ def test_process_pdf() -> None:
             "PDF:ModifyDate": "2022:12:06 11:30:34+01:00",
             "PDF:Keywords": ["anime", "plane", "generated"],
             "PDF:PageCount": 1,
+            "PDF:GTS_PDFXVersion": "PDF/X-1a:2003",
+            "PDF:GTS_PDFXConformance": "PDF/X-1a:2003",
             "XMP:XMP-xmp:CreateDate": "2022:12:06 11:29:06+01:00",
             "XMP:XMP-xmp:ModifyDate": "2022:12:06 11:30:34+01:00",
             "XMP:XMP-xmp:CreatorTool": "PDF Tool Pro",
@@ -37,6 +40,9 @@ def test_process_pdf() -> None:
             "XMP:XMP-pdfe:ISO_PDFEVersion": "PDF/E-1",
             "XMP:XMP-pdfaid:Part": 2,
             "XMP:XMP-pdfaid:Conformance": "A",
+            "XMP:XMP-pdfx:GTS_PDFXVersion": "PDF/X-1a:2003",
+            "XMP:XMP-pdfx:GTS_PDFXConformance": "PDF/X-1a:2003",
+            "XMP:XMP-pdfxid:GTS_PDFXVersion": "PDF/X-4",
         },
         "embeds": {
             "Doc1": {
@@ -113,6 +119,20 @@ def test_process_pdf() -> None:
             ),
             "PDF:PageCount": MetadataField(
                 id="PDF:PageCount", name="PageCount", group="PDF", value=1
+            ),
+            "PDF:GTS_PDFXVersion": MetadataField(
+                id="PDF:GTS_PDFXVersion",
+                name="GTS_PDFXVersion",
+                group="PDF",
+                value="PDF/X-1a:2003",
+                tags=[MetadataTag.COMPLIANCE],
+            ),
+            "PDF:GTS_PDFXConformance": MetadataField(
+                id="PDF:GTS_PDFXConformance",
+                name="GTS_PDFXConformance",
+                group="PDF",
+                value="PDF/X-1a:2003",
+                tags=[MetadataTag.COMPLIANCE],
             ),
             "XMP:XMP-xmp:CreateDate": MetadataField(
                 id="XMP:XMP-xmp:CreateDate",
@@ -200,6 +220,27 @@ def test_process_pdf() -> None:
                 name="XMP-pdfaid:Conformance",
                 group="XMP",
                 value="A",
+                tags=[MetadataTag.COMPLIANCE],
+            ),
+            "XMP:XMP-pdfx:GTS_PDFXVersion": MetadataField(
+                id="XMP:XMP-pdfx:GTS_PDFXVersion",
+                name="XMP-pdfx:GTS_PDFXVersion",
+                group="XMP",
+                value="PDF/X-1a:2003",
+                tags=[MetadataTag.COMPLIANCE],
+            ),
+            "XMP:XMP-pdfx:GTS_PDFXConformance": MetadataField(
+                id="XMP:XMP-pdfx:GTS_PDFXConformance",
+                name="XMP-pdfx:GTS_PDFXConformance",
+                group="XMP",
+                value="PDF/X-1a:2003",
+                tags=[MetadataTag.COMPLIANCE],
+            ),
+            "XMP:XMP-pdfxid:GTS_PDFXVersion": MetadataField(
+                id="XMP:XMP-pdfxid:GTS_PDFXVersion",
+                name="XMP-pdfxid:GTS_PDFXVersion",
+                group="XMP",
+                value="PDF/X-4",
                 tags=[MetadataTag.COMPLIANCE],
             ),
         },

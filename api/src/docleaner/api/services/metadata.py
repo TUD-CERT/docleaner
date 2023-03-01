@@ -8,6 +8,11 @@ PDF_TAGS = {
     "XMP:XMP-pdfe:ISO_PDFEVersion": [MetadataTag.COMPLIANCE],
     "XMP:XMP-pdfaid:Part": [MetadataTag.COMPLIANCE],
     "XMP:XMP-pdfaid:Conformance": [MetadataTag.COMPLIANCE],
+    "PDF:GTS_PDFXVersion": [MetadataTag.COMPLIANCE],
+    "PDF:GTS_PDFXConformance": [MetadataTag.COMPLIANCE],
+    "XMP:XMP-pdfx:GTS_PDFXVersion": [MetadataTag.COMPLIANCE],
+    "XMP:XMP-pdfx:GTS_PDFXConformance": [MetadataTag.COMPLIANCE],
+    "XMP:XMP-pdfxid:GTS_PDFXVersion": [MetadataTag.COMPLIANCE],
 }
 
 
