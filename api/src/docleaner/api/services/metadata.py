@@ -6,6 +6,8 @@ from docleaner.api.core.metadata import DocumentMetadata, MetadataField, Metadat
 PDF_TAGS = {
     "XMP:XMP-pdfuaid:Part": [MetadataTag.ACCESSIBILITY],
     "XMP:XMP-pdfe:ISO_PDFEVersion": [MetadataTag.COMPLIANCE],
+    "XMP:XMP-pdfaid:Part": [MetadataTag.COMPLIANCE],
+    "XMP:XMP-pdfaid:Conformance": [MetadataTag.COMPLIANCE],
 }
 
 

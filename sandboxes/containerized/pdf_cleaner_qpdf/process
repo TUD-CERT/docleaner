@@ -2,7 +2,7 @@
 set -e
 test "${1}" -a "${2}" || exit
 mv "${1}" /tmp/source.pdf  # exiftool demands its source files have the proper extension
-exiftool -config /opt/exiftool.cfg -all= -tagsfromfile @ -title -keywords -subject -description -XMP-pdfuaid:part -XMP-pdfe:ISO_PDFEVersion /tmp/source.pdf -o /tmp/intermediate.pdf
+exiftool -config /opt/exiftool.cfg -all= -tagsfromfile @ -title -keywords -subject -description -XMP-pdfuaid:part -XMP-pdfe:ISO_PDFEVersion -XMP-pdfaid:part -XMP-pdfaid:conformance /tmp/source.pdf -o /tmp/intermediate.pdf
 # For qpdf, only exit code 2 signals a fatal error
 set +e
 qpdf --linearize /tmp/intermediate.pdf "${2}"

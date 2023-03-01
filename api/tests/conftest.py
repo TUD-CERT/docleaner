@@ -1,4 +1,4 @@
-from typing import AsyncGenerator, List
+from typing import AsyncGenerator, List, Tuple
 
 import pytest
 
@@ -81,3 +81,15 @@ def sample_pdfua1() -> bytes:
     with open("tests/resources/pdf-ua1.pdf", "rb") as f:
         result = f.read()
     return result
+
+
+@pytest.fixture
+def samples_pdfa() -> Tuple[bytes, bytes, bytes]:
+    """PDF samples with valid PDF/A-{1,2,3} metadata."""
+    with open("tests/resources/pdf-ua1.pdf", "rb") as f:
+        a1 = f.read()
+    with open("tests/resources/pdf-a2b.pdf", "rb") as f:
+        a2 = f.read()
+    with open("tests/resources/pdf-a3u.pdf", "rb") as f:
+        a3 = f.read()
+    return a1, a2, a3
