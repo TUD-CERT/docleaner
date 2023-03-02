@@ -26,6 +26,7 @@ def test_process_pdf() -> None:
             "PDF:PageCount": 1,
             "PDF:GTS_PDFXVersion": "PDF/X-1a:2003",
             "PDF:GTS_PDFXConformance": "PDF/X-1a:2003",
+            "PDF:GTS_PDFVTVersion": "PDF/VT-1",
             "XMP:XMP-xmp:CreateDate": "2022:12:06 11:29:06+01:00",
             "XMP:XMP-xmp:ModifyDate": "2022:12:06 11:30:34+01:00",
             "XMP:XMP-xmp:CreatorTool": "PDF Tool Pro",
@@ -49,6 +50,7 @@ def test_process_pdf() -> None:
             "XMP:XMP-pdfx:GTS_PDFXVersion": "PDF/X-1a:2003",
             "XMP:XMP-pdfx:GTS_PDFXConformance": "PDF/X-1a:2003",
             "XMP:XMP-pdfxid:GTS_PDFXVersion": "PDF/X-4",
+            "XMP:XMP-pdfvtid:GTS_PDFVTVersion": "PDF/VT-1",
         },
         "embeds": {
             "Doc1": {
@@ -138,6 +140,13 @@ def test_process_pdf() -> None:
                 name="GTS_PDFXConformance",
                 group="PDF",
                 value="PDF/X-1a:2003",
+                tags=[MetadataTag.COMPLIANCE],
+            ),
+            "PDF:GTS_PDFVTVersion": MetadataField(
+                id="PDF:GTS_PDFVTVersion",
+                name="GTS_PDFVTVersion",
+                group="PDF",
+                value="PDF/VT-1",
                 tags=[MetadataTag.COMPLIANCE],
             ),
             "XMP:XMP-xmp:CreateDate": MetadataField(
@@ -261,6 +270,13 @@ def test_process_pdf() -> None:
                 name="XMP-pdfxid:GTS_PDFXVersion",
                 group="XMP",
                 value="PDF/X-4",
+                tags=[MetadataTag.COMPLIANCE],
+            ),
+            "XMP:XMP-pdfvtid:GTS_PDFVTVersion": MetadataField(
+                id="XMP:XMP-pdfvtid:GTS_PDFVTVersion",
+                name="XMP-pdfvtid:GTS_PDFVTVersion",
+                group="XMP",
+                value="PDF/VT-1",
                 tags=[MetadataTag.COMPLIANCE],
             ),
         },

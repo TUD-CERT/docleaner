@@ -103,3 +103,11 @@ def samples_pdfx() -> Tuple[bytes, bytes]:
     with open("tests/resources/pdf-x4.pdf", "rb") as f:
         x4 = f.read()
     return x1, x4
+
+
+@pytest.fixture
+def sample_pdfvt() -> bytes:
+    """PDF sample with valid PDF/VT metadata."""
+    with open("tests/resources/pdf-vt1.pdf", "rb") as f:
+        result = f.read()
+    return result

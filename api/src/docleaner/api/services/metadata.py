@@ -20,6 +20,8 @@ PDF_TAGS = {
     "XMP:XMP-pdfaExtension:SchemasPropertyDescription": [MetadataTag.COMPLIANCE],
     "XMP:XMP-pdfaExtension:SchemasPropertyName": [MetadataTag.COMPLIANCE],
     "XMP:XMP-pdfaExtension:SchemasPropertyValueType": [MetadataTag.COMPLIANCE],
+    "PDF:GTS_PDFVTVersion": [MetadataTag.COMPLIANCE],
+    "XMP:XMP-pdfvtid:GTS_PDFVTVersion": [MetadataTag.COMPLIANCE],
 }
 
 

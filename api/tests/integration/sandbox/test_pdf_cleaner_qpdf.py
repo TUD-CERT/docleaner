@@ -109,3 +109,23 @@ async def test_preserve_pdfx_indicators(samples_pdfx: Tuple[bytes, bytes]) -> No
         == result.metadata_result["primary"]["XMP:XMP-pdfxid:GTS_PDFXVersion"]
         == "PDF/X-4"
     )
+
+
+async def test_preserve_pdfvt_indicators(sample_pdfvt: bytes) -> None:
+    """Preserving the PDF/VT indicators."""
+    sandbox = ContainerizedSandbox(
+        container_image="localhost/docleaner/pdf_cleaner_qpdf",
+        podman_uri="unix:///run/podman.sock",
+    )
+    result = await sandbox.process(sample_pdfvt)
+    assert result.success
+    assert (
+        result.metadata_src["primary"]["PDF:GTS_PDFVTVersion"]
+        == result.metadata_result["primary"]["PDF:GTS_PDFVTVersion"]
+        == "PDF/VT-1"
+    )
+    assert (
+        result.metadata_src["primary"]["XMP:XMP-pdfvtid:GTS_PDFVTVersion"]
+        == result.metadata_result["primary"]["XMP:XMP-pdfvtid:GTS_PDFVTVersion"]
+        == "PDF/VT-1"
+    )
