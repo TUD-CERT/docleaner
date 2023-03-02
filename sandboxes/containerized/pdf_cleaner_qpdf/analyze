@@ -2,10 +2,12 @@
 import json
 import subprocess
 import sys
-from typing import Any, Dict
+from typing import Any, Dict, Union
+
+from pyhanko.pdf_utils.reader import PdfFileReader
 
 
-def preprocess_exiftool_metadata(src: bytes) -> Dict[str, Dict[str, Any]]:
+def preprocess_exiftool_metadata(src: bytes) -> Dict[str, Union[bool, Dict[str, Any]]]:
     """Parses JSON document metadata returned by exiftool into a dictionary
     of the form {'doc': {primary document metadata}, 'embeds': {<id>: <metadata of embedded document>}}.
     In addition, filters out some system- and tool-specific metadata."""
@@ -32,20 +34,34 @@ def preprocess_exiftool_metadata(src: bytes) -> Dict[str, Dict[str, Any]]:
     return metadata
 
 
+def pdf_contains_signatures(path: str) -> bool:
+    with open(path, 'rb') as pdf:
+        try:
+            r = PdfFileReader(pdf)
+            return len(r.embedded_signatures) > 0
+        except Exception as e:
+            print(f"pyHanko Exception: {e}")
+            return False
+
+
 if __name__ == "__main__":
     if len(sys.argv) != 3:
         print("Usage: analyze <path_to_pdf> <result_path>")
         sys.exit(1)
+    src_path = sys.argv[1]
+    result_path = sys.argv[2]
     result = subprocess.run(["exiftool",
                              "-config",
                              "/opt/exiftool.cfg",
                              "-ee",
                              "-G3:0:1",
                              "-j",
-                             sys.argv[1]],
+                             src_path],
                             capture_output=True)
     if result.returncode != 0:
         print(f"Error: {result.stderr}")
         sys.exit(1)
-    with open(sys.argv[2], "w") as f:
-        json.dump(preprocess_exiftool_metadata(result.stdout), f)
+    metadata = preprocess_exiftool_metadata(result.stdout)
+    metadata["signed"] = pdf_contains_signatures(src_path)
+    with open(result_path, "w") as f:
+        json.dump(metadata, f)

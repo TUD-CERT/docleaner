@@ -111,3 +111,11 @@ def sample_pdfvt() -> bytes:
     with open("tests/resources/pdf-vt1.pdf", "rb") as f:
         result = f.read()
     return result
+
+
+@pytest.fixture
+def sample_pdf_signed() -> bytes:
+    """PDF sample with a digial signature."""
+    with open("tests/resources/sample_signed.pdf", "rb") as f:
+        result = f.read()
+    return result

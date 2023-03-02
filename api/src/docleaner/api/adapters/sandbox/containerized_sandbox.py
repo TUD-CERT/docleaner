@@ -4,7 +4,7 @@ import os
 import tarfile
 import traceback
 from tempfile import TemporaryDirectory
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 from podman import PodmanClient  # type: ignore
 from podman.errors.exceptions import APIError as PodmanAPIError  # type: ignore
@@ -36,8 +36,16 @@ class ContainerizedSandbox(Sandbox):
         ) as podman, TemporaryDirectory() as tmpdir:
             log = []
             result_document = b""
-            metadata_result: Dict[str, Dict[str, Any]] = {"primary": {}, "embeds": {}}
-            metadata_src: Dict[str, Dict[str, Any]] = {"primary": {}, "embeds": {}}
+            metadata_result: Dict[str, Union[bool, Dict[str, Any]]] = {
+                "primary": {},
+                "embeds": {},
+                "signed": False,
+            }
+            metadata_src: Dict[str, Union[bool, Dict[str, Any]]] = {
+                "primary": {},
+                "embeds": {},
+                "signed": False,
+            }
             success = False
             # Copy source into container
             source_path = os.path.join(tmpdir, "source")

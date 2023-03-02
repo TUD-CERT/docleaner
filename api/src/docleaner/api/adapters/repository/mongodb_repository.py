@@ -1,6 +1,6 @@
 from dataclasses import asdict
 from datetime import timedelta
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Union
 
 from motor import motor_asyncio
 import pymongo
@@ -186,14 +186,18 @@ class MongoDBRepository(Repository):
 
     @staticmethod
     def _create_document_metadata(
-        raw_data: Dict[str, Dict[str, Any]]
+        raw_data: Dict[str, Union[bool, Dict[str, Any]]]
     ) -> DocumentMetadata:
         embeds = {}
+        assert isinstance(raw_data["primary"], dict)
+        assert isinstance(raw_data["embeds"], dict)
+        assert isinstance(raw_data["signed"], bool)
         for embed_id, embed_data in raw_data["embeds"].items():
             embeds[embed_id] = {k: MetadataField(**v) for k, v in embed_data.items()}
         return DocumentMetadata(
             primary={k: MetadataField(**v) for k, v in raw_data["primary"].items()},
             embeds=embeds,
+            signed=raw_data["signed"],
         )
 
     async def _create_job_from_job_data(

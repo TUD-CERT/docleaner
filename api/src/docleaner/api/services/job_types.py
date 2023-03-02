@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, TYPE_CHECKING
+from typing import Any, Callable, Dict, List, TYPE_CHECKING, Union
 
 from docleaner.api.core.job import JobType
 from docleaner.api.core.metadata import DocumentMetadata
@@ -15,4 +15,6 @@ class SupportedJobType:
     type: JobType
     mimetypes: List[str]
     sandbox: "Sandbox"
-    metadata_processor: Callable[[Dict[str, Dict[str, Any]]], DocumentMetadata]
+    metadata_processor: Callable[
+        [Dict[str, Union[bool, Dict[str, Any]]]], DocumentMetadata
+    ]

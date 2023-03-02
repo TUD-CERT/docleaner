@@ -9,12 +9,12 @@ import httpx
 from docleaner.api.core.job import JobStatus, JobType
 
 
-async def test_clean_document_workflow(web_app: str, sample_pdf: bytes) -> None:
+async def test_clean_document_workflow(web_app: str, sample_pdf_signed: bytes) -> None:
     """End-to-end test uploading a PDF via the REST API, polling until success and downloading the result."""
     async with httpx.AsyncClient() as client:
         # Upload document
         upload_resp = await client.post(
-            f"{web_app}/api/v1/jobs", files={"doc_src": ("test.pdf", sample_pdf)}
+            f"{web_app}/api/v1/jobs", files={"doc_src": ("test.pdf", sample_pdf_signed)}
         )
         assert upload_resp.status_code == 201  # Created
         upload_resp_json = upload_resp.json()
@@ -30,6 +30,11 @@ async def test_clean_document_workflow(web_app: str, sample_pdf: bytes) -> None:
         assert len(job_data["metadata_src"]["primary"]) > 0  # Metadata is present
         assert job_data["metadata_src"]["primary"]["PDF:Author"]["value"] == "John Doe"
         assert "PDF:Author" not in job_data["metadata_result"]["primary"]
+        assert (
+            job_data["metadata_src"]["signed"]
+            is job_data["metadata_result"]["signed"]
+            is True
+        )
         # Download result
         dl_resp = await client.get(f"{web_app}/api/v1/jobs/{jid}/result")
         assert dl_resp.status_code == 200

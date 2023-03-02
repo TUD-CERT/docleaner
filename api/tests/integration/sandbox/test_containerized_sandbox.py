@@ -13,6 +13,8 @@ async def test_process_valid_pdf(sample_pdf: bytes) -> None:
     assert result.success
     assert isinstance(result.result, bytes)
     assert magic.from_buffer(result.result, mime=True) == "application/pdf"
+    assert isinstance(result.metadata_src["primary"], dict)
+    assert isinstance(result.metadata_result["primary"], dict)
     assert result.metadata_src["primary"]["PDF:Subject"] == "testing"
     assert result.metadata_src["primary"]["PDF:Author"] == "John Doe"
     assert (

@@ -21,12 +21,14 @@ class DummySandbox(Sandbox):
             metadata_result={
                 "primary": {"XMP:Author": "Alice", "XMP:Domain": "example.com"},
                 "embeds": {"Doc1": {"XMP:Domain": "example.com"}},
+                "signed": False,
             },
             metadata_src={
                 "primary": {"XMP:Domain": "example.com"},
                 "embeds": {
                     "Doc1": {"XMP:Author": "Alice", "XMP:Domain": "example.com"}
                 },
+                "signed": False,
             },  # Assumes the sandbox didn't purge all metadata
         )
 

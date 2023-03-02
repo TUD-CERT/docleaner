@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 from docleaner.api.core.metadata import DocumentMetadata, MetadataField, MetadataTag
 from docleaner.api.services.metadata import process_pdf_metadata
@@ -6,7 +6,7 @@ from docleaner.api.services.metadata import process_pdf_metadata
 
 def test_process_pdf() -> None:
     """Processing a collection of real-life PDF metadata."""
-    metadata: Dict[str, Dict[str, Any]] = {
+    metadata: Dict[str, Union[bool, Dict[str, Any]]] = {
         "primary": {
             "FileSize": "154 KiB",
             "Composite:ImageSize": "456x318",
@@ -78,6 +78,7 @@ def test_process_pdf() -> None:
                 "File:FileType": "(unsupported)",
             },
         },
+        "signed": True,
     }
     result = process_pdf_metadata(metadata)
     assert result == DocumentMetadata(
@@ -329,4 +330,5 @@ def test_process_pdf() -> None:
                 ),
             }
         },
+        signed=True,
     )

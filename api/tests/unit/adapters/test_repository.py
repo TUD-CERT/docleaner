@@ -95,10 +95,11 @@ async def test_update_job(repo: Repository, sample_pdf: bytes) -> None:
         primary={
             "author": MetadataField(id="author", value="Alice"),
             "year": MetadataField(id="year", value=2000),
-        }
+        },
+        signed=True,
     )
     metadata_result = DocumentMetadata(
-        primary={"author": MetadataField(id="author", value="Alice")}
+        primary={"author": MetadataField(id="author", value="Alice")}, signed=True
     )
     await repo.update_job(
         jid,
@@ -123,6 +124,7 @@ async def test_update_job(repo: Repository, sample_pdf: bytes) -> None:
     assert updated_job.metadata_src.primary["author"].value == "Alice"
     assert updated_job.metadata_src.primary["year"].value == 2000
     assert updated_job.metadata_src.embeds == {}
+    assert updated_job.metadata_src.signed is updated_job.metadata_result.signed is True
 
 
 async def test_update_job_log(repo: Repository, sample_pdf: bytes) -> None:

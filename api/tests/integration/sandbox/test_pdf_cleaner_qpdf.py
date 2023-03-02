@@ -3,6 +3,21 @@ from typing import Tuple
 from docleaner.api.adapters.sandbox.containerized_sandbox import ContainerizedSandbox
 
 
+async def test_retrieve_signature_status(
+    sample_pdf: bytes, sample_pdf_signed: bytes
+) -> None:
+    """The metadata analysis includes a signed marker that indicates
+    whether a document has a digital signature."""
+    sandbox = ContainerizedSandbox(
+        container_image="localhost/docleaner/pdf_cleaner_qpdf",
+        podman_uri="unix:///run/podman.sock",
+    )
+    result = await sandbox.process(sample_pdf_signed)
+    assert result.metadata_src["signed"] is result.metadata_result["signed"] is True
+    result = await sandbox.process(sample_pdf)
+    assert result.metadata_src["signed"] is result.metadata_result["signed"] is False
+
+
 async def test_preserve_pdfua1_indicator(sample_pdfua1: bytes) -> None:
     """Preserving the PDF/UA-1 indicator in accordance with ISO 14289-1."""
     sandbox = ContainerizedSandbox(
@@ -11,6 +26,8 @@ async def test_preserve_pdfua1_indicator(sample_pdfua1: bytes) -> None:
     )
     result = await sandbox.process(sample_pdfua1)
     assert result.success
+    assert isinstance(result.metadata_src["primary"], dict)
+    assert isinstance(result.metadata_result["primary"], dict)
     assert (
         result.metadata_src["primary"]["XMP:XMP-pdfuaid:Part"]
         == result.metadata_result["primary"]["XMP:XMP-pdfuaid:Part"]
@@ -26,6 +43,8 @@ async def test_preserve_pdfe1_indicator(sample_pdfe1: bytes) -> None:
     )
     result = await sandbox.process(sample_pdfe1)
     assert result.success
+    assert isinstance(result.metadata_src["primary"], dict)
+    assert isinstance(result.metadata_result["primary"], dict)
     assert (
         result.metadata_src["primary"]["XMP:XMP-pdfe:ISO_PDFEVersion"]
         == "PDF/E-1"
@@ -49,6 +68,8 @@ async def test_preserve_pdfa_indicators(
     ]:
         result = await sandbox.process(sample)
         assert result.success
+        assert isinstance(result.metadata_src["primary"], dict)
+        assert isinstance(result.metadata_result["primary"], dict)
         assert (
             result.metadata_src["primary"]["XMP:XMP-pdfaid:Part"]
             == result.metadata_result["primary"]["XMP:XMP-pdfaid:Part"]
@@ -82,6 +103,8 @@ async def test_preserve_pdfx_indicators(samples_pdfx: Tuple[bytes, bytes]) -> No
     x1 = samples_pdfx[0]
     result = await sandbox.process(x1)
     assert result.success
+    assert isinstance(result.metadata_src["primary"], dict)
+    assert isinstance(result.metadata_result["primary"], dict)
     assert (
         result.metadata_src["primary"]["PDF:GTS_PDFXVersion"]
         == result.metadata_result["primary"]["PDF:GTS_PDFXVersion"]
@@ -104,6 +127,8 @@ async def test_preserve_pdfx_indicators(samples_pdfx: Tuple[bytes, bytes]) -> No
     )
     x4 = samples_pdfx[1]
     result = await sandbox.process(x4)
+    assert isinstance(result.metadata_src["primary"], dict)
+    assert isinstance(result.metadata_result["primary"], dict)
     assert (
         result.metadata_src["primary"]["XMP:XMP-pdfxid:GTS_PDFXVersion"]
         == result.metadata_result["primary"]["XMP:XMP-pdfxid:GTS_PDFXVersion"]
@@ -119,6 +144,8 @@ async def test_preserve_pdfvt_indicators(sample_pdfvt: bytes) -> None:
     )
     result = await sandbox.process(sample_pdfvt)
     assert result.success
+    assert isinstance(result.metadata_src["primary"], dict)
+    assert isinstance(result.metadata_result["primary"], dict)
     assert (
         result.metadata_src["primary"]["PDF:GTS_PDFVTVersion"]
         == result.metadata_result["primary"]["PDF:GTS_PDFVTVersion"]

@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 from docleaner.api.core.metadata import DocumentMetadata, MetadataField, MetadataTag
 
@@ -25,10 +25,15 @@ PDF_TAGS = {
 }
 
 
-def process_pdf_metadata(src: Dict[str, Dict[str, Any]]) -> DocumentMetadata:
+def process_pdf_metadata(
+    src: Dict[str, Union[bool, Dict[str, Any]]]
+) -> DocumentMetadata:
     """PDF exiftool-generated metadata post-processing. Strips out various tags of
     embedded documents that aren't likely to contain privacy-sensitive metadata."""
     primary_metadata = {}
+    assert isinstance(src["primary"], dict)
+    assert isinstance(src["embeds"], dict)
+    assert isinstance(src["signed"], bool)
     embeds: Dict[str, Dict[str, MetadataField]] = {}
     for field, value in src["primary"].items():
         if ":" in field:
@@ -85,4 +90,6 @@ def process_pdf_metadata(src: Dict[str, Dict[str, Any]]) -> DocumentMetadata:
         # Only attach embeddings that contain actual metadata
         if len([tag for tag in embed_data.keys() if not tag.startswith("_")]) > 0:
             embeds[str(len(embeds))] = embed_data
-    return DocumentMetadata(primary=primary_metadata, embeds=embeds)
+    return DocumentMetadata(
+        primary=primary_metadata, embeds=embeds, signed=src["signed"]
+    )

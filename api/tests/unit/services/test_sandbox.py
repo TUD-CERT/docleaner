@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 import pytest
 
@@ -94,7 +94,9 @@ async def test_exception_during_metadata_processing(
     """An exception thrown during metadata post-processing isn't re-raised,
     but instead the job finishes with an ERROR status."""
 
-    def failing_postprocessor(src: Dict[str, Dict[str, Any]]) -> DocumentMetadata:
+    def failing_postprocessor(
+        src: Dict[str, Union[bool, Dict[str, Any]]]
+    ) -> DocumentMetadata:
         raise ValueError()
 
     job_types[0].metadata_processor = failing_postprocessor
