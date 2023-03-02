@@ -1,13 +1,24 @@
+{% macro render_value(value) %}
+    {% if value is iterable and value is not string %}
+        <ul>
+            {% for val in value %}
+                <li>{{ val|e }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        {{ value|e }}
+    {% endif %}
+{% endmacro %}
 {% if trigger == "dc-job-status" and job_status <= 2 %}
-    <div id="dc-job-status"
-       hx-get="/jobs/{{ jid }}"
-       hx-trigger="load delay:1s"
-       hx-swap="outerHTML">
-        <p>Your job is currently being processed, please wait a bit longer.</p>
-    </div>
+<div id="dc-job-status"
+     hx-get="/jobs/{{ jid }}"
+     hx-trigger="load delay:1s"
+     hx-swap="outerHTML">
+    <p>Your job is currently being processed, please wait a bit longer.</p>
+</div>
 {% else %}
-    <div id="dc-job-details" class="dc-content" {% if trigger == "dc-job-status" %}hx-swap-oob="true"{% endif %}>
-        <h2 {% if job_status <= 2 %}class="text-center"{% endif %}>Job Status - {{ jid }}</h2>
+<div id="dc-job-details" class="dc-content" {% if trigger == "dc-job-status" %}hx-swap-oob="true"{% endif %}>
+<h2 {% if job_status <= 2 %}class="text-center"{% endif %}>Job Status - {{ jid }}</h2>
         {% if job_status <= 2 %}
             <div class="text-center">
                 <div id="dc-job-status"
@@ -66,10 +77,12 @@
                                                 <span class="badge {% if member["id"] in meta_result["primary"] and member["value"] == meta_result["primary"][member["id"]]["value"] %}text-bg-success{% else %}text-bg-danger{% endif %}">{{ MetadataTag(tag).name | title }}</span>
                                             {% endfor %}
                                         </td>
-                                        <td class="text-break {% if member["id"] not in meta_result["primary"]%}text-danger{% endif %}">{{ member["value"]|e }}</td>
+                                        <td class="text-break {% if member["id"] not in meta_result["primary"]%}text-danger{% endif %}">
+                                            {{ render_value(member["value"]) }}
+                                        </td>
                                         <td class="text-break {% if member["id"] in meta_result["primary"] and member["value"] != meta_result["primary"][member["id"]]["value"] %}text-success{% endif %}">
                                             {% if member["id"] in meta_result["primary"] %}
-                                                {{ meta_result["primary"][member["id"]]["value"]|e }}
+                                                {{ render_value(meta_result["primary"][member["id"]]["value"]) }}
                                             {% endif %}
                                         </td>
                                     </tr>
@@ -84,7 +97,7 @@
                                                 {% endfor %}
                                             </td>
                                             <td></td>
-                                            <td class="text-success text-break">{{ result_member["value"]|e }}</td>
+                                            <td class="text-success text-break">{{ render_value(result_member["value"]) }}</td>
                                         </tr>
                                     {% endif %}
                                 {% endfor %}
