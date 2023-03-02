@@ -13,6 +13,13 @@ PDF_TAGS = {
     "XMP:XMP-pdfx:GTS_PDFXVersion": [MetadataTag.COMPLIANCE],
     "XMP:XMP-pdfx:GTS_PDFXConformance": [MetadataTag.COMPLIANCE],
     "XMP:XMP-pdfxid:GTS_PDFXVersion": [MetadataTag.COMPLIANCE],
+    "XMP:XMP-pdfaExtension:SchemasPrefix": [MetadataTag.COMPLIANCE],
+    "XMP:XMP-pdfaExtension:SchemasNamespaceURI": [MetadataTag.COMPLIANCE],
+    "XMP:XMP-pdfaExtension:SchemasSchema": [MetadataTag.COMPLIANCE],
+    "XMP:XMP-pdfaExtension:SchemasPropertyCategory": [MetadataTag.COMPLIANCE],
+    "XMP:XMP-pdfaExtension:SchemasPropertyDescription": [MetadataTag.COMPLIANCE],
+    "XMP:XMP-pdfaExtension:SchemasPropertyName": [MetadataTag.COMPLIANCE],
+    "XMP:XMP-pdfaExtension:SchemasPropertyValueType": [MetadataTag.COMPLIANCE],
 }
 
 

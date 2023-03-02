@@ -40,6 +40,12 @@ def test_process_pdf() -> None:
             "XMP:XMP-pdfe:ISO_PDFEVersion": "PDF/E-1",
             "XMP:XMP-pdfaid:Part": 2,
             "XMP:XMP-pdfaid:Conformance": "A",
+            "XMP:XMP-pdfaExtension:SchemasPrefix": ["pdfx", "pdfuaid", "prism"],
+            "XMP:XMP-pdfaExtension:SchemasSchema": [
+                "PDF/X Schema",
+                "PDF/UA ID Schema",
+                "PRISM metadata",
+            ],
             "XMP:XMP-pdfx:GTS_PDFXVersion": "PDF/X-1a:2003",
             "XMP:XMP-pdfx:GTS_PDFXConformance": "PDF/X-1a:2003",
             "XMP:XMP-pdfxid:GTS_PDFXVersion": "PDF/X-4",
@@ -220,6 +226,20 @@ def test_process_pdf() -> None:
                 name="XMP-pdfaid:Conformance",
                 group="XMP",
                 value="A",
+                tags=[MetadataTag.COMPLIANCE],
+            ),
+            "XMP:XMP-pdfaExtension:SchemasPrefix": MetadataField(
+                id="XMP:XMP-pdfaExtension:SchemasPrefix",
+                name="XMP-pdfaExtension:SchemasPrefix",
+                group="XMP",
+                value=["pdfx", "pdfuaid", "prism"],
+                tags=[MetadataTag.COMPLIANCE],
+            ),
+            "XMP:XMP-pdfaExtension:SchemasSchema": MetadataField(
+                id="XMP:XMP-pdfaExtension:SchemasSchema",
+                name="XMP-pdfaExtension:SchemasSchema",
+                group="XMP",
+                value=["PDF/X Schema", "PDF/UA ID Schema", "PRISM metadata"],
                 tags=[MetadataTag.COMPLIANCE],
             ),
             "XMP:XMP-pdfx:GTS_PDFXVersion": MetadataField(

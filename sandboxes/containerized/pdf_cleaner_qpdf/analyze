@@ -38,7 +38,7 @@ if __name__ == "__main__":
         sys.exit(1)
     result = subprocess.run(["exiftool",
                              "-config",
-                             "/opt/exiftool.cg",
+                             "/opt/exiftool.cfg",
                              "-ee",
                              "-G3:0:1",
                              "-j",

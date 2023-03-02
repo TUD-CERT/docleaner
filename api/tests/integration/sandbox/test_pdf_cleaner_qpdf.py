@@ -37,7 +37,7 @@ async def test_preserve_pdfe1_indicator(sample_pdfe1: bytes) -> None:
 async def test_preserve_pdfa_indicators(
     samples_pdfa: Tuple[bytes, bytes, bytes]
 ) -> None:
-    """Preserving the PDF/A-{1,2,3} indicators in accordance with ISO 19005."""
+    """Preserving the PDF/A-{1,2,3} indicators and schemas in accordance with ISO 19005."""
     sandbox = ContainerizedSandbox(
         container_image="localhost/docleaner/pdf_cleaner_qpdf",
         podman_uri="unix:///run/podman.sock",
@@ -58,6 +58,18 @@ async def test_preserve_pdfa_indicators(
             result.metadata_src["primary"]["XMP:XMP-pdfaid:Conformance"]
             == result.metadata_result["primary"]["XMP:XMP-pdfaid:Conformance"]
             == conformance
+        )
+        assert (
+            result.metadata_src["primary"]["XMP:XMP-pdfaExtension:SchemasPrefix"]
+            == result.metadata_result["primary"]["XMP:XMP-pdfaExtension:SchemasPrefix"]
+            == ["pdfx", "pdfuaid", "prism"]
+        )
+        assert (
+            result.metadata_src["primary"]["XMP:XMP-pdfaExtension:SchemasPropertyName"]
+            == result.metadata_result["primary"][
+                "XMP:XMP-pdfaExtension:SchemasPropertyName"
+            ]
+            == ["AuthoritativeDomain", "part", "aggregationType", "url"]
         )
 
 
