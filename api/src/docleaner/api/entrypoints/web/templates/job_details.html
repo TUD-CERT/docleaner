@@ -77,7 +77,7 @@
                                 </tr>
                                 {% for member in group_members %}
                                     <tr>
-                                        <td><strong>{{ member["name"]|e }}</strong></td>
+                                        <td class="text-break"><strong>{{ member["name"]|e }}</strong></td>
                                         <td>
                                             {% for tag in member["tags"] %}
                                                 <span class="badge {% if member["id"] in meta_result["primary"] and member["value"] == meta_result["primary"][member["id"]]["value"] %}text-bg-success{% else %}text-bg-danger{% endif %}">{{ MetadataTag(tag).name | title }}</span>
@@ -96,7 +96,7 @@
                                 {% for result_member in meta_result["primary"].values() | selectattr("group", "eq", group) %}
                                     {% if result_member["id"] not in meta_src["primary"] %}
                                         <tr>
-                                            <td><strong>{{ result_member["name"]|e }}</strong></td>
+                                            <td class="text-break"><strong>{{ result_member["name"]|e }}</strong></td>
                                             <td>
                                                 {% for tag in result_member["tags"] %}
                                                     <span class="badge text-bg-success">{{ MetadataTag(tag).name | title }}</span>
