@@ -8,8 +8,7 @@ class MetadataTag(IntEnum):
     DELETABLE = 0
     # Categorizations
     ACCESSIBILITY = 100
-    SIGNATURE = 101
-    COMPLIANCE = 102  # A tag required to conform to a certain document standard
+    COMPLIANCE = 101  # A tag required to conform to a certain document standard
 
 
 @dataclass(eq=True, kw_only=True)

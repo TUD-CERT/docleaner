@@ -156,3 +156,29 @@ async def test_preserve_pdfvt_indicators(sample_pdfvt: bytes) -> None:
         == result.metadata_result["primary"]["XMP:XMP-pdfvtid:GTS_PDFVTVersion"]
         == "PDF/VT-1"
     )
+
+
+async def test_preserve_misc_benign_tags(sample_pdfvt: bytes) -> None:
+    """Preserving various unproblematic tags (non-exhaustive)."""
+    sandbox = ContainerizedSandbox(
+        container_image="localhost/docleaner/pdf_cleaner_qpdf",
+        podman_uri="unix:///run/podman.sock",
+    )
+    result = await sandbox.process(sample_pdfvt)
+    assert isinstance(result.metadata_src["primary"], dict)
+    assert isinstance(result.metadata_result["primary"], dict)
+    assert (
+        result.metadata_src["primary"]["XMP:XMP-dc:Format"]
+        == result.metadata_result["primary"]["XMP:XMP-dc:Format"]
+        == "application/pdf"
+    )
+    assert (
+        result.metadata_src["primary"]["PDF:Trapped"]
+        is result.metadata_result["primary"]["PDF:Trapped"]
+        is False
+    )
+    assert (
+        result.metadata_src["primary"]["XMP:XMP-pdf:Trapped"]
+        is result.metadata_result["primary"]["XMP:XMP-pdf:Trapped"]
+        is False
+    )
