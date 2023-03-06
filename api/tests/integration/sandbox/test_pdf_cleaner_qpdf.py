@@ -182,3 +182,14 @@ async def test_preserve_misc_benign_tags(sample_pdfvt: bytes) -> None:
         is result.metadata_result["primary"]["XMP:XMP-pdf:Trapped"]
         is False
     )
+
+
+async def test_exclude_xmptoolkit_tag(sample_pdfua1: bytes) -> None:
+    """The XMP-x:XMPToolkit should neither be preserved nor added by the cleaning process."""
+    sandbox = ContainerizedSandbox(
+        container_image="localhost/docleaner/pdf_cleaner_qpdf",
+        podman_uri="unix:///run/podman.sock",
+    )
+    result = await sandbox.process(sample_pdfua1)
+    assert isinstance(result.metadata_result["primary"], dict)
+    assert "XMP:XMP-x:XMPToolkit" not in result.metadata_result["primary"]
