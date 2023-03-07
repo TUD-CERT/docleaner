@@ -54,7 +54,7 @@ async def test_preserve_pdfe1_indicator(sample_pdfe1: bytes) -> None:
 
 
 async def test_preserve_pdfa_indicators(
-    samples_pdfa: Tuple[bytes, bytes, bytes]
+    samples_pdfa: Tuple[bytes, bytes, bytes, bytes]
 ) -> None:
     """Preserving the PDF/A-{1,2,3} indicators and schemas in accordance with ISO 19005."""
     sandbox = ContainerizedSandbox(
@@ -91,6 +91,14 @@ async def test_preserve_pdfa_indicators(
                 "XMP:XMP-pdfaExtension:SchemasPropertyName"
             ]
             == ["AuthoritativeDomain", "part", "aggregationType", "url"]
+        )
+        result = await sandbox.process(samples_pdfa[3])
+        assert isinstance(result.metadata_src["primary"], dict)
+        assert isinstance(result.metadata_result["primary"], dict)
+        assert (
+                result.metadata_src["primary"]["XMP:XMP-pdfaExtension:SchemasValueTypeType"]
+                == result.metadata_result["primary"]["XMP:XMP-pdfaExtension:SchemasValueTypeType"]
+                == "ContactInfo"
         )
 
 

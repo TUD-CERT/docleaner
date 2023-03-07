@@ -50,6 +50,7 @@ def test_process_pdf() -> None:
                 "PDF/UA ID Schema",
                 "PRISM metadata",
             ],
+            "XMP:XMP-pdfaExtension:SchemasValueTypeType": "ContactInfo",
             "XMP:XMP-pdfx:GTS_PDFXVersion": "PDF/X-1a:2003",
             "XMP:XMP-pdfx:GTS_PDFXConformance": "PDF/X-1a:2003",
             "XMP:XMP-pdfxid:GTS_PDFXVersion": "PDF/X-4",
@@ -260,6 +261,13 @@ def test_process_pdf() -> None:
                 name="XMP-pdfaExtension:SchemasSchema",
                 group="XMP",
                 value=["PDF/X Schema", "PDF/UA ID Schema", "PRISM metadata"],
+                tags=[MetadataTag.COMPLIANCE],
+            ),
+            "XMP:XMP-pdfaExtension:SchemasValueTypeType": MetadataField(
+                id="XMP:XMP-pdfaExtension:SchemasValueTypeType",
+                name="XMP-pdfaExtension:SchemasValueTypeType",
+                group="XMP",
+                value="ContactInfo",
                 tags=[MetadataTag.COMPLIANCE],
             ),
             "XMP:XMP-pdfx:GTS_PDFXVersion": MetadataField(
