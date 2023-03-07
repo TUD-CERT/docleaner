@@ -158,13 +158,39 @@ async def test_preserve_pdfvt_indicators(sample_pdfvt: bytes) -> None:
     )
 
 
-async def test_preserve_misc_benign_tags(sample_pdfvt: bytes) -> None:
+async def test_preserve_legal_tags(sample_pdf_tagged: bytes) -> None:
+    """Preserving tags related to legal/copyright matters."""
+    sandbox = ContainerizedSandbox(
+        container_image="localhost/docleaner/pdf_cleaner_qpdf",
+        podman_uri="unix:///run/podman.sock",
+    )
+    result = await sandbox.process(sample_pdf_tagged)
+    assert isinstance(result.metadata_src["primary"], dict)
+    assert isinstance(result.metadata_result["primary"], dict)
+    assert (
+        result.metadata_src["primary"]["XMP:XMP-dc:Rights-en"]
+        == result.metadata_result["primary"]["XMP:XMP-dc:Rights-en"]
+        == "Copyright (C) 1905, Albert Einstein"
+    )
+    assert (
+        result.metadata_src["primary"]["XMP:XMP-xmpRights:Marked"]
+        is result.metadata_result["primary"]["XMP:XMP-xmpRights:Marked"]
+        is True
+    )
+    assert (
+        result.metadata_src["primary"]["XMP:XMP-xmpRights:WebStatement"]
+        == result.metadata_result["primary"]["XMP:XMP-xmpRights:WebStatement"]
+        == "http://creativecommons.org/licenses/by-nc-nd/3.0/"
+    )
+
+
+async def test_preserve_misc_benign_tags(sample_pdf_tagged: bytes) -> None:
     """Preserving various unproblematic tags (non-exhaustive)."""
     sandbox = ContainerizedSandbox(
         container_image="localhost/docleaner/pdf_cleaner_qpdf",
         podman_uri="unix:///run/podman.sock",
     )
-    result = await sandbox.process(sample_pdfvt)
+    result = await sandbox.process(sample_pdf_tagged)
     assert isinstance(result.metadata_src["primary"], dict)
     assert isinstance(result.metadata_result["primary"], dict)
     assert (
@@ -173,15 +199,36 @@ async def test_preserve_misc_benign_tags(sample_pdfvt: bytes) -> None:
         == "application/pdf"
     )
     assert (
+        result.metadata_src["primary"]["XMP:XMP-dc:Language"]
+        == result.metadata_result["primary"]["XMP:XMP-dc:Language"]
+        == "en"
+    )
+    assert (
+        result.metadata_src["primary"]["XMP:XMP-dc:Type"]
+        == result.metadata_result["primary"]["XMP:XMP-dc:Type"]
+        == "Text"
+    )
+    assert (
+        result.metadata_src["primary"]["XMP:XMP-dc:Title-en"]
+        == result.metadata_result["primary"]["XMP:XMP-dc:Title-en"]
+        == "On a heuristic viewpoint concerning the production and transformation of light"
+    )
+    assert (
+        result.metadata_src["primary"]["XMP:XMP-dc:Title-de"]
+        == result.metadata_result["primary"]["XMP:XMP-dc:Title-de"]
+        == "Über einen die Erzeugung und Verwandlung des Lichtes betreffenden heuristischen Gesichtspunkt"
+    )
+    assert (
+        result.metadata_src["primary"]["XMP:XMP-dc:Description-en"]
+        == result.metadata_result["primary"]["XMP:XMP-dc:Description-en"]
+        == "photoelectric effect"
+    )
+    assert (
         result.metadata_src["primary"]["PDF:Trapped"]
         is result.metadata_result["primary"]["PDF:Trapped"]
         is False
     )
-    assert (
-        result.metadata_src["primary"]["XMP:XMP-pdf:Trapped"]
-        is result.metadata_result["primary"]["XMP:XMP-pdf:Trapped"]
-        is False
-    )
+    assert result.metadata_result["primary"]["XMP:XMP-pdf:Trapped"] is False
 
 
 async def test_exclude_xmptoolkit_tag(sample_pdfua1: bytes) -> None:

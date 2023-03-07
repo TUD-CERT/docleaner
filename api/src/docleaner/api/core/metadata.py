@@ -9,6 +9,7 @@ class MetadataTag(IntEnum):
     # Categorizations
     ACCESSIBILITY = 100
     COMPLIANCE = 101  # A tag required to conform to a certain document standard
+    LEGAL = 102  # Tag related to legal/copyright matters
 
 
 @dataclass(eq=True, kw_only=True)

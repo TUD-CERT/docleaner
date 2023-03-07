@@ -70,6 +70,14 @@ def sample_pdf() -> bytes:
 
 
 @pytest.fixture
+def sample_pdf_tagged() -> bytes:
+    """PDF sample with various XMP tags."""
+    with open("tests/resources/sample_tagged.pdf", "rb") as f:
+        result = f.read()
+    return result
+
+
+@pytest.fixture
 def sample_pdfe1() -> bytes:
     with open("tests/resources/pdf-e1.pdf", "rb") as f:
         result = f.read()
@@ -115,7 +123,7 @@ def sample_pdfvt() -> bytes:
 
 @pytest.fixture
 def sample_pdf_signed() -> bytes:
-    """PDF sample with a digial signature."""
+    """PDF sample with a digital signature."""
     with open("tests/resources/sample_signed.pdf", "rb") as f:
         result = f.read()
     return result

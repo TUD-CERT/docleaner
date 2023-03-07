@@ -34,9 +34,12 @@ def test_process_pdf() -> None:
             "XMP:XMP-pdf:Producer": "PDF Tool Pro",
             "XMP:XMP-pdf:Keywords": "anime, plane, generated",
             "XMP:XMP-dc:Title": "A sample PDF",
+            "XMP:XMP-dc:Title-de": "Ein Beispiel-PDF",
             "XMP:XMP-dc:Creator": "John Doe",
             "XMP:XMP-dc:Description": "testing",
             "XMP:XMP-dc:Subject": ["anime", "plane", "generated"],
+            "XMP:XMP-dc:Rights": "Copyright (C) 1905, Albert Einstein",
+            "XMP:XMP-dc:Rights-en": "Copyright (C) 1905, Albert Einstein",
             "XMP:XMP-pdfuaid:Part": 1,
             "XMP:XMP-pdfe:ISO_PDFEVersion": "PDF/E-1",
             "XMP:XMP-pdfaid:Part": 2,
@@ -51,6 +54,7 @@ def test_process_pdf() -> None:
             "XMP:XMP-pdfx:GTS_PDFXConformance": "PDF/X-1a:2003",
             "XMP:XMP-pdfxid:GTS_PDFXVersion": "PDF/X-4",
             "XMP:XMP-pdfvtid:GTS_PDFVTVersion": "PDF/VT-1",
+            "XMP:XMP-xmpRights:Marked": True,
         },
         "embeds": {
             "Doc1": {
@@ -192,6 +196,12 @@ def test_process_pdf() -> None:
                 group="XMP",
                 value="A sample PDF",
             ),
+            "XMP:XMP-dc:Title-de": MetadataField(
+                id="XMP:XMP-dc:Title-de",
+                name="XMP-dc:Title-de",
+                group="XMP",
+                value="Ein Beispiel-PDF",
+            ),
             "XMP:XMP-dc:Creator": MetadataField(
                 id="XMP:XMP-dc:Creator",
                 name="XMP-dc:Creator",
@@ -279,6 +289,27 @@ def test_process_pdf() -> None:
                 group="XMP",
                 value="PDF/VT-1",
                 tags=[MetadataTag.COMPLIANCE],
+            ),
+            "XMP:XMP-dc:Rights": MetadataField(
+                id="XMP:XMP-dc:Rights",
+                name="XMP-dc:Rights",
+                group="XMP",
+                value="Copyright (C) 1905, Albert Einstein",
+                tags=[MetadataTag.LEGAL],
+            ),
+            "XMP:XMP-dc:Rights-en": MetadataField(
+                id="XMP:XMP-dc:Rights-en",
+                name="XMP-dc:Rights-en",
+                group="XMP",
+                value="Copyright (C) 1905, Albert Einstein",
+                tags=[MetadataTag.LEGAL],
+            ),
+            "XMP:XMP-xmpRights:Marked": MetadataField(
+                id="XMP:XMP-xmpRights:Marked",
+                name="XMP-xmpRights:Marked",
+                group="XMP",
+                value=True,
+                tags=[MetadataTag.LEGAL],
             ),
         },
         embeds={

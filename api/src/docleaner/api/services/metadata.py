@@ -1,4 +1,4 @@
-from typing import Any, Dict, Union
+from typing import Any, Dict, List, Union
 
 from docleaner.api.core.metadata import DocumentMetadata, MetadataField, MetadataTag
 
@@ -22,7 +22,19 @@ PDF_TAGS = {
     "XMP:XMP-pdfaExtension:SchemasPropertyValueType": [MetadataTag.COMPLIANCE],
     "PDF:GTS_PDFVTVersion": [MetadataTag.COMPLIANCE],
     "XMP:XMP-pdfvtid:GTS_PDFVTVersion": [MetadataTag.COMPLIANCE],
+    "XMP:XMP-dc:Rights": [MetadataTag.LEGAL],
+    "XMP:XMP-xmpRights": [MetadataTag.LEGAL],
 }
+
+
+def _identify_tags(field: str) -> List[MetadataTag]:
+    """Returns the matching tags for the given field id. Takes language such as
+    the "-en" in "XMP:XMP-dc:Rights-en" into account by treating the PDF_TAGS
+    keys as prefixes."""
+    for prefix, tags in PDF_TAGS.items():
+        if field.startswith(prefix):
+            return tags
+    return []
 
 
 def process_pdf_metadata(
@@ -49,7 +61,7 @@ def process_pdf_metadata(
             name=field_name,
             group=field_group,
             value=value,
-            tags=PDF_TAGS.get(field, []),
+            tags=_identify_tags(field),
         )
     for embed_name, embed_meta in src["embeds"].items():
         embed_data = {}
@@ -85,7 +97,7 @@ def process_pdf_metadata(
                     name=field_name,
                     value=embed_meta_val,
                     group=field_group,
-                    tags=PDF_TAGS.get(embed_meta_field, []),
+                    tags=_identify_tags(embed_meta_field),
                 )
         # Only attach embeddings that contain actual metadata
         if len([tag for tag in embed_data.keys() if not tag.startswith("_")]) > 0:
