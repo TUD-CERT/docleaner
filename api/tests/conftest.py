@@ -106,7 +106,6 @@ def samples_pdfa() -> Tuple[bytes, bytes, bytes, bytes]:
     return a1, a2, a3, a4
 
 
-
 @pytest.fixture
 def samples_pdfx() -> Tuple[bytes, bytes]:
     """PDF samples with valid PDF/X-{1,4} metadata."""

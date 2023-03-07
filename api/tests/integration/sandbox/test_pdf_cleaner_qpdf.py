@@ -96,9 +96,11 @@ async def test_preserve_pdfa_indicators(
         assert isinstance(result.metadata_src["primary"], dict)
         assert isinstance(result.metadata_result["primary"], dict)
         assert (
-                result.metadata_src["primary"]["XMP:XMP-pdfaExtension:SchemasValueTypeType"]
-                == result.metadata_result["primary"]["XMP:XMP-pdfaExtension:SchemasValueTypeType"]
-                == "ContactInfo"
+            result.metadata_src["primary"]["XMP:XMP-pdfaExtension:SchemasValueTypeType"]
+            == result.metadata_result["primary"][
+                "XMP:XMP-pdfaExtension:SchemasValueTypeType"
+            ]
+            == "ContactInfo"
         )
 
 
@@ -201,6 +203,11 @@ async def test_preserve_misc_benign_tags(sample_pdf_tagged: bytes) -> None:
     result = await sandbox.process(sample_pdf_tagged)
     assert isinstance(result.metadata_src["primary"], dict)
     assert isinstance(result.metadata_result["primary"], dict)
+    assert (
+        result.metadata_src["primary"]["XMP:XMP-pdf:PDFVersion"]
+        == result.metadata_result["primary"]["XMP:XMP-pdf:PDFVersion"]
+        == 1.5
+    )
     assert (
         result.metadata_src["primary"]["XMP:XMP-dc:Format"]
         == result.metadata_result["primary"]["XMP:XMP-dc:Format"]
