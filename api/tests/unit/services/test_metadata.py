@@ -249,25 +249,11 @@ def test_process_pdf() -> None:
                 value="A",
                 tags=[MetadataTag.COMPLIANCE],
             ),
-            "XMP:XMP-pdfaExtension:SchemasPrefix": MetadataField(
-                id="XMP:XMP-pdfaExtension:SchemasPrefix",
-                name="XMP-pdfaExtension:SchemasPrefix",
-                group="XMP",
-                value=["pdfx", "pdfuaid", "prism"],
-                tags=[MetadataTag.COMPLIANCE],
-            ),
-            "XMP:XMP-pdfaExtension:SchemasSchema": MetadataField(
-                id="XMP:XMP-pdfaExtension:SchemasSchema",
-                name="XMP-pdfaExtension:SchemasSchema",
+            "XMP:XMP-pdfaExtension:Schemas": MetadataField(
+                id="XMP:XMP-pdfaExtension:Schemas",
+                name="XMP-pdfaExtension:Schemas",
                 group="XMP",
                 value=["PDF/X Schema", "PDF/UA ID Schema", "PRISM metadata"],
-                tags=[MetadataTag.COMPLIANCE],
-            ),
-            "XMP:XMP-pdfaExtension:SchemasValueTypeType": MetadataField(
-                id="XMP:XMP-pdfaExtension:SchemasValueTypeType",
-                name="XMP-pdfaExtension:SchemasValueTypeType",
-                group="XMP",
-                value="ContactInfo",
                 tags=[MetadataTag.COMPLIANCE],
             ),
             "XMP:XMP-pdfx:GTS_PDFXVersion": MetadataField(

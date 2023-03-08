@@ -50,6 +50,12 @@ def process_pdf_metadata(
             field = f"File:{field}"
         if field_group in ["ICC_Profile", "Composite"]:
             continue
+        # Aggregate all XMP-pdfaExtension:Schemas* into a single tag listing all embedded schemas
+        if field == "XMP:XMP-pdfaExtension:SchemasSchema":
+            field = "XMP:XMP-pdfaExtension:Schemas"
+            field_name = "XMP-pdfaExtension:Schemas"
+        elif field.startswith("XMP:XMP-pdfaExtension:Schemas"):
+            continue
         primary_metadata[field] = MetadataField(
             id=field,
             name=field_name,
