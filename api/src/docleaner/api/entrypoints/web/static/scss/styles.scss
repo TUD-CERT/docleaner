@@ -1,6 +1,7 @@
 @import "~bootstrap/scss/functions";
 
 $primary: #dd2727;
+$secondary: #274275;
 $dark: #002557;
 
 @import "~bootstrap/scss/variables";
@@ -41,4 +42,55 @@ form.htmx-request button {
 // Prevent a spinner that is hidden by default to fade out on page load
 div.htmx-indicator.spinner-border {
   transition: none;
+}
+
+// Full-height navbar buttons with icons
+:root {
+  --bs-nav-link-font-size: 1em;
+}
+button.navbar-toggler svg {
+  color: #fff;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+button.navbar-toggler:focus {
+  box-shadow: none;
+}
+a.nav-link {
+  padding-left: 1em;
+}
+a.nav-link svg {
+  width: 1.6rem;
+  height: 1.6rem;
+  margin-right: .5em;
+}
+ul.navbar-nav {
+  margin-top: .5rem;
+}
+@include media-breakpoint-up(sm) {
+  ul.navbar-nav {
+    column-gap: 2px;
+    margin-top: 0;
+  }
+  header.navbar {
+    padding-top: 0;
+    padding-bottom: 0;
+    min-height: 4.1rem;
+  }
+  li.nav-item {
+    padding-left: 0;
+  }
+  a.nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: .5rem;
+    padding-bottom: .5rem;
+  }
+  a.nav-link:hover {
+    text-decoration: underline;
+  }
+  a.nav-link svg {
+    margin-right: 0;
+  }
 }

@@ -49,7 +49,8 @@ def landing_get(
     request: Request, version: str = Depends(get_version)
 ) -> _TemplateResponse:
     return templates.TemplateResponse(
-        "landing_full.html", {"request": request, "version": version}
+        "landing_full.html",
+        {"request": request, "hide_menu_upload": True, "version": version},
     )
 
 

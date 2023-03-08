@@ -10,15 +10,15 @@
     {% endif %}
 {% endmacro %}
 {% if trigger == "dc-job-status" and job_status <= 2 %}
-<div id="dc-job-status"
-     hx-get="/jobs/{{ jid }}"
-     hx-trigger="load delay:1s"
-     hx-swap="outerHTML">
-    <p>Your job is currently being processed, please wait a bit longer.</p>
-</div>
+    <div id="dc-job-status"
+         hx-get="/jobs/{{ jid }}"
+         hx-trigger="load delay:1s"
+         hx-swap="outerHTML">
+        <p>Your job is currently being processed, please wait a bit longer.</p>
+    </div>
 {% else %}
-<div id="dc-job-details" class="dc-content" {% if trigger == "dc-job-status" %}hx-swap-oob="true"{% endif %}>
-<h2 {% if job_status <= 2 %}class="text-center"{% endif %}>Job Status - {{ jid }}</h2>
+    <div id="dc-job-details" class="dc-content" {% if trigger == "dc-job-status" %}hx-swap-oob="true"{% endif %}>
+        <h2 {% if job_status <= 2 %}class="text-center"{% endif %}>Job Status - {{ jid }}</h2>
         {% if job_status <= 2 %}
             <div class="text-center">
                 <div id="dc-job-status"
@@ -36,7 +36,6 @@
             <pre>{% for log in job_log %}{{ log|e }}{% endfor %}</pre>
             <a href="/" hx-boost="true">Upload another document</a>
         {% else %}
-            <a class="btn btn-sm btn-secondary float-end" href="/" hx-boost="true">Upload another document</a>
             <p>
                 Your job was processed successfully.<br />
                 {% if job_sid is none %}This document will remain available for download for roughly 10 minutes and then be purged from this server.{% endif %}
@@ -197,6 +196,11 @@
                     </div>
                 </div>
             {% endif %}
-    {% endif %}
+        {% endif %}
     </div>
+    {% if job_status in [3, 4] %}
+        <ul id="navbar-menu" class="navbar-nav" hx-swap-oob="true">
+            {% include "navbar_menu.html" %}
+        </ul>
+    {% endif %}
 {% endif %}
