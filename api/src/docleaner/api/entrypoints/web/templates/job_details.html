@@ -36,7 +36,7 @@
             <pre>{% for log in job_log %}{{ log|e }}{% endfor %}</pre>
             <a href="/" hx-boost="true">Upload another document</a>
         {% else %}
-            <a class="float-end" href="/" hx-boost="true">Upload another document</a>
+            <a class="btn btn-sm btn-secondary float-end" href="/" hx-boost="true">Upload another document</a>
             <p>
                 Your job was processed successfully.<br />
                 {% if job_sid is none %}This document will remain available for download for roughly 10 minutes and then be purged from this server.{% endif %}
@@ -62,8 +62,8 @@
                     <table class="table table-sm">
                         <thead>
                             <tr>
-                                <th scope="col" class="col-3"></th>
-                                <th scope="col" class="col-1"></th>
+                                <td class="col-3"></td>
+                                <td class="col-1"></td>
                                 <th scope="col" class="col-4">Original Metadata</th>
                                 <th scope="col" class="col-4">Remaining Metadata</th>
                             </tr>
