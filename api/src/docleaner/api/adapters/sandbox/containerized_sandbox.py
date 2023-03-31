@@ -10,7 +10,7 @@ from podman import PodmanClient  # type: ignore
 from podman.errors.exceptions import APIError as PodmanAPIError  # type: ignore
 from podman.domain.containers import Container  # type: ignore
 
-from docleaner.api.services.sandbox import Sandbox, SandboxResult
+from docleaner.api.core.sandbox import Sandbox, SandboxResult
 
 
 class ContainerizedSandbox(Sandbox):

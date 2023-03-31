@@ -20,7 +20,6 @@ from docleaner.api.entrypoints.web.routers.web import (
 )
 from docleaner.api.services.file_identifier import FileIdentifier
 from docleaner.api.services.job_queue import JobQueue
-from docleaner.api.services.job_types import SupportedJobType
 from docleaner.api.services.jobs import create_job, delete_job, get_job
 from docleaner.api.services.repository import Repository
 from docleaner.api.services.sessions import create_session, delete_session, get_session
@@ -31,7 +30,7 @@ rest_api = APIRouter(prefix="/api/v1")
 
 class JobDetails(BaseModel):
     id: str
-    type: JobType
+    type: str
     log: List[str]
     metadata_result: Optional[DocumentMetadata]
     metadata_src: Optional[DocumentMetadata]
@@ -42,7 +41,7 @@ class JobAbbreviatedDetails(BaseModel):
     id: str
     created: datetime
     updated: datetime
-    type: JobType
+    type: str
     status: JobStatus
 
 
@@ -66,7 +65,7 @@ async def jobs_create(
     session: Optional[str] = None,
     base_url: str = Depends(get_base_url),
     file_identifier: FileIdentifier = Depends(get_file_identifier),
-    job_types: List[SupportedJobType] = Depends(get_job_types),
+    job_types: List[JobType] = Depends(get_job_types),
     repo: Repository = Depends(get_repo),
     queue: JobQueue = Depends(get_queue),
 ) -> Any:
@@ -91,7 +90,7 @@ async def jobs_create(
         response.headers["Location"] = f"{base_url}/api/v1/jobs/{jid}"
         return {
             "id": jid,
-            "type": job_type,
+            "type": job_type.id,
             "log": job_log,
             "metadata_result": job_metadata_result,
             "metadata_src": job_metadata_src,
@@ -119,7 +118,7 @@ async def jobs_get(jid: str, repo: Repository = Depends(get_repo)) -> Any:
         raise RESTException(status_code=status.HTTP_404_NOT_FOUND)
     return {
         "id": jid,
-        "type": job_type,
+        "type": job_type.id,
         "log": job_log,
         "metadata_result": job_metadata_result,
         "metadata_src": job_metadata_src,
@@ -152,13 +151,17 @@ async def sessions_create(
     sid = await create_session(repo)
     response.headers["Location"] = f"{base_url}/api/v1/sessions/{sid}"
     created, updated, jobs_total, jobs_finished, jobs = await get_session(sid, repo)
+    jobs_serialized = [
+        (created, updated, total_jobs, finished_jobs, jobs.id)
+        for created, updated, total_jobs, finished_jobs, jobs in jobs
+    ]
     return {
         "id": sid,
         "created": created,
         "updated": updated,
         "jobs_total": jobs_total,
         "jobs_finished": jobs_finished,
-        "jobs": jobs,
+        "jobs": jobs_serialized,
     }
 
 
@@ -186,7 +189,7 @@ async def sessions_get(
                 "id": jid,
                 "created": job_created,
                 "updated": job_updated,
-                "type": job_type,
+                "type": job_type.id,
                 "status": job_status,
             }
             for jid, job_created, job_updated, job_status, job_type in job_list

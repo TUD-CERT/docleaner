@@ -10,13 +10,12 @@ from docleaner.api.adapters.job_queue.async_job_queue import AsyncJobQueue
 from docleaner.api.adapters.repository.memory_repository import MemoryRepository
 from docleaner.api.adapters.sandbox.dummy_sandbox import DummySandbox
 from docleaner.api.core.job import JobType
+from docleaner.api.core.sandbox import Sandbox
+from docleaner.api.plugins.pdf.metadata import process_pdf_metadata
 from docleaner.api.services.clock import Clock
 from docleaner.api.services.file_identifier import FileIdentifier
 from docleaner.api.services.job_queue import JobQueue
-from docleaner.api.services.job_types import SupportedJobType
-from docleaner.api.services.metadata import process_pdf_metadata
 from docleaner.api.services.repository import Repository
-from docleaner.api.services.sandbox import Sandbox
 
 
 @pytest.fixture
@@ -42,11 +41,12 @@ def file_identifier() -> FileIdentifier:
 
 
 @pytest.fixture
-def job_types(sandbox: Sandbox) -> List[SupportedJobType]:
+def job_types(sandbox: Sandbox) -> List[JobType]:
     return [
-        SupportedJobType(
-            type=JobType.PDF,
+        JobType(
+            id="pdf",
             mimetypes=["application/pdf"],
+            readable_types=["PDF"],
             sandbox=sandbox,
             metadata_processor=process_pdf_metadata,
         )
@@ -55,9 +55,9 @@ def job_types(sandbox: Sandbox) -> List[SupportedJobType]:
 
 @pytest.fixture
 async def queue(
-    repo: Repository, job_types: List[SupportedJobType]
+    repo: Repository, job_types: List[JobType]
 ) -> AsyncGenerator[JobQueue, None]:
-    q = AsyncJobQueue(repo=repo, job_types=job_types, max_concurrent_jobs=3)
+    q = AsyncJobQueue(repo=repo, max_concurrent_jobs=3)
     yield q
     await q.shutdown()
 

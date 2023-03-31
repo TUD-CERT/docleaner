@@ -1,9 +1,10 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import IntEnum
-from typing import List, Optional
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from docleaner.api.core.metadata import DocumentMetadata
+from docleaner.api.core.sandbox import Sandbox
 
 
 class JobStatus(IntEnum):
@@ -14,8 +15,20 @@ class JobStatus(IntEnum):
     ERROR = 4  # Job execution threw an error, a log is available
 
 
-class JobType(IntEnum):
-    PDF = 0
+@dataclass(eq=False, kw_only=True)
+class JobType:
+    """Represents a supported document type and corresponding handlers."""
+
+    id: str  # Unique identification string
+    mimetypes: List[
+        str
+    ]  # Documents are assigned a job type based on a matching mimetype
+    readable_types: List[str]  # Human-readable list of supported document types
+    sandbox: Sandbox  # Sandbox instance to hand jobs of this type to
+    # Metadata post-processor
+    metadata_processor: Callable[
+        [Dict[str, Union[bool, Dict[str, Any]]]], DocumentMetadata
+    ]
 
 
 @dataclass(eq=False, kw_only=True)

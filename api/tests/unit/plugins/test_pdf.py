@@ -1,11 +1,11 @@
 from typing import Any, Dict, Union
 
 from docleaner.api.core.metadata import DocumentMetadata, MetadataField, MetadataTag
-from docleaner.api.services.metadata import process_pdf_metadata
+from docleaner.api.plugins.pdf.metadata import process_pdf_metadata
 
 
-def test_process_pdf() -> None:
-    """Processing a collection of real-life PDF metadata."""
+def test_process_metadata() -> None:
+    """Processing a collection of real-world PDF metadata."""
     metadata: Dict[str, Union[bool, Dict[str, Any]]] = {
         "primary": {
             "FileSize": "154 KiB",

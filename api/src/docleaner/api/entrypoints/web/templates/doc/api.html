@@ -7,7 +7,7 @@
 <p>Upload the document with</p>
 <p><code>curl -F doc_src=@/some/local/path.pdf "{{ base_url }}/api/v1/jobs"</code></p>
 <p>This returns some JSON, which contains a unique job ID (<code>jid</code>) for each uploaded document:</p>
-<p><code>{"id":"(jid)","type":0,"log":[],"metadata_result":{},"metadata_src":{},"status":1}</code></p>
+<p><code>{"id":"(jid)","type":"pdf","log":[],"metadata_result":{},"metadata_src":{},"status":1}</code></p>
 <p>Depending on the current workload, processing your document may take some time. To check the job status, execute</p>
 <p><code>curl {{base_url}}/api/v1/jobs/(jid)</code></p>
 <p>The returned document might be quite large, because it contains your document's metadata after the job has been processed. To figure out the job's status, have a look at the value of <code>status</code>. It should be interpreted as follows:</p>
@@ -27,7 +27,7 @@
 <p>Save the returned session ID <code>(sid)</code> somewhere. To associate jobs with that session, upload documents by specifying that session ID in the upload request, e.g.</p>
 <p><code>curl -F doc_src=@/some/local/path.pdf "{{ base_url }}/api/v1/jobs?session=(sid)"</code></p>
 <p>This returns something similar to</p>
-<p><code>{"id":"(jid)","type":0,"log":[],"metadata_result":{},"metadata_src":{},"status":1}</code></p>
+<p><code>{"id":"(jid)","type":"pdf","log":[],"metadata_result":{},"metadata_src":{},"status":1}</code></p>
 <p>However when using a session, you don't have to remember individual job IDs (jid). Instead, you can track the status of all jobs associated with a session by either visiting <code>{{ base_url }}/sessions/(sid)</code> in a browser, which shows a periodically self-refreshing status overview and all associated jobs, or receive the same data as JSON via the API: <code>curl {{ base_url }}/api/v1/sessions/(sid)</code>. To just view the session summary and omit the detailed job list (which saves a lot of bandwidth), add <code>?jobs=false</code> to the URL. An example response for a session with two associated jobs is:</p>
 <p><code>
     {"id":"(sid)",
@@ -39,12 +39,12 @@
     [{"id":"(jid1)",
     "created":"2023-01-24T15:26:12.659000",
     "updated":"2023-01-24T15:26:12.688000",
-    "type":0,
+    "type":"pdf",
     "status":2},
     {"id":"(jid2)",
     "created":"2023-01-24T15:26:12.165000",
     "updated":"2023-01-24T15:26:12.223000",
-    "type":0,
+    "type":"pdf",
     "status":2}]}</code></p>
 <p>After each job was processed successfully (<code>status</code> is <code>3</code>), download its resulting metadata-cleaned document with</p>
 <p><code>curl -o /download/path.pdf {{ base_url }}/api/v1/jobs/(jid)/result</code></p>

@@ -5,7 +5,13 @@
         <input class="form-control form-control-lg {% if doc_src_invalid is defined %}is-invalid{% endif %}" id="doc_src" name="doc_src" type="file" required />
         {% if doc_src_feedback is defined %}<div class="invalid-feedback">{{ doc_src_feedback }}</div>{% endif %}
     </div>
-    <p>Supported document format(s): PDF</p>
+    <p>Supported document format(s):
+        {% for job_type in  supported_job_types %}
+            {% for readable_type in job_type.readable_types %}
+                {{ readable_type }}
+            {% endfor %}
+        {% endfor %}
+    </p>
     <div class="d-grid">
         <button class="btn btn-primary btn-lg" type="submit">
             <span class="dc-htmx-hideicator">

@@ -3,10 +3,10 @@ import magic
 from docleaner.api.adapters.sandbox.containerized_sandbox import ContainerizedSandbox
 
 
-async def test_process_valid_pdf(sample_pdf: bytes) -> None:
-    """Processing a valid PDF sample in a containerized sandbox."""
+async def test_process_valid_document(sample_pdf: bytes) -> None:
+    """Processing a valid document in a containerized sandbox."""
     sandbox = ContainerizedSandbox(
-        container_image="localhost/docleaner/pdf_cleaner_qpdf",
+        container_image="localhost/docleaner/pdf_cleaner",
         podman_uri="unix:///run/podman.sock",
     )
     result = await sandbox.process(sample_pdf)
@@ -15,28 +15,12 @@ async def test_process_valid_pdf(sample_pdf: bytes) -> None:
     assert magic.from_buffer(result.result, mime=True) == "application/pdf"
     assert isinstance(result.metadata_src["primary"], dict)
     assert isinstance(result.metadata_result["primary"], dict)
-    assert result.metadata_src["primary"]["PDF:Subject"] == "testing"
-    assert result.metadata_src["primary"]["PDF:Author"] == "John Doe"
-    assert (
-        result.metadata_src["primary"]["PDF:Producer"]
-        == "PDF Studio 2018.4.0 Pro - https://www.qoppa.com"
-    )
-    assert result.metadata_src["primary"]["PDF:Creator"] == "PDF Studio 2018 Pro"
-    assert result.metadata_src["primary"]["PDF:Title"] == "A sample PDF"
-    assert result.metadata_src["primary"]["PDF:Keywords"] == [
-        "anime",
-        "plane",
-        "generated",
-    ]
-    assert result.metadata_src["primary"]["XMP:XMP-dc:Title"] == "A sample PDF"
-    for key in ["Author", "Producer", "Creator"]:
-        assert key not in result.metadata_result["primary"]
 
 
-async def test_process_invalid_pdf() -> None:
-    """Attempting to process an invalid PDF sample in a containerized sandbox."""
+async def test_process_invalid_document() -> None:
+    """Attempting to process an invalid document in a containerized sandbox."""
     sandbox = ContainerizedSandbox(
-        container_image="localhost/docleaner/pdf_cleaner_qpdf",
+        container_image="localhost/docleaner/pdf_cleaner",
         podman_uri="unix:///run/podman.sock",
     )
     result = await sandbox.process(b"INVALID_PDF")

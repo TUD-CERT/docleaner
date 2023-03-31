@@ -1,6 +1,6 @@
 import asyncio
 
-from docleaner.api.services.sandbox import Sandbox, SandboxResult
+from docleaner.api.core.sandbox import Sandbox, SandboxResult
 
 
 class DummySandbox(Sandbox):

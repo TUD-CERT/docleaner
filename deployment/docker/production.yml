@@ -3,12 +3,14 @@ services:
 
   api:
     environment:
+      - DOCLEANER_CONF=/etc/docleaner.conf
       - DOCLEANER_URL=https://docleaner.example.com
     image: docleaner/api:latest
     networks:
       - docleaner
     restart: unless-stopped
     volumes:
+      - <path/to/docleaner.conf>:/etc/docleaner.conf
       - <path/to/podman.sock>:/run/podman.sock
 
   proxy:

@@ -17,9 +17,15 @@ class MongoDBRepository(Repository):
     """Repository implementation backed by MongoDB."""
 
     def __init__(
-        self, clock: Clock, db_host: str, db_port: int, db_name: str = "docleaner"
+        self,
+        clock: Clock,
+        job_types: List[JobType],
+        db_host: str,
+        db_port: int,
+        db_name: str = "docleaner",
     ) -> None:
         self._clock = clock
+        self._job_types = job_types
         self._mongo = motor_asyncio.AsyncIOMotorClient(db_host, db_port)
         self._db = self._mongo[db_name]
         self._fs = motor_asyncio.AsyncIOMotorGridFSBucket(self._db)  # type: ignore
@@ -44,6 +50,7 @@ class MongoDBRepository(Repository):
             session_id=sid,
         )
         serialized_job = asdict(job)
+        serialized_job["type"] = job_type.id
         serialized_job["_id"] = serialized_job.pop("id")
         await self._db.jobs.insert_one(serialized_job)
         if sid is not None:
@@ -205,6 +212,9 @@ class MongoDBRepository(Repository):
     ) -> Job:
         """Creates Job instances from raw job data as returned by MongoDB.
         If summary_only is True, omit metadata, the job log, src and result document data from the result."""
+        job_data["type"] = next(
+            filter(lambda jt: jt.id == job_data["type"], self._job_types)
+        )
         job_data["id"] = job_data.pop("_id")
         updated = job_data.pop("updated")
         if summary_only:

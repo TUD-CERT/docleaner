@@ -1,9 +1,8 @@
 import asyncio
-from typing import List, Literal, Set, Union
+from typing import Literal, Set, Union
 
 from docleaner.api.core.job import Job, JobStatus
 from docleaner.api.services.job_queue import JobQueue
-from docleaner.api.services.job_types import SupportedJobType
 from docleaner.api.services.repository import Repository
 from docleaner.api.services.sandbox import process_job_in_sandbox
 
@@ -15,12 +14,10 @@ class AsyncJobQueue(JobQueue):
     def __init__(
         self,
         repo: Repository,
-        job_types: List[SupportedJobType],
         max_concurrent_jobs: int,
     ):
         self._ev_shutdown = asyncio.Event()
         self._repo = repo
-        self._job_types = job_types
         self._max_concurrent_jobs = max_concurrent_jobs
         self._queue: asyncio.Queue[str] = asyncio.Queue()
         self._worker_task = asyncio.create_task(self._worker())
@@ -66,9 +63,7 @@ class AsyncJobQueue(JobQueue):
                     jid = await_job.result()
                     assert isinstance(jid, str)
                     running_tasks.add(
-                        asyncio.create_task(
-                            process_job_in_sandbox(jid, self._job_types, self._repo)
-                        )
+                        asyncio.create_task(process_job_in_sandbox(jid, self._repo))
                     )
                     self._queue.task_done()
                 else:

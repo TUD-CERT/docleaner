@@ -1,6 +1,36 @@
+import magic
 from typing import Tuple
 
 from docleaner.api.adapters.sandbox.containerized_sandbox import ContainerizedSandbox
+
+
+async def test_process_valid_pdf(sample_pdf: bytes) -> None:
+    """Processing a valid PDF sample in a containerized sandbox."""
+    sandbox = ContainerizedSandbox(
+        container_image="localhost/docleaner/pdf_cleaner",
+        podman_uri="unix:///run/podman.sock",
+    )
+    result = await sandbox.process(sample_pdf)
+    assert result.success
+    assert magic.from_buffer(result.result, mime=True) == "application/pdf"
+    assert isinstance(result.metadata_src["primary"], dict)
+    assert isinstance(result.metadata_result["primary"], dict)
+    assert result.metadata_src["primary"]["PDF:Subject"] == "testing"
+    assert result.metadata_src["primary"]["PDF:Author"] == "John Doe"
+    assert (
+        result.metadata_src["primary"]["PDF:Producer"]
+        == "PDF Studio 2018.4.0 Pro - https://www.qoppa.com"
+    )
+    assert result.metadata_src["primary"]["PDF:Creator"] == "PDF Studio 2018 Pro"
+    assert result.metadata_src["primary"]["PDF:Title"] == "A sample PDF"
+    assert result.metadata_src["primary"]["PDF:Keywords"] == [
+        "anime",
+        "plane",
+        "generated",
+    ]
+    assert result.metadata_src["primary"]["XMP:XMP-dc:Title"] == "A sample PDF"
+    for key in ["Author", "Producer", "Creator"]:
+        assert key not in result.metadata_result["primary"]
 
 
 async def test_retrieve_signature_status(
@@ -9,7 +39,7 @@ async def test_retrieve_signature_status(
     """The metadata analysis includes a signed marker that indicates
     whether a document has a digital signature."""
     sandbox = ContainerizedSandbox(
-        container_image="localhost/docleaner/pdf_cleaner_qpdf",
+        container_image="localhost/docleaner/pdf_cleaner",
         podman_uri="unix:///run/podman.sock",
     )
     result = await sandbox.process(sample_pdf_signed)
@@ -21,7 +51,7 @@ async def test_retrieve_signature_status(
 async def test_preserve_pdfua1_indicator(sample_pdfua1: bytes) -> None:
     """Preserving the PDF/UA-1 indicator in accordance with ISO 14289-1."""
     sandbox = ContainerizedSandbox(
-        container_image="localhost/docleaner/pdf_cleaner_qpdf",
+        container_image="localhost/docleaner/pdf_cleaner",
         podman_uri="unix:///run/podman.sock",
     )
     result = await sandbox.process(sample_pdfua1)
@@ -38,7 +68,7 @@ async def test_preserve_pdfua1_indicator(sample_pdfua1: bytes) -> None:
 async def test_preserve_pdfe1_indicator(sample_pdfe1: bytes) -> None:
     """Preserving the PDF/E-1 indicator in accordance with ISO 24517-1:2008-05."""
     sandbox = ContainerizedSandbox(
-        container_image="localhost/docleaner/pdf_cleaner_qpdf",
+        container_image="localhost/docleaner/pdf_cleaner",
         podman_uri="unix:///run/podman.sock",
     )
     result = await sandbox.process(sample_pdfe1)
@@ -58,7 +88,7 @@ async def test_preserve_pdfa_indicators(
 ) -> None:
     """Preserving the PDF/A-{1,2,3} indicators and schemas in accordance with ISO 19005."""
     sandbox = ContainerizedSandbox(
-        container_image="localhost/docleaner/pdf_cleaner_qpdf",
+        container_image="localhost/docleaner/pdf_cleaner",
         podman_uri="unix:///run/podman.sock",
     )
     for sample, part, conformance in [
@@ -107,7 +137,7 @@ async def test_preserve_pdfa_indicators(
 async def test_preserve_pdfx_indicators(samples_pdfx: Tuple[bytes, bytes]) -> None:
     """Preserving the PDF/X indicators in accordance with ISO 15930."""
     sandbox = ContainerizedSandbox(
-        container_image="localhost/docleaner/pdf_cleaner_qpdf",
+        container_image="localhost/docleaner/pdf_cleaner",
         podman_uri="unix:///run/podman.sock",
     )
     x1 = samples_pdfx[0]
@@ -149,7 +179,7 @@ async def test_preserve_pdfx_indicators(samples_pdfx: Tuple[bytes, bytes]) -> No
 async def test_preserve_pdfvt_indicators(sample_pdfvt: bytes) -> None:
     """Preserving the PDF/VT indicators."""
     sandbox = ContainerizedSandbox(
-        container_image="localhost/docleaner/pdf_cleaner_qpdf",
+        container_image="localhost/docleaner/pdf_cleaner",
         podman_uri="unix:///run/podman.sock",
     )
     result = await sandbox.process(sample_pdfvt)
@@ -171,7 +201,7 @@ async def test_preserve_pdfvt_indicators(sample_pdfvt: bytes) -> None:
 async def test_preserve_legal_tags(sample_pdf_tagged: bytes) -> None:
     """Preserving tags related to legal/copyright matters."""
     sandbox = ContainerizedSandbox(
-        container_image="localhost/docleaner/pdf_cleaner_qpdf",
+        container_image="localhost/docleaner/pdf_cleaner",
         podman_uri="unix:///run/podman.sock",
     )
     result = await sandbox.process(sample_pdf_tagged)
@@ -197,7 +227,7 @@ async def test_preserve_legal_tags(sample_pdf_tagged: bytes) -> None:
 async def test_preserve_misc_benign_tags(sample_pdf_tagged: bytes) -> None:
     """Preserving various unproblematic tags (non-exhaustive)."""
     sandbox = ContainerizedSandbox(
-        container_image="localhost/docleaner/pdf_cleaner_qpdf",
+        container_image="localhost/docleaner/pdf_cleaner",
         podman_uri="unix:///run/podman.sock",
     )
     result = await sandbox.process(sample_pdf_tagged)
@@ -249,7 +279,7 @@ async def test_preserve_misc_benign_tags(sample_pdf_tagged: bytes) -> None:
 async def test_exclude_xmptoolkit_tag(sample_pdfua1: bytes) -> None:
     """The XMP-x:XMPToolkit should neither be preserved nor added by the cleaning process."""
     sandbox = ContainerizedSandbox(
-        container_image="localhost/docleaner/pdf_cleaner_qpdf",
+        container_image="localhost/docleaner/pdf_cleaner",
         podman_uri="unix:///run/podman.sock",
     )
     result = await sandbox.process(sample_pdfua1)

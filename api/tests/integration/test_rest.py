@@ -6,7 +6,7 @@ import re
 
 import httpx
 
-from docleaner.api.core.job import JobStatus, JobType
+from docleaner.api.core.job import JobStatus
 
 
 async def test_clean_document_workflow(web_app: str, sample_pdf_signed: bytes) -> None:
@@ -19,7 +19,7 @@ async def test_clean_document_workflow(web_app: str, sample_pdf_signed: bytes) -
         assert upload_resp.status_code == 201  # Created
         upload_resp_json = upload_resp.json()
         jid = upload_resp_json["id"]
-        assert upload_resp_json["type"] == JobType.PDF
+        assert upload_resp_json["type"] == "pdf"
         assert upload_resp.headers["content-type"] == "application/json"
         job_url = f"{web_app}/api/v1/jobs/{jid}"
         assert upload_resp.headers["location"] == job_url
@@ -119,7 +119,7 @@ async def test_clean_multiple_documents_with_session_workflow(
         for job_data in session_data["jobs"]:
             assert job_data["id"] in {jid1, jid2}
             assert job_data["status"] == JobStatus.SUCCESS
-            assert job_data["type"] == JobType.PDF
+            assert job_data["type"] == "pdf"
             assert isinstance(job_data["created"], str)
             assert isinstance(job_data["updated"], str)
         # Download one of the results

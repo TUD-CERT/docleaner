@@ -1,6 +1,6 @@
 import asyncio
 import os
-from typing import AsyncGenerator
+from typing import AsyncGenerator, List
 
 from motor import motor_asyncio
 import pytest
@@ -8,13 +8,16 @@ import uvicorn
 
 from docleaner.api.adapters.repository.mongodb_repository import MongoDBRepository
 from docleaner.api.adapters.sandbox.containerized_sandbox import ContainerizedSandbox
+from docleaner.api.core.job import JobType
+from docleaner.api.core.sandbox import Sandbox
 from docleaner.api.services.clock import Clock
 from docleaner.api.services.repository import Repository
-from docleaner.api.services.sandbox import Sandbox
 
 
 @pytest.fixture
-async def repo(clock: Clock) -> AsyncGenerator[Repository, None]:
+async def repo(
+    clock: Clock, job_types: List[JobType]
+) -> AsyncGenerator[Repository, None]:
     # Delete existing database (if it exists)
     db_host = "database"
     db_port = 27017
@@ -23,7 +26,7 @@ async def repo(clock: Clock) -> AsyncGenerator[Repository, None]:
     if db_name in await mongo.list_database_names():
         await mongo.drop_database(db_name)
     mongo.close()
-    repo = MongoDBRepository(clock, db_host, db_port, db_name)
+    repo = MongoDBRepository(clock, job_types, db_host, db_port, db_name)
     yield repo
     await repo.disconnect()
 
@@ -31,7 +34,7 @@ async def repo(clock: Clock) -> AsyncGenerator[Repository, None]:
 @pytest.fixture
 def sandbox() -> Sandbox:
     return ContainerizedSandbox(
-        container_image="localhost/docleaner/pdf_cleaner_qpdf",
+        container_image="localhost/docleaner/pdf_cleaner",
         podman_uri="unix:///run/podman.sock",
     )
 

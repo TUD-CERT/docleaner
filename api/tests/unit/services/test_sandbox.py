@@ -5,30 +5,19 @@ import pytest
 from docleaner.api.adapters.sandbox.dummy_sandbox import DummySandbox
 from docleaner.api.core.job import Job, JobStatus, JobType
 from docleaner.api.core.metadata import DocumentMetadata
-from docleaner.api.services.job_types import SupportedJobType
-from docleaner.api.services.metadata import process_pdf_metadata
 from docleaner.api.services.repository import Repository
 from docleaner.api.services.sandbox import process_job_in_sandbox
 from docleaner.api.utils import generate_token
 
 
 async def test_process_successful_job_in_sandbox(
-    repo: Repository, sample_pdf: bytes
+    repo: Repository, sample_pdf: bytes, job_types: List[JobType]
 ) -> None:
     """Successfully processing a job in a dummy sandbox
     and storing the result in the repository."""
-    jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+    jid = await repo.add_job(sample_pdf, "sample.pdf", job_types[0])
     await repo.update_job(jid, status=JobStatus.QUEUED)
-    sandbox = DummySandbox()
-    job_types = [
-        SupportedJobType(
-            type=JobType.PDF,
-            mimetypes=["application/pdf"],
-            sandbox=sandbox,
-            metadata_processor=process_pdf_metadata,
-        )
-    ]
-    await process_job_in_sandbox(jid, job_types, repo)
+    await process_job_in_sandbox(jid, repo)
     found_job = await repo.find_job(jid)
     assert isinstance(found_job, Job)
     assert found_job.status == JobStatus.SUCCESS
@@ -42,22 +31,15 @@ async def test_process_successful_job_in_sandbox(
 
 
 async def test_process_unsuccessful_job_in_sandbox(
-    repo: Repository, sample_pdf: bytes
+    repo: Repository, sample_pdf: bytes, job_types: List[JobType]
 ) -> None:
     """Processing a job that fails during execution in a dummy
     sandbox and storing the result in the repository."""
-    jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
-    await repo.update_job(jid, status=JobStatus.QUEUED)
     sandbox = DummySandbox(simulate_errors=True)
-    job_types = [
-        SupportedJobType(
-            type=JobType.PDF,
-            mimetypes=["application/pdf"],
-            sandbox=sandbox,
-            metadata_processor=process_pdf_metadata,
-        )
-    ]
-    await process_job_in_sandbox(jid, job_types, repo)
+    job_types[0].sandbox = sandbox
+    jid = await repo.add_job(sample_pdf, "sample.pdf", job_types[0])
+    await repo.update_job(jid, status=JobStatus.QUEUED)
+    await process_job_in_sandbox(jid, repo)
     found_job = await repo.find_job(jid)
     assert isinstance(found_job, Job)
     assert found_job.status == JobStatus.ERROR
@@ -66,30 +48,21 @@ async def test_process_unsuccessful_job_in_sandbox(
 
 
 async def test_process_invalid_job_in_sandbox(
-    repo: Repository, sample_pdf: bytes
+    repo: Repository, sample_pdf: bytes, job_types: List[JobType]
 ) -> None:
     """Attempting to process an invalid job id in the sandbox raises an exception."""
     # Invalid jid
-    sandbox = DummySandbox()
-    job_types = [
-        SupportedJobType(
-            type=JobType.PDF,
-            mimetypes=["application/pdf"],
-            sandbox=sandbox,
-            metadata_processor=process_pdf_metadata,
-        )
-    ]
     with pytest.raises(ValueError):
-        await process_job_in_sandbox(generate_token(), job_types, repo)
+        await process_job_in_sandbox(generate_token(), repo)
     # Invalid job status
-    jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+    jid = await repo.add_job(sample_pdf, "sample.pdf", job_types[0])
     await repo.update_job(jid, status=JobStatus.ERROR)
     with pytest.raises(ValueError):
-        await process_job_in_sandbox(jid, job_types, repo)
+        await process_job_in_sandbox(jid, repo)
 
 
 async def test_exception_during_metadata_processing(
-    repo: Repository, sample_pdf: bytes, job_types: List[SupportedJobType]
+    repo: Repository, sample_pdf: bytes, job_types: List[JobType]
 ) -> None:
     """An exception thrown during metadata post-processing isn't re-raised,
     but instead the job finishes with an ERROR status."""
@@ -100,9 +73,9 @@ async def test_exception_during_metadata_processing(
         raise ValueError()
 
     job_types[0].metadata_processor = failing_postprocessor
-    jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+    jid = await repo.add_job(sample_pdf, "sample.pdf", job_types[0])
     await repo.update_job(jid, status=JobStatus.QUEUED)
-    await process_job_in_sandbox(jid, job_types, repo)
+    await process_job_in_sandbox(jid, repo)
     found_job = await repo.find_job(jid)
     assert isinstance(found_job, Job)
     assert found_job.status == JobStatus.ERROR

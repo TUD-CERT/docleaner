@@ -1,3 +1,5 @@
+import importlib
+from configparser import ConfigParser
 from importlib.metadata import version
 import os
 from typing import List
@@ -5,18 +7,19 @@ from typing import List
 from fastapi.templating import Jinja2Templates
 
 from docleaner.api.bootstrap import bootstrap
+from docleaner.api.core.job import JobType
 from docleaner.api.core.metadata import MetadataTag
 from docleaner.api.services.clock import Clock
 from docleaner.api.services.file_identifier import FileIdentifier
 from docleaner.api.services.job_queue import JobQueue
-from docleaner.api.services.job_types import SupportedJobType
 from docleaner.api.services.repository import Repository
 
 
 _base_url: str
+_config: ConfigParser
 _clock: Clock
 _file_identifier: FileIdentifier
-_job_types: List[SupportedJobType]
+_job_types: List[JobType]
 _queue: JobQueue
 _repo: Repository
 _version: str
@@ -28,11 +31,21 @@ templates.env.globals["MetadataTag"] = MetadataTag
 
 def init() -> None:
     global _clock, _file_identifier, _job_types, _queue, _repo, _base_url, _version
-    _clock, _file_identifier, _job_types, _queue, _repo = bootstrap()
+    if "DOCLEANER_CONF" not in os.environ:
+        raise ValueError("Environment variable DOCLEANER_CONF is not set!")
+    _config = ConfigParser()
+    _config.read(os.environ["DOCLEANER_CONF"])
     if "DOCLEANER_URL" not in os.environ:
         raise ValueError("Environment variable DOCLEANER_URL is not set!")
     _base_url = os.environ["DOCLEANER_URL"]
     _version = version("docleaner-api")
+    # Load plugins according to config
+    job_types = []
+    for section in _config.sections():
+        if section.startswith("plugins."):
+            plugin = importlib.import_module(f"docleaner.api.{section}")
+            job_types.extend(plugin.get_job_types(_config))
+    _clock, _file_identifier, _job_types, _queue, _repo = bootstrap(job_types)
 
 
 def get_clock() -> Clock:
@@ -43,7 +56,7 @@ def get_file_identifier() -> FileIdentifier:
     return _file_identifier
 
 
-def get_job_types() -> List[SupportedJobType]:
+def get_job_types() -> List[JobType]:
     return _job_types
 
 

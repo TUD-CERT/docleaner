@@ -1,6 +1,0 @@
-#!/bin/sh
-set -e
-test "${1}" -a "${2}" || exit
-mv "${1}" /tmp/source.pdf
-mat2 /tmp/source.pdf
-mv /tmp/source.cleaned.pdf "${2}"

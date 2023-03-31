@@ -3,12 +3,15 @@ Requires an out-of-process database instance such as MongoDB.
 Maintenance tasks are intended to be run via a periodic scheduling tool such as cron."""
 import argparse
 import asyncio
+from configparser import ConfigParser
 from datetime import timedelta
+import importlib
+import os
 import sys
-from typing import Optional
+from typing import List, Optional
 
 from docleaner.api.bootstrap import bootstrap
-from docleaner.api.core.job import JobStatus
+from docleaner.api.core.job import JobStatus, JobType
 from docleaner.api.entrypoints.ctl.utils import status_to_string
 from docleaner.api.services.jobs import (
     get_job,
@@ -21,13 +24,14 @@ from docleaner.api.services.sessions import purge_sessions
 
 
 async def purge(
+    job_types: List[JobType],
     no_standalone_job_purging: bool,
     no_session_purging: bool,
     job_keepalive: int,
     session_keepalive: int,
     quiet: bool = False,
 ) -> None:
-    clock, file_identifier, job_types, queue, repo = bootstrap()
+    clock, file_identifier, job_types, queue, repo = bootstrap(job_types)
     if not no_standalone_job_purging:
         purged_jids = await purge_jobs(
             purge_after=timedelta(minutes=job_keepalive), repo=repo
@@ -42,8 +46,10 @@ async def purge(
             print(f"Purged sessions: {len(purged_sids)}")
 
 
-async def show_status() -> None:
-    clock, file_identifier, job_types, queue, repo = bootstrap()
+async def show_status(
+    job_types: List[JobType],
+) -> None:
+    clock, file_identifier, job_types, queue, repo = bootstrap(job_types)
     total_jobs, created, queued, running, success, error = await get_job_stats(repo)
     current_jobs = created + queued + running + success + error
     print(
@@ -52,16 +58,18 @@ async def show_status() -> None:
     )
 
 
-async def diag_list(status: JobStatus) -> None:
-    clock, file_identifier, job_types, queue, repo = bootstrap()
+async def diag_list(job_types: List[JobType], status: JobStatus) -> None:
+    clock, file_identifier, job_types, queue, repo = bootstrap(job_types)
     jobs = await get_jobs(status, repo)
     print("jid / type")
     for jid, job_type, job_log in jobs:
         print(f"{jid} / {job_type}")
 
 
-async def diag_job_details(jid: str, src_out_path: Optional[str] = None) -> None:
-    clock, file_identifier, job_types, queue, repo = bootstrap()
+async def diag_job_details(
+    job_types: List[JobType], jid: str, src_out_path: Optional[str] = None
+) -> None:
+    clock, file_identifier, job_types, queue, repo = bootstrap(job_types)
     try:
         job_status, job_type, job_log, _, _, sid = await get_job(jid, repo)
         if job_status in [JobStatus.QUEUED, JobStatus.SUCCESS]:
@@ -88,8 +96,8 @@ async def diag_job_details(jid: str, src_out_path: Optional[str] = None) -> None
         sys.exit(1)
 
 
-async def debug_delete_job(jid: str) -> None:
-    clock, file_identifier, job_types, queue, repo = bootstrap()
+async def debug_delete_job(job_types: List[JobType], jid: str) -> None:
+    clock, file_identifier, job_types, queue, repo = bootstrap(job_types)
     try:
         await repo.delete_job(jid)
         print(f"Job {jid} deleted successfully from the database")
@@ -98,9 +106,10 @@ async def debug_delete_job(jid: str) -> None:
         sys.exit(1)
 
 
-def cmd_tasks(args: argparse.Namespace) -> None:
+def cmd_tasks(args: argparse.Namespace, job_types: List[JobType]) -> None:
     asyncio.run(
         purge(
+            job_types,
             args.no_standalone_job_purging,
             args.no_session_purging,
             args.job_keepalive,
@@ -110,29 +119,43 @@ def cmd_tasks(args: argparse.Namespace) -> None:
     )
 
 
-def cmd_status(args: argparse.Namespace) -> None:
-    asyncio.run(show_status())
+def cmd_status(args: argparse.Namespace, job_types: List[JobType]) -> None:
+    asyncio.run(show_status(job_types))
 
 
-def cmd_diag_err(args: argparse.Namespace) -> None:
+def cmd_diag_err(args: argparse.Namespace, job_types: List[JobType]) -> None:
+    if args.jid is not None:
+        asyncio.run(diag_job_details(job_types, args.jid, args.save_src))
+    else:
+        asyncio.run(diag_list(job_types, JobStatus.ERROR))
+
+
+def cmd_diag_run(args: argparse.Namespace, job_types: List[JobType]) -> None:
     if args.jid is not None:
         asyncio.run(diag_job_details(args.jid, args.save_src))
     else:
-        asyncio.run(diag_list(JobStatus.ERROR))
+        asyncio.run(diag_list(job_types, JobStatus.RUNNING))
 
 
-def cmd_diag_run(args: argparse.Namespace) -> None:
-    if args.jid is not None:
-        asyncio.run(diag_job_details(args.jid, args.save_src))
-    else:
-        asyncio.run(diag_list(JobStatus.RUNNING))
-
-
-def cmd_debug(args: argparse.Namespace) -> None:
+def cmd_debug(args: argparse.Namespace, job_types: List[JobType]) -> None:
     if args.delete_jid is not None:
-        asyncio.run(debug_delete_job(args.delete_jid))
+        asyncio.run(debug_delete_job(job_types, args.delete_jid))
     else:
         print("No debug command specified")
+
+
+def init() -> List[JobType]:
+    if "DOCLEANER_CONF" not in os.environ:
+        raise ValueError("Environment variable DOCLEANER_CONF is not set!")
+    _config = ConfigParser()
+    _config.read(os.environ["DOCLEANER_CONF"])
+    # Load plugins according to config
+    job_types = []
+    for section in _config.sections():
+        if section.startswith("plugins."):
+            plugin = importlib.import_module(f"docleaner.api.{section}")
+            job_types.extend(plugin.get_job_types(_config))
+    return job_types
 
 
 def main() -> None:
@@ -212,7 +235,7 @@ def main() -> None:
     debug_parser.set_defaults(func=cmd_debug)
     args = parser.parse_args()
     if "func" in args:
-        args.func(args)
+        args.func(args, init())
     else:
         print("No command specified")
 

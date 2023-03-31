@@ -9,7 +9,6 @@ from docleaner.api.core.job import JobStatus, JobType
 from docleaner.api.core.metadata import DocumentMetadata
 from docleaner.api.services.file_identifier import FileIdentifier
 from docleaner.api.services.job_queue import JobQueue
-from docleaner.api.services.job_types import SupportedJobType
 from docleaner.api.services.jobs import (
     await_job,
     create_job,
@@ -30,20 +29,20 @@ async def test_process_pdf_job(
     repo: Repository,
     queue: JobQueue,
     file_identifier: FileIdentifier,
-    job_types: List[SupportedJobType],
+    job_types: List[JobType],
 ) -> None:
     """Creating a PDF cleaning job, waiting until processing is complete and retrieving the result."""
     jid, job_type = await create_job(
         sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types
     )
     assert isinstance(jid, str) and len(jid) > 0
-    assert job_type == JobType.PDF
+    assert job_type == job_types[0]
     # Wait until job completion
     result_status, result_type, log, metadata_src, metadata_result = await await_job(
         jid, repo
     )
     assert result_status == JobStatus.SUCCESS
-    assert result_type == JobType.PDF
+    assert result_type == job_types[0]
     assert isinstance(log, list)
     assert isinstance(metadata_src, DocumentMetadata) and len(metadata_src.primary) > 0
     assert (
@@ -61,7 +60,7 @@ async def test_process_invalid_job(
     repo: Repository,
     queue: JobQueue,
     file_identifier: FileIdentifier,
-    job_types: List[SupportedJobType],
+    job_types: List[JobType],
 ) -> None:
     """Attempting to create a job from an unsupported document type raises an exception."""
     with pytest.raises(ValueError, match=r".*Unsupported document.*"):
@@ -70,7 +69,7 @@ async def test_process_invalid_job(
         )
 
 
-async def test_services_with_nonexisting_job(repo: Repository, queue: JobQueue) -> None:
+async def test_services_with_nonexisting_job(repo: Repository) -> None:
     """Attempting to call various services with a nonexistent job raises exceptions."""
     with pytest.raises(ValueError, match=r".*does not exist.*"):
         await await_job("invalid", repo)
@@ -89,7 +88,7 @@ async def test_await_twice(
     repo: Repository,
     queue: JobQueue,
     file_identifier: FileIdentifier,
-    job_types: List[SupportedJobType],
+    job_types: List[JobType],
 ) -> None:
     """Attempting to await a job that has been successfully awaited previously
     succeeds and returns identical results."""
@@ -108,14 +107,16 @@ async def test_await_twice(
         assert x == y
 
 
-async def test_get_unfinished_job_details(sample_pdf: bytes, repo: Repository) -> None:
+async def test_get_unfinished_job_details(
+    sample_pdf: bytes, repo: Repository, job_types: List[JobType]
+) -> None:
     """Retrieving details for a job that hasn't been finished yet."""
-    jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+    jid = await repo.add_job(sample_pdf, "sample.pdf", job_types[0])
     job_status, job_type, job_log, job_meta_src, job_meta_result, _ = await get_job(
         jid, repo
     )
     assert job_status == JobStatus.CREATED
-    assert job_type == JobType.PDF
+    assert job_type == job_types[0]
 
 
 async def test_get_finished_job_details(
@@ -123,7 +124,7 @@ async def test_get_finished_job_details(
     repo: Repository,
     queue: JobQueue,
     file_identifier: FileIdentifier,
-    job_types: List[SupportedJobType],
+    job_types: List[JobType],
 ) -> None:
     """Retrieving details for a job that has been finished."""
     jid, job_type = await create_job(
@@ -134,7 +135,7 @@ async def test_get_finished_job_details(
         jid, repo
     )
     assert job_status == JobStatus.SUCCESS
-    assert job_type == JobType.PDF
+    assert job_type == job_types[0]
     assert isinstance(job_meta_src, DocumentMetadata)
     assert len(job_meta_src.primary) > 0
 
@@ -144,7 +145,7 @@ async def test_get_jobs_with_specific_state(
     repo: Repository,
     queue: JobQueue,
     file_identifier: FileIdentifier,
-    job_types: List[SupportedJobType],
+    job_types: List[JobType],
 ) -> None:
     """Retrieving a lists of jobs with a specific status."""
     # Create jobs in various states
@@ -158,12 +159,12 @@ async def test_get_jobs_with_specific_state(
         await await_job(successful_jid, repo)
         successful_jids.add(successful_jid)
     for i in range(3):
-        running_jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+        running_jid = await repo.add_job(sample_pdf, "sample.pdf", job_types[0])
         await repo.update_job(running_jid, status=JobStatus.RUNNING)
         running_jids.add(running_jid)
-    created_jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+    created_jid = await repo.add_job(sample_pdf, "sample.pdf", job_types[0])
     for i in range(4):
-        queued_jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+        queued_jid = await repo.add_job(sample_pdf, "sample.pdf", job_types[0])
         await repo.update_job(queued_jid, status=JobStatus.QUEUED)
         queued_jids.add(queued_jid)
     # Retrieve jobs by their status
@@ -179,7 +180,7 @@ async def test_get_job_source(
     repo: Repository,
     queue: JobQueue,
     file_identifier: FileIdentifier,
-    job_types: List[SupportedJobType],
+    job_types: List[JobType],
 ) -> None:
     """Retrieving the source document of a job."""
     jid, _ = await create_job(
@@ -190,9 +191,11 @@ async def test_get_job_source(
     assert job_name == "sample.pdf"
 
 
-async def test_get_unfinished_job_result(sample_pdf: bytes, repo: Repository) -> None:
+async def test_get_unfinished_job_result(
+    sample_pdf: bytes, repo: Repository, job_types: List[JobType]
+) -> None:
     """Attempting to retrieve the result of a yet unfinished job raises an exception."""
-    jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+    jid = await repo.add_job(sample_pdf, "sample.pdf", job_types[0])
     with pytest.raises(ValueError, match=r".*didn't complete.*"):
         await get_job_result(jid, repo)
 
@@ -202,7 +205,7 @@ async def test_get_job_stats(
     repo: Repository,
     queue: JobQueue,
     file_identifier: FileIdentifier,
-    job_types: List[SupportedJobType],
+    job_types: List[JobType],
 ) -> None:
     """Retrieving global job statistics."""
     assert await get_job_stats(repo) == (0, 0, 0, 0, 0, 0)
@@ -210,19 +213,21 @@ async def test_get_job_stats(
         sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types
     )
     await await_job(finished_jid, repo)
-    running_jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+    running_jid = await repo.add_job(sample_pdf, "sample.pdf", job_types[0])
     await repo.update_job(running_jid, status=JobStatus.RUNNING)
-    await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)  # in CREATED state
-    queued_jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+    await repo.add_job(sample_pdf, "sample.pdf", job_types[0])  # in CREATED state
+    queued_jid = await repo.add_job(sample_pdf, "sample.pdf", job_types[0])
     await repo.update_job(queued_jid, status=JobStatus.QUEUED)
     assert await get_job_stats(repo) == (4, 1, 1, 1, 1, 0)
 
 
-async def test_delete_jobs(sample_pdf: bytes, repo: Repository) -> None:
+async def test_delete_jobs(
+    sample_pdf: bytes, repo: Repository, job_types: List[JobType]
+) -> None:
     """Deleting jobs that are in a finished state (SUCCESS or ERROR).
     Attempting to delete a job in any other state raises an exception."""
-    jid1 = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
-    jid2 = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+    jid1 = await repo.add_job(sample_pdf, "sample.pdf", job_types[0])
+    jid2 = await repo.add_job(sample_pdf, "sample.pdf", job_types[0])
     with pytest.raises(ValueError, match="not in a finished state"):
         await delete_job(jid1, repo)
     await repo.update_job(jid1, status=JobStatus.QUEUED)
@@ -243,7 +248,7 @@ async def test_purge_jobs(
     repo: Repository,
     queue: JobQueue,
     file_identifier: FileIdentifier,
-    job_types: List[SupportedJobType],
+    job_types: List[JobType],
 ) -> None:
     """Purge individual finished (in SUCCESS or ERROR state) standalone jobs
     after some time of inactivity. Jobs associated with a session are ignored."""
@@ -253,10 +258,10 @@ async def test_purge_jobs(
         sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types
     )
     await await_job(finished_jid, repo)
-    running_jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+    running_jid = await repo.add_job(sample_pdf, "sample.pdf", job_types[0])
     await repo.update_job(running_jid, status=JobStatus.RUNNING)
-    created_jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
-    queued_jid = await repo.add_job(sample_pdf, "sample.pdf", JobType.PDF)
+    created_jid = await repo.add_job(sample_pdf, "sample.pdf", job_types[0])
+    queued_jid = await repo.add_job(sample_pdf, "sample.pdf", job_types[0])
     await repo.update_job(queued_jid, status=JobStatus.QUEUED)
     sid = await create_session(repo)
     session_jid, _ = await create_job(

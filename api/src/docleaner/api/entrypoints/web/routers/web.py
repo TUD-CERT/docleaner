@@ -6,6 +6,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 import starlette.status as status
 from starlette.templating import _TemplateResponse
 
+from docleaner.api.core.job import JobType
 from docleaner.api.entrypoints.web.dependencies import (
     get_base_url,
     get_file_identifier,
@@ -17,7 +18,6 @@ from docleaner.api.entrypoints.web.dependencies import (
 )
 from docleaner.api.services.file_identifier import FileIdentifier
 from docleaner.api.services.job_queue import JobQueue
-from docleaner.api.services.job_types import SupportedJobType
 from docleaner.api.services.jobs import create_job, delete_job, get_job, get_job_result
 from docleaner.api.services.repository import Repository
 from docleaner.api.services.sessions import get_session
@@ -46,11 +46,18 @@ class ValidationException(HTTPException):
 
 @web_api.get("/", response_class=HTMLResponse, response_model=None)
 def landing_get(
-    request: Request, version: str = Depends(get_version)
+    request: Request,
+    job_types: List[JobType] = Depends(get_job_types),
+    version: str = Depends(get_version),
 ) -> _TemplateResponse:
     return templates.TemplateResponse(
         "landing_full.html",
-        {"request": request, "hide_menu_upload": True, "version": version},
+        {
+            "request": request,
+            "hide_menu_upload": True,
+            "supported_job_types": job_types,
+            "version": version,
+        },
     )
 
 
@@ -59,9 +66,10 @@ async def landing_post(
     request: Request,
     doc_src: UploadFile,
     file_identifier: FileIdentifier = Depends(get_file_identifier),
-    job_types: List[SupportedJobType] = Depends(get_job_types),
+    job_types: List[JobType] = Depends(get_job_types),
     repo: Repository = Depends(get_repo),
     queue: JobQueue = Depends(get_queue),
+    version: str = Depends(get_version),
 ) -> Union[_TemplateResponse, RedirectResponse]:
     try:
         jid, _ = await create_job(
@@ -91,6 +99,9 @@ async def landing_post(
             params={
                 "doc_src_invalid": True,
                 "doc_src_feedback": "You uploaded an unsupported document type.",
+                "hide_menu_upload": True,
+                "supported_job_types": job_types,
+                "version": version,
             },
             template_full="landing_full.html",
             template_htmx="landing.html",
@@ -175,6 +186,7 @@ async def jobs_delete(
 async def sessions_get(
     request: Request,
     sid: str,
+    job_types: List[JobType] = Depends(get_job_types),
     jobs: bool = True,
     repo: Repository = Depends(get_repo),
     version: str = Depends(get_version),
@@ -196,6 +208,7 @@ async def sessions_get(
             "jobs_total": jobs_total,
             "jobs_finished": jobs_finished,
             "jobs": job_list if jobs else None,
+            "supported_job_types": job_types,
             "version": version,
         },
     )
