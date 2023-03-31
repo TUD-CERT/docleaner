@@ -39,9 +39,9 @@ form.htmx-request button {
   opacity: 0.65;
 }
 
-// Prevent a spinner that is hidden by default to fade out on page load
-div.htmx-indicator.spinner-border {
-  transition: none;
+// Hide HTMX indicators by default (in case JS is disabled, usually hidden inline by htmx.js)
+.htmx-indicator {
+  opacity: 0;
 }
 
 // Icon size on buttons
