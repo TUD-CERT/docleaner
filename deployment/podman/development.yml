@@ -4,15 +4,14 @@ services:
   api:
     build:
       context: ${PWD}
-      dockerfile: deployment/docker/Dockerfile.api.dev
+      dockerfile: deployment/podman/Containerfile.api.dev
     environment:
       - DOCLEANER_CONF=/etc/docleaner.conf
     networks:
       - docleaner-dev
     volumes:
       - ${PWD}/api:/mnt
-      - ${PWD}/deployment/docker/docleaner.conf:/etc/docleaner.conf
-      - ${DOCLEANER_PODMAN_SOCKET}:/run/podman.sock
+      - ${DOCLEANER_PODMAN_SOCKET}:/run/ext_podman.sock
 
   proxy:
     image: nginx:stable
@@ -22,7 +21,7 @@ services:
       - "8080:8080"
     restart: unless-stopped
     volumes:
-      - ${PWD}/deployment/docker/nginx.dev.conf:/etc/nginx/nginx.conf
+      - ${PWD}/deployment/podman/nginx.dev.conf:/etc/nginx/nginx.conf
 
   database:
     image: mongo:6

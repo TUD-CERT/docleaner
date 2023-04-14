@@ -16,8 +16,8 @@ def get_job_types(config: configparser.ConfigParser) -> List[JobType]:
             mimetypes=["application/pdf"],
             readable_types=["PDF"],
             sandbox=ContainerizedSandbox(
-                container_image=config.get(section, "container_image"),
-                podman_uri=config.get(section, "podman_uri"),
+                container_image=config.get(section, "containerized.image"),
+                podman_uri=config.get("docleaner", "podman_uri"),
             ),
             metadata_processor=process_pdf_metadata,
         )

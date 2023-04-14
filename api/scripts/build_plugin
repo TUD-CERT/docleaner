@@ -1,0 +1,29 @@
+#!/usr/bin/env sh
+set -e
+# Builds a plugin's container image.
+# Receives a path to a plugin Containerfile as first parameter,
+# removes a potentially already existing image and rebuilds it.
+if [ ! \( $# -eq 1 -o $# -eq 2 \) ]; then
+  echo "Usage: build_plugin <Containerfile> [out_path]"
+  exit 1
+fi
+if [ ! -f "${1}" ]; then
+  echo "File ${1} not found"
+  exit 1
+fi
+
+PLUGIN=$(echo "${1}" | sed -re "s/.*plugins\/([^/]+)\/.*/\1/")
+IMAGE="docleaner/plugin_${PLUGIN}"
+# If an image with the same name already exists, remove it
+podman rmi -i "${IMAGE}"
+echo "[*] Building container image ${IMAGE} from ${1}"
+podman build -t ${IMAGE} $(dirname $1)
+
+if [ $# -eq 2 ]; then
+  OUT_PATH="${2}/docleaner_plugin_${PLUGIN}.tar"
+  echo "[*] Writing image ${IMAGE} to ${OUT_PATH}"
+  mkdir -p "${2}"
+  podman save -o "${OUT_PATH}" "${IMAGE}"
+  echo "[*] Removing temporary image ${IMAGE}"
+  podman rmi -i "${IMAGE}"
+fi

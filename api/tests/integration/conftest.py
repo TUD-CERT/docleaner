@@ -1,4 +1,5 @@
 import asyncio
+from configparser import ConfigParser
 import os
 from typing import AsyncGenerator, List
 
@@ -12,6 +13,13 @@ from docleaner.api.core.job import JobType
 from docleaner.api.core.sandbox import Sandbox
 from docleaner.api.services.clock import Clock
 from docleaner.api.services.repository import Repository
+
+
+@pytest.fixture
+def app_config() -> ConfigParser:
+    config = ConfigParser()
+    config.read(os.environ["DOCLEANER_CONF"])
+    return config
 
 
 @pytest.fixture
@@ -32,11 +40,16 @@ async def repo(
 
 
 @pytest.fixture
-def sandbox() -> Sandbox:
+def sandbox(app_config: ConfigParser) -> Sandbox:
     return ContainerizedSandbox(
-        container_image="localhost/docleaner/pdf_cleaner",
-        podman_uri="unix:///run/podman.sock",
+        container_image=app_config.get("plugins.pdf", "containerized.image"),
+        podman_uri=app_config.get("docleaner", "podman_uri")
     )
+
+
+@pytest.fixture
+def cont_pdf_sandbox(sandbox: Sandbox) -> Sandbox:
+    return sandbox
 
 
 @pytest.fixture
