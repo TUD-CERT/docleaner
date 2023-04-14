@@ -49,28 +49,35 @@ def init() -> None:
 
 
 def get_clock() -> Clock:
+    global _clock
     return _clock
 
 
 def get_file_identifier() -> FileIdentifier:
+    global _file_identifier
     return _file_identifier
 
 
 def get_job_types() -> List[JobType]:
+    global _job_types
     return _job_types
 
 
 def get_queue() -> JobQueue:
+    global _queue
     return _queue
 
 
 def get_repo() -> Repository:
+    global _repo
     return _repo
 
 
 def get_base_url() -> str:
+    global _base_url
     return _base_url
 
 
 def get_version() -> str:
+    global _version
     return _version
