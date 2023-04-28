@@ -1,5 +1,5 @@
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -9,6 +9,7 @@ from starlette.templating import _TemplateResponse
 from docleaner.api.core.job import JobType
 from docleaner.api.entrypoints.web.dependencies import (
     get_base_url,
+    get_contact,
     get_file_identifier,
     get_job_types,
     get_queue,
@@ -218,8 +219,9 @@ async def sessions_get(
 async def doc_api_usage(
     request: Request,
     base_url: str = Depends(get_base_url),
+    contact: Optional[str] = Depends(get_contact),
     version: str = Depends(get_version),
 ) -> _TemplateResponse:
     return templates.TemplateResponse(
-        "doc/api.html", {"request": request, "base_url": base_url, "version": version}
+        "doc/api.html", {"request": request, "base_url": base_url, "contact": contact, "version": version}
     )

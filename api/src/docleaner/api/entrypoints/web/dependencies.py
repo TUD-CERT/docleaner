@@ -2,7 +2,7 @@ import importlib
 from configparser import ConfigParser
 from importlib.metadata import version
 import os
-from typing import List
+from typing import List, Optional
 
 from fastapi.templating import Jinja2Templates
 
@@ -30,7 +30,7 @@ templates.env.globals["MetadataTag"] = MetadataTag
 
 
 def init() -> None:
-    global _clock, _file_identifier, _job_types, _queue, _repo, _base_url, _version
+    global _clock, _config, _file_identifier, _job_types, _queue, _repo, _base_url, _version
     if "DOCLEANER_CONF" not in os.environ:
         raise ValueError("Environment variable DOCLEANER_CONF is not set!")
     _config = ConfigParser()
@@ -76,6 +76,14 @@ def get_repo() -> Repository:
 def get_base_url() -> str:
     global _base_url
     return _base_url
+
+
+def get_contact() -> Optional[str]:
+    global _config
+    contact = _config.get("docleaner", "contact", fallback="")
+    if len(contact) == 0:
+        contact = None
+    return contact
 
 
 def get_version() -> str:

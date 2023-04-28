@@ -112,7 +112,7 @@ def test(podman_socket: str) -> None:
     shutdown()
 
 
-def build(include_nested: bool) -> None:
+def build(include_nested: bool, theme: str) -> None:
     config = "development"
     proj = "docleaner-build"
     shutil.rmtree("dist", ignore_errors=True)
@@ -122,8 +122,8 @@ def build(include_nested: bool) -> None:
     env["DOCLEANER_PODMAN_SOCKET"] = "/tmp"  # Has to be set, but isn't required for build
     subprocess.check_call(build_compose_cmdline(config, proj) + ["up", "-d", "api"], env=env)
     service_id = wait_for_service("api", "Development environment is ready", project=proj)
-    print("[*] Building docleaner-api wheel")
-    subprocess.check_call(["podman", "exec", service_id, "npm", "run", "build-prod"])
+    print(f"[*] Building docleaner-api wheel with {theme} theme")
+    subprocess.check_call(["podman", "exec", service_id, "select_theme", theme])
     subprocess.check_call(["podman", "exec", service_id, "python3", "setup.py", "bdist_wheel"])
     api_version = subprocess.check_output(["podman", "exec", service_id, "python3", "-c",
                                            "from importlib.metadata import version; print(version('docleaner-api'))"])\
@@ -138,17 +138,17 @@ def build(include_nested: bool) -> None:
             subprocess.check_call(["api/scripts/build_plugin", os.path.join(dirpath, "Containerfile"), "dist/plugins"])
     print("Building docleaner/api container image")
     subprocess.check_call(["podman", "build", "-f", "deployment/podman/Containerfile.api",
-                           "-t", f"docleaner/api:{api_version}",
+                           "-t", f"docleaner/api:{api_version}-{theme}",
                            "--build-arg", f"INCLUDE_PLUGINS={str(include_nested).lower()}",
                            "."])
-    subprocess.check_call(["podman", "save", "-o", f"dist/docleaner_api-{api_version}.tar", f"docleaner/api:{api_version}"])
-    subprocess.check_call(["podman", "rmi", f"docleaner/api:{api_version}"])
+    subprocess.check_call(["podman", "save", "-o", f"dist/docleaner_api-{api_version}-{theme}.tar", f"docleaner/api:{api_version}-{theme}"])
+    subprocess.check_call(["podman", "rmi", f"docleaner/api:{api_version}-{theme}"])
     # Create default configuration files
     shutil.copyfile("deployment/podman/docleaner.conf", "dist/docleaner.conf")
     shutil.copyfile("deployment/podman/nginx.dev.conf", "dist/nginx.insecure.conf")
     shutil.copyfile("deployment/podman/nginx.tls.conf", "dist/nginx.tls.conf")
     with open("deployment/podman/production.yml", "r") as src, open("dist/docker-compose.yml", "w") as dst:
-        dst.write(src.read().replace("$REVISION", api_version))
+        dst.write(src.read().replace("$REVISION", f"{api_version}-{theme}"))
 
 
 def parse_args() -> Tuple[argparse.Namespace, List[str]]:
@@ -174,6 +174,7 @@ def parse_args() -> Tuple[argparse.Namespace, List[str]]:
 
     build_parser = subparsers.add_parser("build", help="Assembles the project into distributable components (to dist/)")
     build_parser.add_argument("-n", "--nested", action="store_true", help="Include nested containerized plugin images")
+    build_parser.add_argument("-t", "--theme", type=str, default="default", help="Build with selected web frontend theme")
     return parser.parse_known_args()
 
 
@@ -189,4 +190,4 @@ if __name__ == "__main__":
     elif args.subcmd == "test":
         test(podman_socket=args.podman_socket)
     elif args.subcmd == "build":
-        build(include_nested=args.nested)
+        build(include_nested=args.nested, theme=args.theme)

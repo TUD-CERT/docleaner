@@ -1,8 +1,6 @@
 @import "~bootstrap/scss/functions";
 
-$primary: #dd2727;
-$secondary: #274275;
-$dark: #002557;
+@import "colors.scss";
 
 @import "~bootstrap/scss/variables";
 @import "~bootstrap/scss/maps";
@@ -101,3 +99,5 @@ ul.navbar-nav {
     margin-right: 0;
   }
 }
+
+@import "theme.scss";

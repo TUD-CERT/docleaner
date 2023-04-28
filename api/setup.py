@@ -8,10 +8,10 @@ setup(name="docleaner-api",
       },
       data_files=[
             ("api/entrypoints/web/templates", glob("src/docleaner/api/entrypoints/web/templates/*.html")),
-            ("api/entrypoints/web/templates/doc", glob("src/docleaner/api/entrypoints/web/templates/doc/*")),
+            ("api/entrypoints/web/templates/doc", glob("src/docleaner/api/entrypoints/web/templates/doc/*.html")),
+            ("api/entrypoints/web/templates/theme", glob("src/docleaner/api/entrypoints/web/templates/theme/*.html")),
             ("api/entrypoints/web/templates/errors", glob("src/docleaner/api/entrypoints/web/templates/errors/*")),
             ("api/entrypoints/web/static/dist", glob("src/docleaner/api/entrypoints/web/static/dist/*")),
-            ("api/entrypoints/web/static/img", glob("src/docleaner/api/entrypoints/web/static/img/*"))
       ],
       include_package_data=True,
       install_requires=[

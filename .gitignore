@@ -1,2 +1,8 @@
 .idea
 dist
+
+# Web theme symlinks (created dynamically)
+api/src/docleaner/api/entrypoints/web/static/scss/colors.scss
+api/src/docleaner/api/entrypoints/web/static/scss/theme.scss
+api/src/docleaner/api/entrypoints/web/static/js/theme.js
+api/src/docleaner/api/entrypoints/web/templates/theme

@@ -5,7 +5,8 @@ module.exports = {
     entry: "./static/js/main.js",
     output: {
         filename: "bundle.js",
-        path: path.resolve(__dirname, "static/dist")
+        path: path.resolve(__dirname, "static/dist"),
+        assetModuleFilename: "[name][ext]"  // Don't hash asset names
     },
     plugins: [new miniCssExtractPlugin({filename: "bundle.css"})],
     resolve: {
@@ -36,6 +37,9 @@ module.exports = {
                     loader: "sass-loader"
                 }
             ]
+        }, {
+            test: /\.(png)$/,
+            type: "asset/resource"
         }]
     }
 }

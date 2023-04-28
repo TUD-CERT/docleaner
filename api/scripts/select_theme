@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+set -e
+
+if [ $# -ne 1 ]; then
+  echo "Usage: select_theme <theme_name>"
+  exit 1
+fi
+THEME_DIR="/srv/src/docleaner/api/entrypoints/web/themes/${1}"
+if [ ! -d "${THEME_DIR}" ]; then
+  echo "Theme dir ${THEME_DIR} not found or not a directory"
+  exit 1
+fi
+
+echo "Enabling theme ${1}"
+ln -vfsT ../../themes/${1}/colors.scss /srv/src/docleaner/api/entrypoints/web/static/scss/colors.scss
+ln -vfsT ../../themes/${1}/styles.scss /srv/src/docleaner/api/entrypoints/web/static/scss/theme.scss
+ln -vfsT ../../themes/${1}/theme.js /srv/src/docleaner/api/entrypoints/web/static/js/theme.js
+ln -vfsT ../themes/${1} /srv/src/docleaner/api/entrypoints/web/templates/theme
+echo "Regenerating web modules"
+npm --prefix /srv run build-dev

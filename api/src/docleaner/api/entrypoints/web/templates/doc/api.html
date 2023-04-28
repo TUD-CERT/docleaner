@@ -16,7 +16,7 @@
     <li>1: Job is enqueued and waiting to be picked up by a worker</li>
     <li>2: Job is currently being executed</li>
     <li>3: Job has been executed successfully</li>
-    <li>4: Job execution has encountered an error, please report such bugs together with the problematic document to <a href="mailto:cert@tu-dresden.de">cert@tu-dresden.de</a></li>
+    <li>4: Job execution has encountered an error{% if contact is not none %}, please report such bugs together with the problematic document to <a href="mailto:{{ contact }}">{{ contact }}</a>{% endif %}</li>
 </ul>
 <p>After a job has been successfully processed (<code>status</code> is <code>3</code>), download it via</p>
 <p><code>curl -o /download/path.pdf {{ base_url }}/api/v1/jobs/(jid)/result</code></p>
@@ -49,5 +49,7 @@
 <p>After each job was processed successfully (<code>status</code> is <code>3</code>), download its resulting metadata-cleaned document with</p>
 <p><code>curl -o /download/path.pdf {{ base_url }}/api/v1/jobs/(jid)/result</code></p>
 <p>In contrast to single document uploads, jobs associated with a session are stored for <strong>24 hours</strong> on the server. Afterwards, the session and all associated jobs are purged from the database. Alternatively, a session and all of its jobs can be removed immediately with <code>curl -X DELETE "{{ base_url }}/api/v1/sessions/(sid)"</code>. Be aware that deleting a session that way requires that all associated jobs have finished pressing (job status SUCCESS/3 or ERROR/4).</p>
-<p>Please report issues with this service to <a href="mailto:cert@tu-dresden.de">cert@tu-dresden.de</a>.</p>
+{% if contact is not none %}
+<p>Please report issues with this service to <a href="mailto:{{ contact }}">{{ contact }}</a>.</p>
+{% endif %}
 {% endblock %}
