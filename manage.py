@@ -145,7 +145,8 @@ def build(include_nested: bool) -> None:
     subprocess.check_call(["podman", "rmi", f"docleaner/api:{api_version}"])
     # Create default configuration files
     shutil.copyfile("deployment/podman/docleaner.conf", "dist/docleaner.conf")
-    shutil.copyfile("deployment/podman/nginx.conf", "dist/nginx.conf")
+    shutil.copyfile("deployment/podman/nginx.dev.conf", "dist/nginx.insecure.conf")
+    shutil.copyfile("deployment/podman/nginx.tls.conf", "dist/nginx.tls.conf")
     with open("deployment/podman/production.yml", "r") as src, open("dist/docker-compose.yml", "w") as dst:
         dst.write(src.read().replace("$REVISION", api_version))
 
