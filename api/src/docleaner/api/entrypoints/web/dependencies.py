@@ -1,4 +1,3 @@
-import importlib
 from configparser import ConfigParser
 from importlib.metadata import version
 import os
@@ -39,13 +38,7 @@ def init() -> None:
         raise ValueError("Environment variable DOCLEANER_URL is not set!")
     _base_url = os.environ["DOCLEANER_URL"]
     _version = version("docleaner-api")
-    # Load plugins according to config
-    job_types = []
-    for section in _config.sections():
-        if section.startswith("plugins."):
-            plugin = importlib.import_module(f"docleaner.api.{section}")
-            job_types.extend(plugin.get_job_types(_config))
-    _clock, _file_identifier, _job_types, _queue, _repo = bootstrap(job_types)
+    _clock, _file_identifier, _job_types, _queue, _repo = bootstrap(_config)
 
 
 def get_clock() -> Clock:
@@ -82,7 +75,7 @@ def get_contact() -> Optional[str]:
     global _config
     contact = _config.get("docleaner", "contact", fallback="")
     if len(contact) == 0:
-        contact = None
+        return None
     return contact
 
 

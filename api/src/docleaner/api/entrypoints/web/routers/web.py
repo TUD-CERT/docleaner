@@ -157,7 +157,7 @@ async def jobs_get_result(jid: str, repo: Repository = Depends(get_repo)) -> Res
         raise WebException(status_code=status.HTTP_404_NOT_FOUND)
     quoted_document_name = quote(document_name)
     if quoted_document_name != document_name:
-        # If quoting was necessary, signal UTF8 encoding according (RFC 8187)
+        # If quoting was necessary, signal UTF8 encoding (RFC 8187)
         file_name = f"filename*=utf-8''{quoted_document_name}"
     else:
         file_name = f'filename="{document_name}"'

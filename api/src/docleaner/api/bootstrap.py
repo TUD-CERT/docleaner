@@ -1,3 +1,6 @@
+from configparser import ConfigParser
+import importlib
+import logging
 import os
 from typing import List, Optional, Tuple
 
@@ -15,13 +18,30 @@ from docleaner.api.services.repository import Repository
 
 
 def bootstrap(
-    job_types: List[JobType],
+    config: ConfigParser,
+    log_level: str = "info",
     clock: Optional[Clock] = None,
     file_identifier: Optional[FileIdentifier] = None,
     queue: Optional[JobQueue] = None,
     repo: Optional[Repository] = None,
 ) -> Tuple[Clock, FileIdentifier, List[JobType], JobQueue, Repository]:
-    """Initializes and returns adapters and service components."""
+    """Initializes and returns plugins, adapters and service components."""
+    # Initialize logging
+    numeric_log_level = getattr(logging, log_level.upper(), None)
+    if not isinstance(numeric_log_level, int):
+        raise ValueError(f"Invalid log level {log_level}")
+    logging.basicConfig(level=numeric_log_level)
+    logger = logging.getLogger(__name__)
+    logger.info(f"Bootstrapping docleaner r{importlib.metadata.version('docleaner-api')}")
+    # Load configured plugins
+    job_types = []
+    for section in config.sections():
+        if section.startswith("plugins."):
+            logger.info(f"Initializing {section}")
+            plugin = importlib.import_module(f"docleaner.api.{section}")
+            job_types.extend(plugin.get_job_types(config))
+    logger.info(f"Registered job types: {', '.join([j.id for j in job_types])}")
+    # Initialize adapters
     if clock is None:
         clock = SystemClock()
     if file_identifier is None:
