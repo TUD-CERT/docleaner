@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, Upload
 from fastapi.responses import HTMLResponse, RedirectResponse
 import starlette.status as status
 from starlette.templating import _TemplateResponse
+from urllib.parse import quote
 
 from docleaner.api.core.job import JobType
 from docleaner.api.entrypoints.web.dependencies import (
@@ -154,8 +155,14 @@ async def jobs_get_result(jid: str, repo: Repository = Depends(get_repo)) -> Res
         job_result, document_name = await get_job_result(jid, repo)
     except ValueError:
         raise WebException(status_code=status.HTTP_404_NOT_FOUND)
+    quoted_document_name = quote(document_name)
+    if quoted_document_name != document_name:
+        # If quoting was necessary, signal UTF8 encoding according (RFC 8187)
+        file_name = f"filename*=utf-8''{quoted_document_name}"
+    else:
+        file_name = f'filename="{document_name}"'
     response_headers = {
-        "Content-Disposition": f'attachment; filename="{document_name}"'
+        "Content-Disposition": f"attachment; {file_name}"
     }
     return Response(
         content=job_result,
