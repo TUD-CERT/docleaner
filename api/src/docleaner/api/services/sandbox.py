@@ -15,7 +15,19 @@ async def process_job_in_sandbox(jid: str, repo: Repository) -> None:
             f"Can't execute job {jid}, because it's not in QUEUED state (state is {job.status})"
         )
     await repo.update_job(jid, status=JobStatus.RUNNING)
-    result = await job.type.sandbox.process(job.src)
+    try:
+        result = await job.type.sandbox.process(job.src)
+    except Exception:
+        traceback.print_exc()
+        await repo.add_to_job_log(jid, "Error during sandbox processing")
+        await repo.update_job(
+            jid=jid,
+            status=JobStatus.ERROR,
+            result=None,
+            metadata_result=None,
+            metadata_src=None,
+        )
+        return
     for logline in result.log:
         await repo.add_to_job_log(jid, logline)
     try:

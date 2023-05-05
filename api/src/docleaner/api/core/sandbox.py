@@ -27,5 +27,7 @@ class Sandbox(abc.ABC):
     @abc.abstractmethod
     async def process(self, source: bytes) -> SandboxResult:
         """Transforms the given source document by removing associated metadata.
-        Returns a tuple of the form (log_data, success, resulting clean file)."""
+        Returns a tuple of the form (log_data, success, resulting clean file).
+        The implementation is required to be fail-safe and not raise any exceptions,
+        since those aren't expected to be handled by the responsible job queue."""
         raise NotImplementedError()

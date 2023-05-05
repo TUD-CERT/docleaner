@@ -80,3 +80,17 @@ async def test_exception_during_metadata_processing(
     assert isinstance(found_job, Job)
     assert found_job.status == JobStatus.ERROR
     assert found_job.log[-1] == "Error during metadata post-processing"
+
+
+async def test_exception_during_sandbox_processing(
+    repo: Repository, sample_pdf: bytes, job_types: List[JobType]
+) -> None:
+    """The method process_in_sandbox should be robust against exceptions thrown within a sandbox."""
+    sandbox = DummySandbox(simulate_exceptions=True)
+    job_types[0].sandbox = sandbox
+    jid = await repo.add_job(sample_pdf, "sample.pdf", job_types[0])
+    await repo.update_job(jid, status=JobStatus.QUEUED)
+    await process_job_in_sandbox(jid, repo)
+    found_job = await repo.find_job(jid)
+    assert isinstance(found_job, Job)
+    assert found_job.status == JobStatus.ERROR

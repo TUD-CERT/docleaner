@@ -43,7 +43,7 @@ async def repo(
 def sandbox(app_config: ConfigParser) -> Sandbox:
     return ContainerizedSandbox(
         container_image=app_config.get("plugins.pdf", "containerized.image"),
-        podman_uri=app_config.get("docleaner", "podman_uri")
+        podman_uri=app_config.get("docleaner", "podman_uri"),
     )
 
 
