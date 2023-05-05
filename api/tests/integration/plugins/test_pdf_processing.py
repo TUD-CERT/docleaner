@@ -40,7 +40,9 @@ async def test_retrieve_signature_status(
     assert result.metadata_src["signed"] is result.metadata_result["signed"] is False
 
 
-async def test_preserve_pdfua1_indicator(cont_pdf_sandbox: Sandbox, sample_pdfua1: bytes) -> None:
+async def test_preserve_pdfua1_indicator(
+    cont_pdf_sandbox: Sandbox, sample_pdfua1: bytes
+) -> None:
     """Preserving the PDF/UA-1 indicator in accordance with ISO 14289-1."""
     result = await cont_pdf_sandbox.process(sample_pdfua1)
     assert result.success
@@ -53,7 +55,9 @@ async def test_preserve_pdfua1_indicator(cont_pdf_sandbox: Sandbox, sample_pdfua
     )
 
 
-async def test_preserve_pdfe1_indicator(cont_pdf_sandbox: Sandbox, sample_pdfe1: bytes) -> None:
+async def test_preserve_pdfe1_indicator(
+    cont_pdf_sandbox: Sandbox, sample_pdfe1: bytes
+) -> None:
     """Preserving the PDF/E-1 indicator in accordance with ISO 24517-1:2008-05."""
     result = await cont_pdf_sandbox.process(sample_pdfe1)
     assert result.success
@@ -114,7 +118,9 @@ async def test_preserve_pdfa_indicators(
         )
 
 
-async def test_preserve_pdfx_indicators(cont_pdf_sandbox: Sandbox, samples_pdfx: Tuple[bytes, bytes]) -> None:
+async def test_preserve_pdfx_indicators(
+    cont_pdf_sandbox: Sandbox, samples_pdfx: Tuple[bytes, bytes]
+) -> None:
     """Preserving the PDF/X indicators in accordance with ISO 15930."""
     x1 = samples_pdfx[0]
     result = await cont_pdf_sandbox.process(x1)
@@ -152,7 +158,9 @@ async def test_preserve_pdfx_indicators(cont_pdf_sandbox: Sandbox, samples_pdfx:
     )
 
 
-async def test_preserve_pdfvt_indicators(cont_pdf_sandbox: Sandbox, sample_pdfvt: bytes) -> None:
+async def test_preserve_pdfvt_indicators(
+    cont_pdf_sandbox: Sandbox, sample_pdfvt: bytes
+) -> None:
     """Preserving the PDF/VT indicators."""
     result = await cont_pdf_sandbox.process(sample_pdfvt)
     assert result.success
@@ -170,7 +178,9 @@ async def test_preserve_pdfvt_indicators(cont_pdf_sandbox: Sandbox, sample_pdfvt
     )
 
 
-async def test_preserve_legal_tags(cont_pdf_sandbox: Sandbox, sample_pdf_tagged: bytes) -> None:
+async def test_preserve_legal_tags(
+    cont_pdf_sandbox: Sandbox, sample_pdf_tagged: bytes
+) -> None:
     """Preserving tags related to legal/copyright matters."""
     result = await cont_pdf_sandbox.process(sample_pdf_tagged)
     assert isinstance(result.metadata_src["primary"], dict)
@@ -192,7 +202,9 @@ async def test_preserve_legal_tags(cont_pdf_sandbox: Sandbox, sample_pdf_tagged:
     )
 
 
-async def test_preserve_misc_benign_tags(cont_pdf_sandbox: Sandbox, sample_pdf_tagged: bytes) -> None:
+async def test_preserve_misc_benign_tags(
+    cont_pdf_sandbox: Sandbox, sample_pdf_tagged: bytes
+) -> None:
     """Preserving various unproblematic tags (non-exhaustive)."""
     result = await cont_pdf_sandbox.process(sample_pdf_tagged)
     assert isinstance(result.metadata_src["primary"], dict)
@@ -240,7 +252,9 @@ async def test_preserve_misc_benign_tags(cont_pdf_sandbox: Sandbox, sample_pdf_t
     assert result.metadata_result["primary"]["XMP:XMP-pdf:Trapped"] is False
 
 
-async def test_exclude_xmptoolkit_tag(cont_pdf_sandbox: Sandbox, sample_pdfua1: bytes) -> None:
+async def test_exclude_xmptoolkit_tag(
+    cont_pdf_sandbox: Sandbox, sample_pdfua1: bytes
+) -> None:
     """The XMP-x:XMPToolkit should neither be preserved nor added by the cleaning process."""
     result = await cont_pdf_sandbox.process(sample_pdfua1)
     assert isinstance(result.metadata_result["primary"], dict)

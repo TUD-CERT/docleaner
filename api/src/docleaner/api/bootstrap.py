@@ -32,15 +32,18 @@ def bootstrap(
         raise ValueError(f"Invalid log level {log_level}")
     logging.basicConfig(level=numeric_log_level)
     logger = logging.getLogger(__name__)
-    logger.info(f"Bootstrapping docleaner r{importlib.metadata.version('docleaner-api')}")
+    logger.info(
+        "Bootstrapping docleaner r%s", importlib.metadata.version("docleaner-api")
+    )
+    logger.info("Log level: %s", log_level)
     # Load configured plugins
     job_types = []
     for section in config.sections():
         if section.startswith("plugins."):
-            logger.info(f"Initializing {section}")
+            logger.info("Initializing %s", section)
             plugin = importlib.import_module(f"docleaner.api.{section}")
             job_types.extend(plugin.get_job_types(config))
-    logger.info(f"Registered job types: {', '.join([j.id for j in job_types])}")
+    logger.info("Registered job types: %s", ", ".join([j.id for j in job_types]))
     # Initialize adapters
     if clock is None:
         clock = SystemClock()

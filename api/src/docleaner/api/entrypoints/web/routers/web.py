@@ -161,9 +161,7 @@ async def jobs_get_result(jid: str, repo: Repository = Depends(get_repo)) -> Res
         file_name = f"filename*=utf-8''{quoted_document_name}"
     else:
         file_name = f'filename="{document_name}"'
-    response_headers = {
-        "Content-Disposition": f"attachment; {file_name}"
-    }
+    response_headers = {"Content-Disposition": f"attachment; {file_name}"}
     return Response(
         content=job_result,
         media_type="application/octet-stream",
@@ -230,5 +228,11 @@ async def doc_api_usage(
     version: str = Depends(get_version),
 ) -> _TemplateResponse:
     return templates.TemplateResponse(
-        "doc/api.html", {"request": request, "base_url": base_url, "contact": contact, "version": version}
+        "doc/api.html",
+        {
+            "request": request,
+            "base_url": base_url,
+            "contact": contact,
+            "version": version,
+        },
     )

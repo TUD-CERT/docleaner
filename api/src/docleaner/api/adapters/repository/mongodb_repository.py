@@ -1,5 +1,6 @@
 from dataclasses import asdict
 from datetime import timedelta
+import logging
 from typing import Any, Dict, List, Optional, Set, Union
 
 from motor import motor_asyncio
@@ -11,6 +12,8 @@ from docleaner.api.core.session import Session
 from docleaner.api.services.clock import Clock
 from docleaner.api.services.repository import Repository
 from docleaner.api.utils import generate_token
+
+logger = logging.getLogger(__name__)
 
 
 class MongoDBRepository(Repository):
@@ -29,6 +32,7 @@ class MongoDBRepository(Repository):
         self._mongo = motor_asyncio.AsyncIOMotorClient(db_host, db_port)
         self._db = self._mongo[db_name]
         self._fs = motor_asyncio.AsyncIOMotorGridFSBucket(self._db)  # type: ignore
+        logger.info("Database backend: MongoDB (%s:%d/%s)", db_host, db_port, db_name)
 
     async def add_job(
         self, src: bytes, src_name: str, job_type: JobType, sid: Optional[str] = None
@@ -40,6 +44,7 @@ class MongoDBRepository(Repository):
         jid = generate_token()
         now = self._clock.now()
         # Save source document to GridFS
+        logger.debug("Storing job %s src in GridFS", jid)
         src_id = await self._fs.upload_from_stream(jid, src)
         job = Job(
             id=jid,
@@ -52,6 +57,7 @@ class MongoDBRepository(Repository):
         serialized_job = asdict(job)
         serialized_job["type"] = job_type.id
         serialized_job["_id"] = serialized_job.pop("id")
+        logger.debug("Adding job %s (%s)", jid, sid)
         await self._db.jobs.insert_one(serialized_job)
         if sid is not None:
             await self._db.sessions.update_one({"_id": sid}, {"$set": {"updated": now}})
@@ -114,6 +120,7 @@ class MongoDBRepository(Repository):
             update_fields["result"] = result_id
         if status is not None:
             update_fields["status"] = status
+        logger.debug("Updating job %s (%s)", jid, ", ".join(update_fields.keys()))
         await self._db.jobs.update_one({"_id": jid}, {"$set": update_fields})
         # If associated with a session, also update that session
         if job["session_id"] is not None:
@@ -136,9 +143,11 @@ class MongoDBRepository(Repository):
                 {"$set": {"updated": self._clock.now()}},
             )
         # Delete associated fragments from GridFS
+        logger.debug("Deleting GridFS data of job %s", jid)
         self._fs.delete(job_data["src"])
         if job_data["result"] != b"":
             self._fs.delete(job_data["result"])
+        logger.debug("Deleting job %s", jid)
         await self._db.jobs.delete_one({"_id": jid})
 
     async def get_total_job_count(self) -> int:
@@ -153,6 +162,7 @@ class MongoDBRepository(Repository):
         session = Session(id=sid, created=self._clock.now())
         serialized_session = asdict(session)
         serialized_session["_id"] = serialized_session.pop("id")
+        logger.debug("Adding session %s", sid)
         await self._db.sessions.insert_one(serialized_session)
         return sid
 
@@ -180,11 +190,13 @@ class MongoDBRepository(Repository):
                 f"Can't delete session {sid}, because the ID doesn't exist"
             )
         # Delete associated job fragments from GridFS
+        logger.debug("Deleting GridFS data of session %s", sid)
         async for job_data in self._db.jobs.find({"session_id": sid}):
             if job_data["src"] != b"":
                 self._fs.delete(job_data["src"])
             if job_data["result"] != b"":
                 self._fs.delete(job_data["result"])
+        logger.debug("Deleting session %s and all associated jobs", sid)
         await self._db.jobs.delete_many({"session_id": sid})
         await self._db.sessions.delete_one({"_id": sid})
 

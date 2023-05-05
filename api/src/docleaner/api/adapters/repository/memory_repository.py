@@ -1,6 +1,7 @@
 from collections import OrderedDict
 import dataclasses
 from datetime import timedelta
+import logging
 from typing import Dict, List, Optional, Set
 
 from docleaner.api.core.job import Job, JobStatus, JobType
@@ -9,6 +10,8 @@ from docleaner.api.core.session import Session
 from docleaner.api.services.clock import Clock
 from docleaner.api.services.repository import Repository
 from docleaner.api.utils import generate_token
+
+logger = logging.getLogger(__name__)
 
 
 class MemoryRepository(Repository):
@@ -21,6 +24,7 @@ class MemoryRepository(Repository):
         ] = OrderedDict()  # Preserve insertion order (job creation)
         self._sessions: Dict[str, Session] = {}
         self._total_jobs = 0
+        logger.info("Database backend: In-Memory Repository")
 
     async def add_job(
         self, src: bytes, src_name: str, job_type: JobType, sid: Optional[str] = None

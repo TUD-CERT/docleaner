@@ -3,7 +3,9 @@ import magic
 from docleaner.api.core.sandbox import Sandbox
 
 
-async def test_process_valid_document(cont_pdf_sandbox: Sandbox, sample_pdf: bytes) -> None:
+async def test_process_valid_document(
+    cont_pdf_sandbox: Sandbox, sample_pdf: bytes
+) -> None:
     """Processing a valid document in a containerized sandbox."""
     result = await cont_pdf_sandbox.process(sample_pdf)
     assert result.success
@@ -21,7 +23,9 @@ async def test_process_invalid_document(cont_pdf_sandbox: Sandbox) -> None:
     assert len(result.log) > 0
 
 
-async def test_nonexisting_container_image(cont_pdf_sandbox: Sandbox, sample_pdf: bytes) -> None:
+async def test_nonexisting_container_image(
+    cont_pdf_sandbox: Sandbox, sample_pdf: bytes
+) -> None:
     """Initializing a sandbox with a nonexisting container image returns unsuccessful jobs."""
     container_image = "localhost/nonexisting/image"
     cont_pdf_sandbox._image = container_image  # type: ignore

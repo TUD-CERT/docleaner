@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import os
 import tarfile
 import traceback
@@ -11,6 +12,8 @@ from podman.errors.exceptions import APIError as PodmanAPIError  # type: ignore
 from podman.domain.containers import Container  # type: ignore
 
 from docleaner.api.core.sandbox import Sandbox, SandboxResult
+
+logger = logging.getLogger(__name__)
 
 
 class ContainerizedSandbox(Sandbox):
@@ -25,6 +28,11 @@ class ContainerizedSandbox(Sandbox):
     def __init__(self, container_image: str, podman_uri: str):
         self._image = container_image
         self._podman_uri = podman_uri
+        logger.info(
+            "Containerized sandbox with image %s via %s is ready",
+            self._image,
+            self._podman_uri,
+        )
 
     async def process(self, source: bytes) -> SandboxResult:
         """Runs _process() in its own thread due to blocking dependencies (podman)."""
@@ -50,23 +58,27 @@ class ContainerizedSandbox(Sandbox):
             # Copy source into container
             source_path = os.path.join(tmpdir, "source")
             source_tar = os.path.join(tmpdir, "source.tar")
+            logger.debug("Writing temporary source file to %s", source_path)
             with open(source_path, "wb") as f:
                 f.write(source)
+            logger.debug("Writing temporary source archive to %s", source_tar)
             with tarfile.open(source_tar, "w") as tar:
                 tar.add(source_path, arcname="source")
-                try:
-                    container = podman.containers.create(
-                        image=self._image, auto_remove=True, network_mode="none"
-                    )
-                except PodmanAPIError:
-                    return SandboxResult(
-                        success=success,
-                        log=[f"Invalid container image {self._image}"],
-                        result=result_document,
-                        metadata_result=metadata_result,
-                        metadata_src=metadata_src,
-                    )
+            try:
+                container = podman.containers.create(
+                    image=self._image, auto_remove=True, network_mode="none"
+                )
+            except PodmanAPIError:
+                return SandboxResult(
+                    success=success,
+                    log=[f"Invalid container image {self._image}"],
+                    result=result_document,
+                    metadata_result=metadata_result,
+                    metadata_src=metadata_src,
+                )
+            logger.debug("Starting container %s", container.name)
             container.start()
+            logger.debug("Copying %s into container %s", source_tar, container.name)
             with open(source_tar, "rb") as tar_raw:
                 container.put_archive("/tmp", tar_raw)
             try:
@@ -104,6 +116,7 @@ class ContainerizedSandbox(Sandbox):
                 traceback.print_exc()
                 result_document = b""
             finally:
+                logger.debug("Stopping container %s", container.name)
                 container.stop(timeout=10)
                 return SandboxResult(
                     success=success,

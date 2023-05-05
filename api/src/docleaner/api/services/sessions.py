@@ -1,18 +1,22 @@
 from datetime import datetime, timedelta
+import logging
 from typing import List, Set, Tuple
 
 from docleaner.api.core.job import JobStatus, JobType
 from docleaner.api.services.jobs import await_job
-from docleaner.api.services.job_queue import JobQueue
 from docleaner.api.services.repository import Repository
+
+logger = logging.getLogger(__name__)
 
 
 async def create_session(repo: Repository) -> str:
     """Creates a new session and returns the session id."""
-    return await repo.add_session()
+    sid = await repo.add_session()
+    logger.debug("Creating session %s", sid)
+    return sid
 
 
-async def await_session(sid: str, repo: Repository, queue: JobQueue) -> None:
+async def await_session(sid: str, repo: Repository) -> None:
     """Blocks until all jobs of the given session have been processed."""
     for job in await repo.find_jobs(sid):
         await await_job(job.id, repo)
@@ -52,6 +56,7 @@ async def delete_session(sid: str, repo: Repository) -> None:
         sid=session.id, status=[JobStatus.QUEUED, JobStatus.RUNNING, JobStatus.CREATED]
     ):
         raise ValueError(f"Session {sid} has unfinished jobs")
+    logger.debug("Deleting session %s", sid)
     await repo.delete_session(sid)
 
 
@@ -69,4 +74,6 @@ async def purge_sessions(purge_after: timedelta, repo: Repository) -> Set[str]:
             continue
         purged_sessions.add(session.id)
         await repo.delete_session(session.id)
+    if len(purged_sessions) > 0:
+        logger.debug("Purged %d sessions", len(purged_sessions))
     return purged_sessions

@@ -1,5 +1,6 @@
 import asyncio
 from datetime import timedelta
+import logging
 from typing import Dict, List, Optional, Set, Tuple
 
 from docleaner.api.core.job import JobStatus, JobType
@@ -7,6 +8,8 @@ from docleaner.api.core.metadata import DocumentMetadata
 from docleaner.api.services.file_identifier import FileIdentifier
 from docleaner.api.services.job_queue import JobQueue
 from docleaner.api.services.repository import Repository
+
+logger = logging.getLogger(__name__)
 
 
 async def create_job(
@@ -30,6 +33,9 @@ async def create_job(
     except StopIteration:
         raise ValueError("Unsupported document type")
     # Create and schedule job
+    logger.debug(
+        "Creating job for %s of type %s (%s)", source_name, source_type.id, sid
+    )
     jid = await repo.add_job(source, source_name, source_type, sid)
     job = await repo.find_job(jid)
     if job is None:
@@ -143,6 +149,7 @@ async def delete_job(jid: str, repo: Repository) -> None:
         raise ValueError(f"A job with jid {jid} does not exist")
     if job.status in [JobStatus.CREATED, JobStatus.QUEUED, JobStatus.RUNNING]:
         raise ValueError(f"Job {jid} is not in a finished state (SUCCESS or ERROR)")
+    logger.debug("Deleting job %s with status %s", jid, job.status)
     await repo.delete_job(jid)
 
 
@@ -156,4 +163,6 @@ async def purge_jobs(purge_after: timedelta, repo: Repository) -> Set[str]:
         if job.session_id is None:
             purged_jobs.add(job.id)
             await repo.delete_job(job.id)
+    if len(purged_jobs) > 0:
+        logger.debug("Purged %d jobs", len(purged_jobs))
     return purged_jobs

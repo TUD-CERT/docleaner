@@ -1,7 +1,10 @@
+import logging
 import traceback
 
 from docleaner.api.core.job import JobStatus
 from docleaner.api.services.repository import Repository
+
+logger = logging.getLogger(__name__)
 
 
 async def process_job_in_sandbox(jid: str, repo: Repository) -> None:
@@ -15,6 +18,12 @@ async def process_job_in_sandbox(jid: str, repo: Repository) -> None:
             f"Can't execute job {jid}, because it's not in QUEUED state (state is {job.status})"
         )
     await repo.update_job(jid, status=JobStatus.RUNNING)
+    logger.debug(
+        "Processing job %s (%s) in %s",
+        jid,
+        job.type.id,
+        type(job.type.sandbox).__name__,
+    )
     try:
         result = await job.type.sandbox.process(job.src)
     except Exception:
@@ -28,6 +37,7 @@ async def process_job_in_sandbox(jid: str, repo: Repository) -> None:
             metadata_src=None,
         )
         return
+    logger.debug("Job %s has been processed", jid)
     for logline in result.log:
         await repo.add_to_job_log(jid, logline)
     try:

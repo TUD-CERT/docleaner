@@ -1,10 +1,13 @@
 import asyncio
+import logging
 from typing import Literal, Set, Union
 
 from docleaner.api.core.job import Job, JobStatus
 from docleaner.api.services.job_queue import JobQueue
 from docleaner.api.services.repository import Repository
 from docleaner.api.services.sandbox import process_job_in_sandbox
+
+logger = logging.getLogger(__name__)
 
 
 class AsyncJobQueue(JobQueue):
@@ -21,6 +24,10 @@ class AsyncJobQueue(JobQueue):
         self._max_concurrent_jobs = max_concurrent_jobs
         self._queue: asyncio.Queue[str] = asyncio.Queue()
         self._worker_task = asyncio.create_task(self._worker())
+        logger.info(
+            "Job queue: in-process, async, concurrent job limit of %d",
+            self._max_concurrent_jobs,
+        )
 
     async def enqueue(self, job: Job) -> None:
         """Creates a new coroutine for job execution."""
@@ -30,6 +37,7 @@ class AsyncJobQueue(JobQueue):
             raise ValueError(
                 f"Can't enqueue job {job.id} due to its invalid status {job.status}"
             )
+        logger.debug("Enqueuing job %s", job.id)
         await self._repo.update_job(job.id, status=JobStatus.QUEUED)
         await self._queue.put(job.id)
 
@@ -62,6 +70,7 @@ class AsyncJobQueue(JobQueue):
                 if await_job in done:
                     jid = await_job.result()
                     assert isinstance(jid, str)
+                    logger.debug("Processing job %s", jid)
                     running_tasks.add(
                         asyncio.create_task(process_job_in_sandbox(jid, self._repo))
                     )

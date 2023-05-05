@@ -37,7 +37,7 @@ async def test_process_multiple_jobs_via_session(
         sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid
     )
     # Wait until job completion
-    await await_session(sid, repo, queue)
+    await await_session(sid, repo)
     # Retrieve session and job details
     created, updated, total_jobs, finished_jobs, jobs = await get_session(sid, repo)
     assert isinstance(created, datetime)
@@ -87,7 +87,7 @@ async def test_with_nonexistent_session(
             sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid
         )
     with pytest.raises(ValueError):
-        await await_session(sid, repo, queue)
+        await await_session(sid, repo)
     with pytest.raises(ValueError, match="Invalid session id"):
         await get_session(sid, repo)
     with pytest.raises(ValueError, match="Invalid session id"):
@@ -112,7 +112,7 @@ async def test_delete_finished_session(
     jid3 = await repo.add_job(sample_pdf, "sample.pdf", job_types[0], sid)
     await repo.update_job(jid3, status=JobStatus.ERROR)
     # Wait until job completion
-    await await_session(sid, repo, queue)
+    await await_session(sid, repo)
     # Delete session
     await delete_session(sid, repo)
     # Verify session and job deletion
@@ -176,7 +176,7 @@ async def test_purge_sessions(
     clock.advance(60)
     purged_sids = await purge_sessions(timedelta(seconds=30), repo)
     assert len(purged_sids) == 0  # Session is not stale, there is still a queued job
-    await await_session(sid, repo, queue)
+    await await_session(sid, repo)
     clock.advance(60)
     purged_sids = await purge_sessions(timedelta(seconds=30), repo)
     assert purged_sids == {sid}

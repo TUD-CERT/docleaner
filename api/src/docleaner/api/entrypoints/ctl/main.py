@@ -30,7 +30,9 @@ async def purge(
     session_keepalive: int,
     quiet: bool = False,
 ) -> None:
-    clock, file_identifier, job_types, queue, repo = bootstrap(config)
+    clock, file_identifier, job_types, queue, repo = bootstrap(
+        config, log_level="warning"
+    )
     if not no_standalone_job_purging:
         purged_jids = await purge_jobs(
             purge_after=timedelta(minutes=job_keepalive), repo=repo
@@ -48,7 +50,9 @@ async def purge(
 async def show_status(
     config: ConfigParser,
 ) -> None:
-    clock, file_identifier, job_types, queue, repo = bootstrap(config)
+    clock, file_identifier, job_types, queue, repo = bootstrap(
+        config, log_level="warning"
+    )
     total_jobs, created, queued, running, success, error = await get_job_stats(repo)
     current_jobs = created + queued + running + success + error
     print(
@@ -58,7 +62,9 @@ async def show_status(
 
 
 async def diag_list(config: ConfigParser, status: JobStatus) -> None:
-    clock, file_identifier, job_types, queue, repo = bootstrap(config)
+    clock, file_identifier, job_types, queue, repo = bootstrap(
+        config, log_level="warning"
+    )
     jobs = await get_jobs(status, repo)
     print("jid / type")
     for jid, job_type, job_log in jobs:
@@ -68,7 +74,9 @@ async def diag_list(config: ConfigParser, status: JobStatus) -> None:
 async def diag_job_details(
     config: ConfigParser, jid: str, src_out_path: Optional[str] = None
 ) -> None:
-    clock, file_identifier, job_types, queue, repo = bootstrap(config)
+    clock, file_identifier, job_types, queue, repo = bootstrap(
+        config, log_level="warning"
+    )
     try:
         job_status, job_type, job_log, _, _, sid = await get_job(jid, repo)
         if job_status in [JobStatus.QUEUED, JobStatus.SUCCESS]:
@@ -96,7 +104,9 @@ async def diag_job_details(
 
 
 async def debug_delete_job(config: ConfigParser, jid: str) -> None:
-    clock, file_identifier, job_types, queue, repo = bootstrap(config)
+    clock, file_identifier, job_types, queue, repo = bootstrap(
+        config, log_level="warning"
+    )
     try:
         await repo.delete_job(jid)
         print(f"Job {jid} deleted successfully from the database")

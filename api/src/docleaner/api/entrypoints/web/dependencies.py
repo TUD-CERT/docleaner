@@ -1,5 +1,6 @@
 from configparser import ConfigParser
 from importlib.metadata import version
+import logging
 import os
 from typing import List, Optional
 
@@ -12,6 +13,8 @@ from docleaner.api.services.clock import Clock
 from docleaner.api.services.file_identifier import FileIdentifier
 from docleaner.api.services.job_queue import JobQueue
 from docleaner.api.services.repository import Repository
+
+logger = logging.getLogger(__name__)
 
 
 _base_url: str
@@ -32,13 +35,19 @@ def init() -> None:
     global _clock, _config, _file_identifier, _job_types, _queue, _repo, _base_url, _version
     if "DOCLEANER_CONF" not in os.environ:
         raise ValueError("Environment variable DOCLEANER_CONF is not set!")
+    logger.info("Reading configuration from %s", os.environ["DOCLEANER_CONF"])
     _config = ConfigParser()
     _config.read(os.environ["DOCLEANER_CONF"])
     if "DOCLEANER_URL" not in os.environ:
         raise ValueError("Environment variable DOCLEANER_URL is not set!")
     _base_url = os.environ["DOCLEANER_URL"]
     _version = version("docleaner-api")
-    _clock, _file_identifier, _job_types, _queue, _repo = bootstrap(_config)
+    optional_params = {}
+    if "DOCLEANER_LOGLVL" in os.environ:
+        optional_params["log_level"] = os.environ["DOCLEANER_LOGLVL"]
+    _clock, _file_identifier, _job_types, _queue, _repo = bootstrap(
+        _config, **optional_params  # type: ignore
+    )
 
 
 def get_clock() -> Clock:

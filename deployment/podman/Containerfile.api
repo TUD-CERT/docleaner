@@ -2,6 +2,7 @@ FROM alpine:3.17
 
 ARG INCLUDE_PLUGINS
 ENV DOCLEANER_CONF="/etc/docleaner.conf"
+ENV DOCLEANER_LOGLVL="info"
 ADD deployment/podman/api.run.sh /usr/local/bin/
 ADD deployment/podman/containers.conf /opt
 ADD dist/docleaner_api*.whl /opt
