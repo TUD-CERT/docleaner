@@ -21,7 +21,10 @@ setup(name="docleaner-api",
             "podman",
             "python-magic",
             "python-multipart",
-            "uvicorn[standard]"
+            "uvicorn[standard]",
+            # Workaround for incompatible urllib3/requests update
+            "requests<2.29.0",
+            "urllib3<2.0.0"
       ],
       packages=find_namespace_packages(where="src", include=["docleaner.*"]),
       package_dir={"": "src"},
