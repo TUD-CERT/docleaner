@@ -1,7 +1,6 @@
 import datetime
 import logging.handlers
 import re
-import socket
 import time
 from typing import Any
 
@@ -15,6 +14,7 @@ class SysLogHandler5424(logging.handlers.SysLogHandler):
     def __init__(self, *args: Any, **kwargs: Any):
         self.msgid = kwargs.pop("msgid", None)
         self.appname = kwargs.pop("appname", None)
+        self.hostname = kwargs.pop("hostname", None)
         super().__init__(*args, **kwargs)
 
     def format(self, record: logging.LogRecord) -> str:
@@ -30,10 +30,7 @@ class SysLogHandler5424(logging.handlers.SysLogHandler):
             asctime += "Z"
         else:
             asctime += f"{hrs}:{mins}"
-        try:
-            hostname = socket.gethostname()
-        except Exception:
-            hostname = "-"
+        hostname = self.hostname or "-"
         appname = self.appname or "-"
         procid = record.process
         msgid = self.msgid or "-"

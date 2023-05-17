@@ -3,6 +3,7 @@ from importlib.metadata import version
 import logging
 import os
 from typing import List, Optional
+from urllib.parse import urlparse
 
 from fastapi.templating import Jinja2Templates
 
@@ -42,7 +43,7 @@ def init() -> None:
         raise ValueError("Environment variable DOCLEANER_URL is not set!")
     _base_url = os.environ["DOCLEANER_URL"]
     _version = version("docleaner-api")
-    optional_params = {}
+    optional_params = {"log_hostname": urlparse(_base_url).hostname}
     if "DOCLEANER_LOGLVL" in os.environ:
         optional_params["log_level"] = os.environ["DOCLEANER_LOGLVL"]
     _clock, _file_identifier, _job_types, _queue, _repo = bootstrap(

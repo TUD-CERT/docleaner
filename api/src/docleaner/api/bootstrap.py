@@ -23,6 +23,7 @@ from docleaner.api.services.repository import Repository
 def bootstrap(
     config: ConfigParser,
     log_level: str = "info",
+    log_hostname: Optional[str] = None,
     clock: Optional[Clock] = None,
     file_identifier: Optional[FileIdentifier] = None,
     queue: Optional[JobQueue] = None,
@@ -39,11 +40,16 @@ def bootstrap(
     if len(syslog_cfg := config.get("docleaner", "log_to_syslog", fallback="")) > 0:
         syslog_host, syslog_protocol, syslog_port = syslog_cfg.split(":")
         syslog_protocol = syslog_protocol.lower()
+        try:
+            hostname = log_hostname or socket.gethostname()
+        except Exception:
+            hostname = None
         handler = SysLogHandler5424(
             address=(syslog_host, int(syslog_port)),
             facility=logging.handlers.SysLogHandler.LOG_USER,
             socktype=protocols[syslog_protocol],
             appname="docleaner",
+            hostname=hostname,
         )
         root_logger = logging.getLogger()
         root_logger.addHandler(handler)
