@@ -27,7 +27,7 @@ async def process_job_in_sandbox(jid: str, repo: Repository) -> None:
     try:
         result = await job.type.sandbox.process(job.src)
     except Exception:
-        traceback.print_exc()
+        logger.warning(f"Exception in sandbox.process():\n{traceback.format_exc()}")
         await repo.add_to_job_log(jid, "Error during sandbox processing")
         await repo.update_job(
             jid=jid,
@@ -51,7 +51,9 @@ async def process_job_in_sandbox(jid: str, repo: Repository) -> None:
             metadata_src=metadata_src,
         )
     except Exception:
-        traceback.print_exc()
+        logger.warning(
+            f"Exception during metadata post-processing:\n{traceback.format_exc()}"
+        )
         await repo.add_to_job_log(jid, "Error during metadata post-processing")
         await repo.update_job(
             jid=jid,

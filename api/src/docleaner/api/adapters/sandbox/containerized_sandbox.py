@@ -69,6 +69,9 @@ class ContainerizedSandbox(Sandbox):
                     image=self._image, auto_remove=True, network_mode="none"
                 )
             except PodmanAPIError:
+                logger.warning(
+                    f"Could not create container for {self._image}:\n{traceback.format_exc()}"
+                )
                 return SandboxResult(
                     success=success,
                     log=[f"Invalid container image {self._image}"],
@@ -113,8 +116,10 @@ class ContainerizedSandbox(Sandbox):
                 )
                 success = True
             except ValueError:
-                traceback.print_exc()
                 result_document = b""
+                logger.warning(
+                    f"Exception in containerized_sandbox.process():\n{traceback.format_exc()}"
+                )
             finally:
                 logger.debug("Stopping container %s", container.name)
                 container.stop(timeout=10)

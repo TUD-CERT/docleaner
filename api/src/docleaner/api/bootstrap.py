@@ -1,6 +1,8 @@
+import socket
 from configparser import ConfigParser
 import importlib
 import logging
+import logging.handlers
 import os
 from typing import List, Optional, Tuple
 
@@ -9,6 +11,7 @@ from docleaner.api.adapters.file_identifier.magic_file_identifier import (
     MagicFileIdentifier,
 )
 from docleaner.api.adapters.job_queue.async_job_queue import AsyncJobQueue
+from docleaner.api.adapters.logging.syslog import SysLogHandler5424
 from docleaner.api.adapters.repository.mongodb_repository import MongoDBRepository
 from docleaner.api.core.job import JobType
 from docleaner.api.services.clock import Clock
@@ -31,6 +34,25 @@ def bootstrap(
     if not isinstance(numeric_log_level, int):
         raise ValueError(f"Invalid log level {log_level}")
     logging.basicConfig(level=numeric_log_level)
+    # External syslog logging
+    protocols = {"tcp": socket.SOCK_STREAM, "udp": socket.SOCK_DGRAM}
+    if len(syslog_cfg := config.get("docleaner", "log_to_syslog", fallback="")) > 0:
+        syslog_host, syslog_protocol, syslog_port = syslog_cfg.split(":")
+        syslog_protocol = syslog_protocol.lower()
+        handler = SysLogHandler5424(
+            address=(syslog_host, int(syslog_port)),
+            facility=logging.handlers.SysLogHandler.LOG_USER,
+            socktype=protocols[syslog_protocol],
+            appname="docleaner",
+        )
+        root_logger = logging.getLogger()
+        root_logger.addHandler(handler)
+        root_logger.info(
+            "Logging to syslog: %s (%s/%d)",
+            syslog_host,
+            syslog_protocol,
+            int(syslog_port),
+        )
     logger = logging.getLogger(__name__)
     logger.info(
         "Bootstrapping docleaner r%s", importlib.metadata.version("docleaner-api")
