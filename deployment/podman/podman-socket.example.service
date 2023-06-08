@@ -1,0 +1,12 @@
+[Unit]
+Description=Create podman user socket
+After=network.target
+
+[Service]
+Type=simple
+User=user
+Group=users
+ExecStart=podman system service --time=0 unix:///home/user/podman.sock
+
+[Install]
+WantedBy=multi-user.target

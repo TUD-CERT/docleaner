@@ -35,7 +35,7 @@ class ContainerizedSandbox(Sandbox):
         )
 
     async def process(self, source: bytes) -> SandboxResult:
-        """Runs _process() in its own thread due to blocking dependencies (podman)."""
+        """Runs _process_blocking() in its own thread due to blocking dependencies (podman)."""
         return await asyncio.to_thread(self._process_blocking, source)
 
     def _process_blocking(self, source: bytes) -> SandboxResult:

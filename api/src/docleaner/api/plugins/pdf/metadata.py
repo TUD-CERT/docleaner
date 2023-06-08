@@ -35,7 +35,7 @@ def process_pdf_metadata(
     src: Dict[str, Union[bool, Dict[str, Any]]]
 ) -> DocumentMetadata:
     """PDF exiftool-generated metadata post-processing. Strips out various tags of
-    embedded documents that aren't likely to contain privacy-sensitive metadata."""
+    embedded documents that aren't likely to contain privacy-invasive metadata."""
     primary_metadata = {}
     assert isinstance(src["primary"], dict)
     assert isinstance(src["embeds"], dict)
