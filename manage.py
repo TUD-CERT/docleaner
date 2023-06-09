@@ -124,6 +124,7 @@ def build(include_nested: bool, theme: str) -> None:
     service_id = wait_for_service("api", "Development environment is ready", project=proj)
     print(f"[*] Building docleaner-api wheel with {theme} theme")
     subprocess.check_call(["podman", "exec", service_id, "select_theme", theme])
+    subprocess.check_call(["podman", "exec", service_id, "npm", "run", "build-prod"])
     subprocess.check_call(["podman", "exec", service_id, "python3", "setup.py", "bdist_wheel"])
     api_version = subprocess.check_output(["podman", "exec", service_id, "python3", "-c",
                                            "from importlib.metadata import version; print(version('docleaner-api'))"])\
