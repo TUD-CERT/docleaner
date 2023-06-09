@@ -1,6 +1,7 @@
 import socket
 from configparser import ConfigParser
 import importlib
+import importlib.metadata
 import logging
 import logging.handlers
 import os
