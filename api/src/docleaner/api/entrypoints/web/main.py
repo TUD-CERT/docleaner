@@ -1,5 +1,7 @@
+from contextlib import asynccontextmanager
 from importlib.metadata import version
 import os
+from typing import AsyncIterator
 
 from fastapi import FastAPI, Request, Response
 from fastapi.exception_handlers import http_exception_handler
@@ -16,22 +18,21 @@ from docleaner.api.entrypoints.web.dependencies import (
 from docleaner.api.entrypoints.web.routers import rest, web
 
 
-app = FastAPI(version=version("docleaner-api"), title="docleaner API")
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    init_dependencies()
+    yield
+    await get_queue().shutdown()
+
+
+app = FastAPI(
+    version=version("docleaner-api"), title="docleaner API", lifespan=lifespan
+)
 app.mount(
     "/static", StaticFiles(directory=os.path.join(base_path, "static")), name="static"
 )
 app.include_router(rest.rest_api)
 app.include_router(web.web_api)
-
-
-@app.on_event("startup")
-def on_startup() -> None:
-    init_dependencies()
-
-
-@app.on_event("shutdown")
-async def on_shutdown() -> None:
-    await get_queue().shutdown()
 
 
 @app.exception_handler(web.ValidationException)

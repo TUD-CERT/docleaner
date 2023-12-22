@@ -28,7 +28,8 @@ class MetadataField:
 @dataclass(eq=True, kw_only=True)
 class DocumentMetadata:
     """Aggregation of metadata fields for a single document, covering signature status
-    and primary (of the document itself) as well as secondary metadata (of embedded documents)."""
+    and primary (of the document itself) as well as secondary metadata (of embedded documents).
+    """
 
     primary: Dict[str, MetadataField] = field(default_factory=dict)
     embeds: Dict[str, Dict[str, MetadataField]] = field(default_factory=dict)

@@ -63,7 +63,8 @@ async def delete_session(sid: str, repo: Repository) -> None:
 async def purge_sessions(purge_after: timedelta, repo: Repository) -> Set[str]:
     """Purges sessions after all jobs associated with a session are
     finished (in state SUCCESS or ERROR) and the session hasn't been updated
-    within the specified timeframe (purge_after). Returns the identifiers of all deleted sessions."""
+    within the specified timeframe (purge_after). Returns the identifiers of all deleted sessions.
+    """
     purged_sessions = set()
     for session in await repo.find_sessions(not_updated_for=purge_after):
         # Do not purge sessions with unfinished jobs

@@ -157,7 +157,8 @@ async def test_purge_sessions(
     job_types: List[JobType],
 ) -> None:
     """Purge finished (all associated jobs in SUCCESS or ERROR state) sessions
-    after some time of inactivity. Standalone jobs - not associated with a session - are ignored."""
+    after some time of inactivity. Standalone jobs - not associated with a session - are ignored.
+    """
     clock = DummyClock()
     repo._clock = clock  # type: ignore
     sid = await create_session(repo)

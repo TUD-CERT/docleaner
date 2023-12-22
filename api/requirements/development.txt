@@ -1,10 +1,10 @@
 -r production.txt
 
-black == 22.12.0
-flake8
-httpx
-motor-stubs
-mypy == 0.961
-pytest
-pytest-asyncio
-wheel
+black ~= 23.12.0
+flake8 ~= 6.1.0
+httpx ~= 0.26.0
+motor-stubs ~= 1.7.1
+mypy ~= 1.8.0
+pytest ~= 7.4.3
+pytest-asyncio ~= 0.23.2
+wheel ~= 0.42.0

@@ -1,4 +1,4 @@
-FROM alpine:3.17
+FROM alpine:3.18
 
 COPY analyze exiftool.cfg process /opt/
 RUN apk add tini bash exiftool qpdf python3 py3-pip; \

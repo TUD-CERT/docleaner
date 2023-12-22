@@ -10,7 +10,8 @@ class DummySandbox(Sandbox):
         self, simulate_errors: bool = False, simulate_exceptions: bool = False
     ):
         """Set simulate_errors to True to force this sandbox to simulate an error on each job.
-        In a similar vein, simulate_exceptions can be set to raise exceptions during processing."""
+        In a similar vein, simulate_exceptions can be set to raise exceptions during processing.
+        """
         self._running = asyncio.Event()
         self._running.set()
         self._simulate_errors = simulate_errors

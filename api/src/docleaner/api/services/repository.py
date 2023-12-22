@@ -85,13 +85,15 @@ class Repository(abc.ABC):
         self, not_updated_for: Optional[timedelta] = None
     ) -> Set[Session]:
         """Returns a set of all currently registered sessions, optionally filtered by
-        a timedelta to find sessions that haven't been updated for a given amount of time."""
+        a timedelta to find sessions that haven't been updated for a given amount of time.
+        """
         raise NotImplementedError()
 
     @abc.abstractmethod
     async def delete_session(self, sid: str) -> None:
         """Deletes a session, identified by its sid, from the repository.
-        In addition, deletes all jobs associated with that session regardless of their status."""
+        In addition, deletes all jobs associated with that session regardless of their status.
+        """
         raise NotImplementedError()
 
     async def disconnect(self) -> None:

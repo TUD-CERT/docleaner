@@ -223,7 +223,8 @@ class MongoDBRepository(Repository):
         self, job_data: Dict[str, Any], summary_only: bool = False
     ) -> Job:
         """Creates Job instances from raw job data as returned by MongoDB.
-        If summary_only is True, omit metadata, the job log, src and result document data from the result."""
+        If summary_only is True, omit metadata, the job log, src and result document data from the result.
+        """
         job_data["type"] = next(
             filter(lambda jt: jt.id == job_data["type"], self._job_types)
         )

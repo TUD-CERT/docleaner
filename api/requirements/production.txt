@@ -1,7 +1,7 @@
-fastapi
-jinja2
-motor
-podman
-python-magic
-python-multipart
-uvicorn[standard]
+fastapi ~= 0.105.0
+Jinja2 ~= 3.1.2
+motor ~= 3.3.2
+podman ~= 4.8.1
+python-magic ~= 0.4.27
+python-multipart ~= 0.0.6
+uvicorn[standard] ~= 0.25.0

@@ -139,7 +139,7 @@ async def jobs_get(
             "job_log": job_log,
             "job_sid": job_sid,
             "meta_src": None if job_meta_src is None else asdict(job_meta_src),
-            "meta_result": None if job_meta_src is None else asdict(job_meta_result),
+            "meta_result": None if job_meta_result is None else asdict(job_meta_result),
             "htmx": "hx-request" in request.headers,
             "trigger": request.headers.get("hx-trigger"),
             "version": version,

@@ -54,7 +54,8 @@ async def await_job(
     Optional[DocumentMetadata],
 ]:
     """Blocks until the job identified by jid has been processed.
-    Returns the job's final status, type, log data, source metadata and resulting metadata."""
+    Returns the job's final status, type, log data, source metadata and resulting metadata.
+    """
     job = await repo.find_job(jid)
     if job is None:
         raise ValueError(f"A job with jid {jid} does not exist")
@@ -155,7 +156,8 @@ async def delete_job(jid: str, repo: Repository) -> None:
 
 async def purge_jobs(purge_after: timedelta, repo: Repository) -> Set[str]:
     """Deletes all finished standalone (not associated with a session) jobs that haven't been
-    updated within the timeframe specified by purge_after. Returns the identifiers of all deleted jobs."""
+    updated within the timeframe specified by purge_after. Returns the identifiers of all deleted jobs.
+    """
     purged_jobs = set()
     for job in await repo.find_jobs(
         status=[JobStatus.SUCCESS, JobStatus.ERROR], not_updated_for=purge_after
