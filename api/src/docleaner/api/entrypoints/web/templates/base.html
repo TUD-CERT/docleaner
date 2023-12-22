@@ -6,34 +6,36 @@
         <link rel="stylesheet" href="/static/dist/bundle.css">
         <title>docleaner</title>
     </head>
-    <body class="d-flex flex-column justify-content-between min-vh-100" hx-history="false">
-        <header class="navbar navbar-expand-sm mb-3 bg-dark">
-            <nav class="container-xl">
-                {% include "theme/header.html" %}
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle menu">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-three-dots" viewBox="0 0 16 16">
-                        <path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
-                    </svg>
-                </button>
-                <div id="navbar" class="collapse navbar-collapse flex-grow-0">
-                    <ul id="navbar-menu" class="navbar-nav">
-                        {% include "navbar_menu.html" %}
-                    </ul>
+    <body hx-history="false">
+        <div class="d-flex flex-column justify-content-between min-vh-100">
+            <header class="navbar navbar-expand-sm mb-3 bg-dark">
+                <nav class="container-xl">
+                    {% include "theme/header.html" %}
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle menu">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-three-dots" viewBox="0 0 16 16">
+                            <path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
+                        </svg>
+                    </button>
+                    <div id="navbar" class="collapse navbar-collapse flex-grow-0">
+                        <ul id="navbar-menu" class="navbar-nav">
+                            {% include "navbar_menu.html" %}
+                        </ul>
+                    </div>
+                </nav>
+            </header>
+            <main class="container-xl">
+                <div class="row flex-column">
+                    <div class="col-12">
+                        {% block content %}{% endblock %}
+                    </div>
                 </div>
-            </nav>
-        </header>
-        <main class="container-xl">
-            <div class="row flex-column">
-                <div class="col-12">
-                    {% block content %}{% endblock %}
+            </main>
+            <footer class="bg-dark">
+                <div class="container-xl">
+                    {% include "theme/footer.html" %}
                 </div>
-            </div>
-        </main>
-        <footer class="bg-dark">
-            <div class="container-xl">
-                {% include "theme/footer.html" %}
-            </div>
-        </footer>
+            </footer>
+        </div>
         <script src="/static/dist/bundle.js"></script>
     </body>
 </html>
