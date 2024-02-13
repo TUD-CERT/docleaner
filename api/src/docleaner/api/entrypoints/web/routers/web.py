@@ -53,9 +53,9 @@ def landing_get(
     version: str = Depends(get_version),
 ) -> _TemplateResponse:
     return templates.TemplateResponse(
+        request,
         "landing_full.html",
         {
-            "request": request,
             "hide_menu_upload": True,
             "supported_job_types": job_types,
             "version": version,
@@ -84,9 +84,9 @@ async def landing_post(
         )
         if "hx-request" in request.headers:
             return templates.TemplateResponse(
+                request,
                 "job_details.html",
                 {
-                    "request": request,
                     "jid": jid,
                     "job_status": 0,
                     "trigger": None,
@@ -129,11 +129,13 @@ async def jobs_get(
     except ValueError:
         raise WebException(status_code=status.HTTP_404_NOT_FOUND)
     return templates.TemplateResponse(
-        "job_details.html"
-        if "hx-request" in request.headers
-        else "job_details_full.html",
+        request,
+        (
+            "job_details.html"
+            if "hx-request" in request.headers
+            else "job_details_full.html"
+        ),
         {
-            "request": request,
             "jid": jid,
             "job_status": job_status,
             "job_log": job_log,
@@ -181,10 +183,13 @@ async def jobs_delete(
     except ValueError:
         raise WebException(status_code=status.HTTP_404_NOT_FOUND)
     return templates.TemplateResponse(
-        "job_deleted.html"
-        if "hx-request" in request.headers
-        else "job_deleted_full.html",
-        {"request": request, "jid": jid, "version": version},
+        request,
+        (
+            "job_deleted.html"
+            if "hx-request" in request.headers
+            else "job_deleted_full.html"
+        ),
+        {"jid": jid, "version": version},
     )
 
 
@@ -204,11 +209,13 @@ async def sessions_get(
     except ValueError:
         raise WebException(status_code=status.HTTP_404_NOT_FOUND)
     return templates.TemplateResponse(
-        "session_details.html"
-        if "hx-request" in request.headers
-        else "session_details_full.html",
+        request,
+        (
+            "session_details.html"
+            if "hx-request" in request.headers
+            else "session_details_full.html"
+        ),
         {
-            "request": request,
             "sid": sid,
             "created": created,
             "jobs_total": jobs_total,
@@ -228,9 +235,9 @@ async def doc_api_usage(
     version: str = Depends(get_version),
 ) -> _TemplateResponse:
     return templates.TemplateResponse(
+        request,
         "doc/api.html",
         {
-            "request": request,
             "base_url": base_url,
             "contact": contact,
             "version": version,

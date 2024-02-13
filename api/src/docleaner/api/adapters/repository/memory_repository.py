@@ -19,9 +19,9 @@ class MemoryRepository(Repository):
 
     def __init__(self, clock: Clock) -> None:
         self._clock = clock
-        self._jobs: Dict[
-            str, Job
-        ] = OrderedDict()  # Preserve insertion order (job creation)
+        self._jobs: Dict[str, Job] = (
+            OrderedDict()
+        )  # Preserve insertion order (job creation)
         self._sessions: Dict[str, Session] = {}
         self._total_jobs = 0
         logger.info("Database backend: In-Memory Repository")

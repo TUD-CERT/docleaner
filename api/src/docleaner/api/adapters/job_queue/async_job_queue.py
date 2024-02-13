@@ -61,9 +61,9 @@ class AsyncJobQueue(JobQueue):
                 for t in completed_tasks:
                     running_tasks.remove(t)
             else:
-                await_job: asyncio.Task[
-                    Union[Literal[True], str]
-                ] = asyncio.create_task(self._queue.get())
+                await_job: asyncio.Task[Union[Literal[True], str]] = (
+                    asyncio.create_task(self._queue.get())
+                )
                 done, pending = await asyncio.wait(
                     [await_job, await_shutdown], return_when=asyncio.FIRST_COMPLETED
                 )

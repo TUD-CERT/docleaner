@@ -1,6 +1,7 @@
 """
 Tests targeting the REST API
 """
+
 import asyncio
 import re
 

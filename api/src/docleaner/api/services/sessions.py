@@ -22,9 +22,7 @@ async def await_session(sid: str, repo: Repository) -> None:
         await await_job(job.id, repo)
 
 
-async def get_session(
-    sid: str, repo: Repository
-) -> Tuple[
+async def get_session(sid: str, repo: Repository) -> Tuple[
     datetime,
     datetime,
     int,

@@ -44,9 +44,7 @@ async def create_job(
     return jid, source_type
 
 
-async def await_job(
-    jid: str, repo: Repository
-) -> Tuple[
+async def await_job(jid: str, repo: Repository) -> Tuple[
     JobStatus,
     JobType,
     List[str],
@@ -69,9 +67,7 @@ async def await_job(
     raise RuntimeError(f"Race condition: awaited job {jid} is now gone")
 
 
-async def get_job(
-    jid: str, repo: Repository
-) -> Tuple[
+async def get_job(jid: str, repo: Repository) -> Tuple[
     JobStatus,
     JobType,
     List[str],

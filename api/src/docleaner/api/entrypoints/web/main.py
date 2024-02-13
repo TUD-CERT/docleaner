@@ -39,8 +39,8 @@ app.include_router(web.web_api)
 async def validation_exception_handler(
     request: Request, exc: web.ValidationException
 ) -> Response:
-    exc.params["request"] = request
     return templates.TemplateResponse(
+        request,
         exc.template_htmx if "hx-request" in request.headers else exc.template_full,
         exc.params,
         status_code=exc.status_code,
@@ -51,9 +51,9 @@ async def validation_exception_handler(
 async def web_exception_handler(request: Request, exc: web.WebException) -> Response:
     if exc.status_code == status.HTTP_404_NOT_FOUND:
         return templates.TemplateResponse(
+            request,
             "error.html",
             {
-                "request": request,
                 "msg": exc.detail,
                 "version": version("docleaner-api"),
             },
