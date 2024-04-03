@@ -2,7 +2,7 @@ import abc
 from datetime import timedelta
 from typing import List, Optional, Set
 
-from docleaner.api.core.job import Job, JobStatus, JobType
+from docleaner.api.core.job import Job, JobParams, JobStatus, JobType
 from docleaner.api.core.metadata import DocumentMetadata
 from docleaner.api.core.session import Session
 
@@ -12,10 +12,16 @@ class Repository(abc.ABC):
 
     @abc.abstractmethod
     async def add_job(
-        self, src: bytes, src_name: str, job_type: JobType, sid: Optional[str] = None
+        self,
+        src: bytes,
+        src_name: str,
+        job_type: JobType,
+        params: Optional[JobParams] = None,
+        sid: Optional[str] = None,
     ) -> str:
         """Creates a job of a specific type for a given source document and returns the
-        resulting job id. If sid is given, the job is association with that session."""
+        resulting job id. If required, additional parameters for job processing may be supplied.
+        If sid is given, the job is association with that session."""
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -51,7 +57,7 @@ class Repository(abc.ABC):
     ) -> None:
         """Updates a job's result and/or status flag.
         In addition, transparently refreshes the 'updated' field of the job itself and its
-        session (in case its associated with one)."""
+        session (in case it's associated with one)."""
         raise NotImplementedError()
 
     @abc.abstractmethod

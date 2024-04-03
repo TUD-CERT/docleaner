@@ -265,7 +265,7 @@ async def test_purge_jobs(
     await repo.update_job(queued_jid, status=JobStatus.QUEUED)
     sid = await create_session(repo)
     session_jid, _ = await create_job(
-        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid
+        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid=sid
     )
     await await_job(session_jid, repo)
     clock.advance(60)

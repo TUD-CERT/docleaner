@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response, UploadFile
 from pydantic import BaseModel
 import starlette.status as status
 
-from docleaner.api.core.job import JobStatus, JobType
+from docleaner.api.core.job import JobParams, JobStatus, JobType
 from docleaner.api.core.metadata import DocumentMetadata
 from docleaner.api.entrypoints.web.dependencies import (
     get_base_url,
@@ -77,6 +77,7 @@ async def jobs_create(
             queue,
             file_identifier,
             job_types,
+            JobParams(),
             session,
         )
         (

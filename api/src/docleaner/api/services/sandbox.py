@@ -25,7 +25,7 @@ async def process_job_in_sandbox(jid: str, repo: Repository) -> None:
         type(job.type.sandbox).__name__,
     )
     try:
-        result = await job.type.sandbox.process(job.src)
+        result = await job.type.sandbox.process(job.src, job.params)
     except Exception:
         logger.warning(f"Exception in sandbox.process():\n{traceback.format_exc()}")
         await repo.add_to_job_log(jid, "Error during sandbox processing")

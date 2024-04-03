@@ -1,6 +1,9 @@
 import abc
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, TYPE_CHECKING, Union
+
+if TYPE_CHECKING:
+    from docleaner.api.core.job import JobParams
 
 
 @dataclass(kw_only=True)
@@ -22,12 +25,12 @@ class SandboxResult:
 
 class Sandbox(abc.ABC):
     """Interface for an isolated process that receives a document file,
-    attempts to purge its metadata and returns the result."""
+    processes it according to a set of rules and returns the result."""
 
     @abc.abstractmethod
-    async def process(self, source: bytes) -> SandboxResult:
-        """Transforms the given source document by removing associated metadata.
-        Returns a tuple of the form (log_data, success, resulting clean file).
+    async def process(self, source: bytes, params: "JobParams") -> SandboxResult:
+        """Transforms the given source into a result document. Additional params are
+        implementation-specific and can be utilized to configure the transformation process.
         The implementation is required to be fail-safe and not raise any exceptions,
         since those aren't expected to be handled by the responsible job queue."""
         raise NotImplementedError()

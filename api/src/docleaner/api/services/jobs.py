@@ -3,7 +3,7 @@ from datetime import timedelta
 import logging
 from typing import Dict, List, Optional, Set, Tuple
 
-from docleaner.api.core.job import JobStatus, JobType
+from docleaner.api.core.job import JobParams, JobStatus, JobType
 from docleaner.api.core.metadata import DocumentMetadata
 from docleaner.api.services.file_identifier import FileIdentifier
 from docleaner.api.services.job_queue import JobQueue
@@ -19,9 +19,10 @@ async def create_job(
     queue: JobQueue,
     file_identifier: FileIdentifier,
     job_types: List[JobType],
+    params: Optional[JobParams] = None,
     sid: Optional[str] = None,
 ) -> Tuple[str, JobType]:
-    """Creates and schedules a job to clean the given source document.
+    """Creates and schedules a job to transform the given source document.
     Can optionally be added to a session by providing a session id (sid).
     Returns the job id and (identified) type."""
     # Identify source MIME type
@@ -36,7 +37,7 @@ async def create_job(
     logger.debug(
         "Creating job for %s of type %s (%s)", source_name, source_type.id, sid
     )
-    jid = await repo.add_job(source, source_name, source_type, sid)
+    jid = await repo.add_job(source, source_name, source_type, params, sid)
     job = await repo.find_job(jid)
     if job is None:
         raise RuntimeError(f"Race condition: added job {jid} is now gone")

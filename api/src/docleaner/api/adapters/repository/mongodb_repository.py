@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Set, Union
 from motor import motor_asyncio
 import pymongo
 
-from docleaner.api.core.job import JobStatus, Job, JobType
+from docleaner.api.core.job import Job, JobParams, JobStatus, JobType
 from docleaner.api.core.metadata import DocumentMetadata, MetadataField
 from docleaner.api.core.session import Session
 from docleaner.api.services.clock import Clock
@@ -35,12 +35,19 @@ class MongoDBRepository(Repository):
         logger.info("Database backend: MongoDB (%s:%d/%s)", db_host, db_port, db_name)
 
     async def add_job(
-        self, src: bytes, src_name: str, job_type: JobType, sid: Optional[str] = None
+        self,
+        src: bytes,
+        src_name: str,
+        job_type: JobType,
+        params: Optional[JobParams] = None,
+        sid: Optional[str] = None,
     ) -> str:
         if sid is not None and await self._db.sessions.find_one({"_id": sid}) is None:
             raise ValueError(
                 f"Can't add to session {sid}, because the ID doesn't exist"
             )
+        if params is None:
+            params = JobParams()
         jid = generate_token()
         now = self._clock.now()
         # Save source document to GridFS
@@ -51,6 +58,7 @@ class MongoDBRepository(Repository):
             src=src_id,
             name=src_name,
             type=job_type,
+            params=params,
             created=now,
             session_id=sid,
         )
@@ -254,6 +262,11 @@ class MongoDBRepository(Repository):
             job_data["metadata_src"] = self._create_document_metadata(
                 job_data["metadata_src"]
             )
+        # Create MetadataField and JobParams instances
+        job_data["params"]["metadata"] = [
+            MetadataField(**m) for m in job_data["params"]["metadata"]
+        ]
+        job_data["params"] = JobParams(**job_data["params"])
         job = Job(**job_data)
         job.updated = updated
         return job

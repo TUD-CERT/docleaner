@@ -1,6 +1,6 @@
 #!/bin/sh
 set -e
-test "${1}" -a "${2}" || exit
+test -f "${1}" -a "${2}" -a -f "${3}"|| exit
 mv "${1}" /tmp/source.pdf  # exiftool demands its source files have the proper extension
 exiftool -config /opt/exiftool.cfg -all= -tagsfromfile @ -title -keywords -subject -description -trapped -GTS_PDFXVersion -GTS_PDFXConformance -GTS_PDFVTVersion -XMP-dc:Format -XMP-dc:Language -XMP-dc:Subject -XMP-dc:Title* -XMP-dc:Type -XMP-dc:Description* -XMP-dc:Rights* -XMP-pdfuaid:part -XMP-pdfe:ISO_PDFEVersion -XMP-pdfaid:part -XMP-pdfaid:conformance -XMP-pdfaExtension:All -XMP-pdfxid:GTS_PDFXVersion -XMP-pdfvtid:GTS_PDFVTVersion -XMP-pdf:Trapped -XMP-pdf:PDFVersion -XMP-xmpRights:All -XMP-x:XMPToolkit= /tmp/source.pdf -o /tmp/intermediate.pdf
 # For qpdf, only exit code 2 signals a fatal error

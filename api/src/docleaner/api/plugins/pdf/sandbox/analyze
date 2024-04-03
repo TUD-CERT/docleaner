@@ -45,11 +45,12 @@ def pdf_contains_signatures(path: str) -> bool:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage: analyze <path_to_pdf> <result_path>")
+    if len(sys.argv) != 4:
+        print("Usage: analyze <path_to_pdf> <result_path> <params_path>")
         sys.exit(1)
     src_path = sys.argv[1]
     result_path = sys.argv[2]
+    params_path = sys.argv[3]
     result = subprocess.run(["exiftool",
                              "-config",
                              "/opt/exiftool.cfg",

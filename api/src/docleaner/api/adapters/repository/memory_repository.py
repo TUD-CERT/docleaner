@@ -4,7 +4,7 @@ from datetime import timedelta
 import logging
 from typing import Dict, List, Optional, Set
 
-from docleaner.api.core.job import Job, JobStatus, JobType
+from docleaner.api.core.job import Job, JobParams, JobStatus, JobType
 from docleaner.api.core.metadata import DocumentMetadata
 from docleaner.api.core.session import Session
 from docleaner.api.services.clock import Clock
@@ -27,16 +27,29 @@ class MemoryRepository(Repository):
         logger.info("Database backend: In-Memory Repository")
 
     async def add_job(
-        self, src: bytes, src_name: str, job_type: JobType, sid: Optional[str] = None
+        self,
+        src: bytes,
+        src_name: str,
+        job_type: JobType,
+        params: Optional[JobParams] = None,
+        sid: Optional[str] = None,
     ) -> str:
         if sid is not None and sid not in self._sessions:
             raise ValueError(
                 f"Can't add to session {sid}, because the ID doesn't exist"
             )
+        if params is None:
+            params = JobParams()
         jid = generate_token()
         now = self._clock.now()
         job = Job(
-            id=jid, src=src, name=src_name, type=job_type, created=now, session_id=sid
+            id=jid,
+            src=src,
+            name=src_name,
+            type=job_type,
+            params=params,
+            created=now,
+            session_id=sid,
         )
         self._jobs[jid] = job
         if sid is not None:

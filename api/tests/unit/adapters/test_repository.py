@@ -4,7 +4,7 @@ from typing import List
 import pytest
 
 from docleaner.api.adapters.clock.dummy_clock import DummyClock
-from docleaner.api.core.job import Job, JobStatus, JobType
+from docleaner.api.core.job import Job, JobParams, JobStatus, JobType
 from docleaner.api.core.metadata import DocumentMetadata, MetadataField
 from docleaner.api.core.session import Session
 from docleaner.api.services.repository import Repository
@@ -27,6 +27,19 @@ async def test_add_and_fetch_job(
     assert isinstance(found_job.created, datetime)
     assert found_job.created == found_job.updated
     assert found_job.session_id is None
+
+
+async def test_add_and_fetch_job_with_params(
+    repo: Repository, sample_pdf: bytes, job_types: List[JobType]
+) -> None:
+    """Adding and retrieving a job with some custom parameters."""
+    params = JobParams(metadata=[MetadataField(id="Title", value="invoice")])
+    jid = await repo.add_job(sample_pdf, "sample.pdf", job_types[0], params)
+    found_job = await repo.find_job(jid)
+    assert isinstance(found_job, Job)
+    assert found_job.params == JobParams(
+        metadata=[MetadataField(id="Title", value="invoice")]
+    )
 
 
 async def test_fetch_all_jobs(
@@ -250,7 +263,7 @@ async def test_with_nonexisting_session(
     with pytest.raises(ValueError):
         await repo.delete_session(sid)
     with pytest.raises(ValueError):
-        await repo.add_job(sample_pdf, "sample.pdf", job_types[0], sid)
+        await repo.add_job(sample_pdf, "sample.pdf", job_types[0], sid=sid)
     with pytest.raises(ValueError):
         await repo.find_jobs(sid)
 
@@ -264,7 +277,7 @@ async def test_add_jobs_to_session_then_fetch_and_delete_them(
     sid = await repo.add_session()
     jids = set()
     for i in range(2):
-        jids.add(await repo.add_job(sample_pdf, "sample.pdf", job_types[0], sid))
+        jids.add(await repo.add_job(sample_pdf, "sample.pdf", job_types[0], sid=sid))
     sessionless_jid = await repo.add_job(sample_pdf, "sample.pdf", job_types[0])
     # Fetch session's jobs
     found_jobs = await repo.find_jobs(sid)
@@ -289,7 +302,7 @@ async def test_session_timestamp_is_updated_after_job_updates(
     sid = await repo.add_session()
     # Session is updated when adding jobs
     advanced_time = clock.advance(10)
-    jid = await repo.add_job(sample_pdf, "sample.pdf", job_types[0], sid)
+    jid = await repo.add_job(sample_pdf, "sample.pdf", job_types[0], sid=sid)
     session = await repo.find_session(sid)
     assert isinstance(session, Session)
     # Account for repository implementations with different time resolutions

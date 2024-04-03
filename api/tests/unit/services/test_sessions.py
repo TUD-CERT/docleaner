@@ -31,10 +31,10 @@ async def test_process_multiple_jobs_via_session(
     sid = await create_session(repo)
     assert isinstance(sid, str) and len(sid) > 0
     jid1, _ = await create_job(
-        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid
+        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid=sid
     )
     jid2, _ = await create_job(
-        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid
+        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid=sid
     )
     # Wait until job completion
     await await_session(sid, repo)
@@ -61,11 +61,11 @@ async def test_get_unfinished_session_details(
 ) -> None:
     """Retrieving session details for a session with yet unfinished jobs."""
     sid = await create_session(repo)
-    jid1 = await repo.add_job(sample_pdf, "sample.pdf", job_types[0], sid)
+    jid1 = await repo.add_job(sample_pdf, "sample.pdf", job_types[0], sid=sid)
     await repo.update_job(jid1, status=JobStatus.QUEUED)
-    jid2 = await repo.add_job(sample_pdf, "sample.pdf", job_types[0], sid)
+    jid2 = await repo.add_job(sample_pdf, "sample.pdf", job_types[0], sid=sid)
     await repo.update_job(jid2, status=JobStatus.SUCCESS)
-    jid3 = await repo.add_job(sample_pdf, "sample.pdf", job_types[0], sid)
+    jid3 = await repo.add_job(sample_pdf, "sample.pdf", job_types[0], sid=sid)
     await repo.update_job(jid3, status=JobStatus.ERROR)
     created, updated, total_jobs, finished_jobs, jobs = await get_session(sid, repo)
     assert total_jobs == 3
@@ -84,7 +84,7 @@ async def test_with_nonexistent_session(
     sid = generate_token()
     with pytest.raises(ValueError):
         await create_job(
-            sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid
+            sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid=sid
         )
     with pytest.raises(ValueError):
         await await_session(sid, repo)
@@ -104,12 +104,12 @@ async def test_delete_finished_session(
     """Deleting a session that has only associated jobs in state SUCCESS and ERROR."""
     sid = await create_session(repo)
     jid1, _ = await create_job(
-        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid
+        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid=sid
     )
     jid2, _ = await create_job(
-        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid
+        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid=sid
     )
-    jid3 = await repo.add_job(sample_pdf, "sample.pdf", job_types[0], sid)
+    jid3 = await repo.add_job(sample_pdf, "sample.pdf", job_types[0], sid=sid)
     await repo.update_job(jid3, status=JobStatus.ERROR)
     # Wait until job completion
     await await_session(sid, repo)
@@ -131,11 +131,11 @@ async def test_delete_running_session(
     """Attempting to delete a session that has running or queued jobs
     raises an exception until all jobs are finished."""
     sid = await create_session(repo)
-    jid1 = await repo.add_job(sample_pdf, "sample.pdf", job_types[0], sid)
+    jid1 = await repo.add_job(sample_pdf, "sample.pdf", job_types[0], sid=sid)
     await repo.update_job(jid1, status=JobStatus.CREATED)
-    jid2 = await repo.add_job(sample_pdf, "sample.pdf", job_types[0], sid)
+    jid2 = await repo.add_job(sample_pdf, "sample.pdf", job_types[0], sid=sid)
     await repo.update_job(jid2, status=JobStatus.QUEUED)
-    jid3 = await repo.add_job(sample_pdf, "sample.pdf", job_types[0], sid)
+    jid3 = await repo.add_job(sample_pdf, "sample.pdf", job_types[0], sid=sid)
     await repo.update_job(jid3, status=JobStatus.RUNNING)
     with pytest.raises(ValueError, match="has unfinished jobs"):
         await delete_session(sid, repo)
@@ -167,12 +167,12 @@ async def test_purge_sessions(
     )
     await await_job(standalone_jid, repo)
     finished_jid, _ = await create_job(
-        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid
+        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid=sid
     )
     await await_job(finished_jid, repo)
     # Job that remains in QUEUED state
     await create_job(
-        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid
+        sample_pdf, "sample.pdf", repo, queue, file_identifier, job_types, sid=sid
     )
     clock.advance(60)
     purged_sids = await purge_sessions(timedelta(seconds=30), repo)

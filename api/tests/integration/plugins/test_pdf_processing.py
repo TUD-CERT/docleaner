@@ -1,12 +1,13 @@
 import magic
 from typing import Tuple
 
+from docleaner.api.core.job import JobParams
 from docleaner.api.core.sandbox import Sandbox
 
 
 async def test_process_valid_pdf(cont_pdf_sandbox: Sandbox, sample_pdf: bytes) -> None:
     """Processing a valid PDF sample in a containerized sandbox."""
-    result = await cont_pdf_sandbox.process(sample_pdf)
+    result = await cont_pdf_sandbox.process(sample_pdf, JobParams())
     assert result.success
     assert magic.from_buffer(result.result, mime=True) == "application/pdf"
     assert isinstance(result.metadata_src["primary"], dict)
@@ -34,9 +35,9 @@ async def test_retrieve_signature_status(
 ) -> None:
     """The metadata analysis includes a signed marker that indicates
     whether a document has a digital signature."""
-    result = await cont_pdf_sandbox.process(sample_pdf_signed)
+    result = await cont_pdf_sandbox.process(sample_pdf_signed, JobParams())
     assert result.metadata_src["signed"] is result.metadata_result["signed"] is True
-    result = await cont_pdf_sandbox.process(sample_pdf)
+    result = await cont_pdf_sandbox.process(sample_pdf, JobParams())
     assert result.metadata_src["signed"] is result.metadata_result["signed"] is False
 
 
@@ -44,7 +45,7 @@ async def test_preserve_pdfua1_indicator(
     cont_pdf_sandbox: Sandbox, sample_pdfua1: bytes
 ) -> None:
     """Preserving the PDF/UA-1 indicator in accordance with ISO 14289-1."""
-    result = await cont_pdf_sandbox.process(sample_pdfua1)
+    result = await cont_pdf_sandbox.process(sample_pdfua1, JobParams())
     assert result.success
     assert isinstance(result.metadata_src["primary"], dict)
     assert isinstance(result.metadata_result["primary"], dict)
@@ -59,7 +60,7 @@ async def test_preserve_pdfe1_indicator(
     cont_pdf_sandbox: Sandbox, sample_pdfe1: bytes
 ) -> None:
     """Preserving the PDF/E-1 indicator in accordance with ISO 24517-1:2008-05."""
-    result = await cont_pdf_sandbox.process(sample_pdfe1)
+    result = await cont_pdf_sandbox.process(sample_pdfe1, JobParams())
     assert result.success
     assert isinstance(result.metadata_src["primary"], dict)
     assert isinstance(result.metadata_result["primary"], dict)
@@ -80,7 +81,7 @@ async def test_preserve_pdfa_indicators(
         (samples_pdfa[1], 2, "B"),
         (samples_pdfa[2], 3, "U"),
     ]:
-        result = await cont_pdf_sandbox.process(sample)
+        result = await cont_pdf_sandbox.process(sample, JobParams())
         assert result.success
         assert isinstance(result.metadata_src["primary"], dict)
         assert isinstance(result.metadata_result["primary"], dict)
@@ -106,7 +107,7 @@ async def test_preserve_pdfa_indicators(
             ]
             == ["AuthoritativeDomain", "part", "aggregationType", "url"]
         )
-        result = await cont_pdf_sandbox.process(samples_pdfa[3])
+        result = await cont_pdf_sandbox.process(samples_pdfa[3], JobParams())
         assert isinstance(result.metadata_src["primary"], dict)
         assert isinstance(result.metadata_result["primary"], dict)
         assert (
@@ -123,7 +124,7 @@ async def test_preserve_pdfx_indicators(
 ) -> None:
     """Preserving the PDF/X indicators in accordance with ISO 15930."""
     x1 = samples_pdfx[0]
-    result = await cont_pdf_sandbox.process(x1)
+    result = await cont_pdf_sandbox.process(x1, JobParams())
     assert result.success
     assert isinstance(result.metadata_src["primary"], dict)
     assert isinstance(result.metadata_result["primary"], dict)
@@ -148,7 +149,7 @@ async def test_preserve_pdfx_indicators(
         == "PDF/X-1a:2003"
     )
     x4 = samples_pdfx[1]
-    result = await cont_pdf_sandbox.process(x4)
+    result = await cont_pdf_sandbox.process(x4, JobParams())
     assert isinstance(result.metadata_src["primary"], dict)
     assert isinstance(result.metadata_result["primary"], dict)
     assert (
@@ -162,7 +163,7 @@ async def test_preserve_pdfvt_indicators(
     cont_pdf_sandbox: Sandbox, sample_pdfvt: bytes
 ) -> None:
     """Preserving the PDF/VT indicators."""
-    result = await cont_pdf_sandbox.process(sample_pdfvt)
+    result = await cont_pdf_sandbox.process(sample_pdfvt, JobParams())
     assert result.success
     assert isinstance(result.metadata_src["primary"], dict)
     assert isinstance(result.metadata_result["primary"], dict)
@@ -182,7 +183,7 @@ async def test_preserve_legal_tags(
     cont_pdf_sandbox: Sandbox, sample_pdf_tagged: bytes
 ) -> None:
     """Preserving tags related to legal/copyright matters."""
-    result = await cont_pdf_sandbox.process(sample_pdf_tagged)
+    result = await cont_pdf_sandbox.process(sample_pdf_tagged, JobParams())
     assert isinstance(result.metadata_src["primary"], dict)
     assert isinstance(result.metadata_result["primary"], dict)
     assert (
@@ -206,7 +207,7 @@ async def test_preserve_misc_benign_tags(
     cont_pdf_sandbox: Sandbox, sample_pdf_tagged: bytes
 ) -> None:
     """Preserving various unproblematic tags (non-exhaustive)."""
-    result = await cont_pdf_sandbox.process(sample_pdf_tagged)
+    result = await cont_pdf_sandbox.process(sample_pdf_tagged, JobParams())
     assert isinstance(result.metadata_src["primary"], dict)
     assert isinstance(result.metadata_result["primary"], dict)
     assert (
@@ -256,6 +257,6 @@ async def test_exclude_xmptoolkit_tag(
     cont_pdf_sandbox: Sandbox, sample_pdfua1: bytes
 ) -> None:
     """The XMP-x:XMPToolkit should neither be preserved nor added by the cleaning process."""
-    result = await cont_pdf_sandbox.process(sample_pdfua1)
+    result = await cont_pdf_sandbox.process(sample_pdfua1, JobParams())
     assert isinstance(result.metadata_result["primary"], dict)
     assert "XMP:XMP-x:XMPToolkit" not in result.metadata_result["primary"]

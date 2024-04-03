@@ -1,4 +1,5 @@
 import asyncio
+from dataclasses import asdict
 import json
 import logging
 import os
@@ -11,6 +12,7 @@ from podman import PodmanClient  # type: ignore
 from podman.errors.exceptions import APIError as PodmanAPIError  # type: ignore
 from podman.domain.containers import Container  # type: ignore
 
+from docleaner.api.core.job import JobParams
 from docleaner.api.core.sandbox import Sandbox, SandboxResult
 
 logger = logging.getLogger(__name__)
@@ -34,11 +36,11 @@ class ContainerizedSandbox(Sandbox):
             self._podman_uri,
         )
 
-    async def process(self, source: bytes) -> SandboxResult:
+    async def process(self, source: bytes, params: JobParams) -> SandboxResult:
         """Runs _process_blocking() in its own thread due to blocking dependencies (podman)."""
-        return await asyncio.to_thread(self._process_blocking, source)
+        return await asyncio.to_thread(self._process_blocking, source, params)
 
-    def _process_blocking(self, source: bytes) -> SandboxResult:
+    def _process_blocking(self, source: bytes, params: JobParams) -> SandboxResult:
         with PodmanClient(
             base_url=self._podman_uri
         ) as podman, TemporaryDirectory() as tmpdir:
@@ -55,15 +57,20 @@ class ContainerizedSandbox(Sandbox):
                 "signed": False,
             }
             success = False
-            # Copy source into container
+            # Copy source and params into container
             source_path = os.path.join(tmpdir, "source")
+            params_path = os.path.join(tmpdir, "params")
             source_tar = os.path.join(tmpdir, "source.tar")
             logger.debug("Writing temporary source file to %s", source_path)
             with open(source_path, "wb") as f:
                 f.write(source)
+            logger.debug("Writing temporary params to %s", params_path)
+            with open(params_path, "w") as f:
+                f.write(json.dumps(asdict(params)))
             logger.debug("Writing temporary source archive to %s", source_tar)
             with tarfile.open(source_tar, "w") as tar:
                 tar.add(source_path, arcname="source")
+                tar.add(params_path, arcname="params")
             try:
                 container = podman.containers.create(
                     image=self._image, auto_remove=True, network_mode="none"
@@ -87,21 +94,21 @@ class ContainerizedSandbox(Sandbox):
             try:
                 # Pre-process metadata analysis
                 process_status, process_out = container.exec_run(
-                    ["/opt/analyze", "/tmp/source", "/tmp/meta_src"]
+                    ["/opt/analyze", "/tmp/source", "/tmp/meta_src", "/tmp/params"]
                 )
                 if process_status != 0:
                     log.append(process_out.decode("utf-8"))
                     raise ValueError()
                 # Metadata processing
                 process_status, process_out = container.exec_run(
-                    ["/opt/process", "/tmp/source", "/tmp/result"]
+                    ["/opt/process", "/tmp/source", "/tmp/result", "/tmp/params"]
                 )
                 log.append(process_out.decode("utf-8"))
                 if process_status != 0:
                     raise ValueError()
                 # Post-process metadata analysis
                 process_status, process_out = container.exec_run(
-                    ["/opt/analyze", "/tmp/result", "/tmp/meta_result"]
+                    ["/opt/analyze", "/tmp/result", "/tmp/meta_result", "/tmp/params"]
                 )
                 if process_status != 0:
                     log.append(process_out.decode("utf-8"))

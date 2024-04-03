@@ -3,7 +3,7 @@ from datetime import datetime
 from enum import IntEnum
 from typing import Any, Callable, Dict, List, Optional, Union
 
-from docleaner.api.core.metadata import DocumentMetadata
+from docleaner.api.core.metadata import DocumentMetadata, MetadataField
 from docleaner.api.core.sandbox import Sandbox
 
 
@@ -31,13 +31,23 @@ class JobType:
     ]
 
 
+@dataclass(frozen=True, kw_only=True)
+class JobParams:
+    """Additional parameters that guide job execution."""
+
+    metadata: List[MetadataField] = field(
+        default_factory=list
+    )  # Metadata to assign to specific fields (instead of using the plugin defaults)
+
+
 @dataclass(eq=False, kw_only=True)
 class Job:
-    """A document cleaning job."""
+    """A document transformation job."""
 
     id: str  # Unique identifier
     src: bytes = field(repr=False)  # Source, the document to clean
     name: str  # Source document name, typically its filename
+    params: JobParams  # Additional data handed over to the transformation task
     type: JobType  # Source document type, selects a worker to handle this job
     created: datetime  # Job creation timestamp
     updated: datetime = field(init=False)  # Last update timestamp

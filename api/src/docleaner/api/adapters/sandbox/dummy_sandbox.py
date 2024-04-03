@@ -1,5 +1,6 @@
 import asyncio
 
+from docleaner.api.core.job import JobParams
 from docleaner.api.core.sandbox import Sandbox, SandboxResult
 
 
@@ -17,7 +18,7 @@ class DummySandbox(Sandbox):
         self._simulate_errors = simulate_errors
         self._simulate_exceptions = simulate_exceptions
 
-    async def process(self, source: bytes) -> SandboxResult:
+    async def process(self, source: bytes, params: JobParams) -> SandboxResult:
         await self._running.wait()
         if self._simulate_exceptions:
             raise ValueError("An exception was raised from the sandbox")
