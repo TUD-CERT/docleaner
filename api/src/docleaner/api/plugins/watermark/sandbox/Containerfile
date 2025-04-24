@@ -1,0 +1,7 @@
+FROM alpine:3.18
+
+COPY analyze process /opt/
+RUN apk add tini bash python3 py3-pip py3-reportlab; \
+    pip3 install pypdf
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["sleep", "infinity"]

@@ -1,0 +1,30 @@
+#!/usr/bin/env python3
+import json
+import sys
+
+from pypdf import PdfWriter, PdfReader
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+
+
+if __name__ == "__main__":
+    if len(sys.argv) != 4:
+        print("Usage: process <path_to_pdf> <result_path> <params_path>")
+        sys.exit(1)
+    src_path = sys.argv[1]
+    result_path = sys.argv[2]
+    params_path = sys.argv[3]
+    # Read params
+    with open(params_path) as f:
+        params = json.load(f)
+    license = f'Licensed for: {params["licensee"]}'
+    # Create watermark
+    c = canvas.Canvas("watermark.pdf", pagesize=A4)
+    c.drawString(10, 10, license)
+    c.save()
+    # Stamp source document
+    stamp = PdfReader("watermark.pdf").pages[0]
+    writer = PdfWriter(clone_from=src_path)
+    for page in writer.pages:
+        page.merge_page(stamp, over=True)
+    writer.write(result_path)

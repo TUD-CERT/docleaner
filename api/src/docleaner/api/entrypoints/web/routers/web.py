@@ -1,15 +1,17 @@
+from configparser import ConfigParser
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, List, Optional, Union
+from typing import Annotated, Any, Dict, List, Optional, Union
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, UploadFile
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 import starlette.status as status
 from starlette.templating import _TemplateResponse
 from urllib.parse import quote
 
-from docleaner.api.core.job import JobType
+from docleaner.api.core.job import JobParams, JobType
 from docleaner.api.entrypoints.web.dependencies import (
     get_base_url,
+    get_config,
     get_contact,
     get_file_identifier,
     get_job_types,
@@ -66,7 +68,8 @@ def landing_get(
 @web_api.post("/", response_model=None)
 async def landing_post(
     request: Request,
-    doc_src: UploadFile,
+    licensee: Annotated[str, Form()],
+    config: ConfigParser = Depends(get_config),
     file_identifier: FileIdentifier = Depends(get_file_identifier),
     job_types: List[JobType] = Depends(get_job_types),
     repo: Repository = Depends(get_repo),
@@ -74,13 +77,16 @@ async def landing_post(
     version: str = Depends(get_version),
 ) -> Union[_TemplateResponse, RedirectResponse]:
     try:
+        with open(config.get("docleaner", "source_document"), "rb") as f:
+            source_document = f.read()
         jid, _ = await create_job(
-            await doc_src.read(),
-            doc_src.filename or "",
+            source_document,
+            config.get("docleaner", "source_filename"),
             repo,
             queue,
             file_identifier,
             job_types,
+            JobParams(licensee=licensee)
         )
         if "hx-request" in request.headers:
             return templates.TemplateResponse(
@@ -136,6 +142,7 @@ async def jobs_get(
             else "job_details_full.html"
         ),
         {
+            "hide_menu_upload": True,
             "jid": jid,
             "job_status": job_status,
             "job_log": job_log,
@@ -222,24 +229,6 @@ async def sessions_get(
             "jobs_finished": jobs_finished,
             "jobs": job_list if jobs else None,
             "supported_job_types": job_types,
-            "version": version,
-        },
-    )
-
-
-@web_api.get("/api/usage", response_class=HTMLResponse, response_model=None)
-async def doc_api_usage(
-    request: Request,
-    base_url: str = Depends(get_base_url),
-    contact: Optional[str] = Depends(get_contact),
-    version: str = Depends(get_version),
-) -> _TemplateResponse:
-    return templates.TemplateResponse(
-        request,
-        "doc/api.html",
-        {
-            "base_url": base_url,
-            "contact": contact,
             "version": version,
         },
     )

@@ -35,6 +35,7 @@ class JobType:
 class JobParams:
     """Additional parameters that guide job execution."""
 
+    licensee: str = None
     metadata: List[MetadataField] = field(
         default_factory=list
     )  # Metadata to assign to specific fields (instead of using the plugin defaults)

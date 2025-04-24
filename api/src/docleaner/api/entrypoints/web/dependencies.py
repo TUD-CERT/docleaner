@@ -51,6 +51,11 @@ def init() -> None:
     )
 
 
+def get_config() -> ConfigParser:
+    global _config
+    return _config
+
+
 def get_clock() -> Clock:
     global _clock
     return _clock
