@@ -5,4 +5,4 @@ if [ $# -eq 1 ]; then
 fi
 
 echo "Serving backend application at ${DOCLEANER_URL} - Ctrl+C to stop"
-uvicorn --host 0.0.0.0 --port 8080 --reload --reload-dir /srv docleaner.api.entrypoints.web.main:app
+/srv/venv/bin/uvicorn --host 0.0.0.0 --port 8080 --reload --reload-dir /srv docleaner.api.entrypoints.web.main:app

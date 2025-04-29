@@ -1,4 +1,4 @@
-FROM alpine:3.18
+FROM alpine:3.21
 
 ENV PATH /srv/node_modules/.bin:$PATH
 ENV NODE_PATH /srv/node_modules
@@ -6,13 +6,14 @@ ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 
 WORKDIR /srv
-ADD api/scripts deployment/podman/run.sh /usr/local/bin/
+ADD api/scripts deployment/podman/dev.run.sh /usr/local/bin/
 ADD deployment/podman/containers.conf deployment/podman/docleaner.conf /root
 RUN apk add fuse-overlayfs libmagic npm podman py3-pip; \
     mv /root/containers.conf /etc/containers/containers.conf; \
     mv /root/docleaner.conf /etc/docleaner.conf; \
-    echo -e "root:1:999\nroot:1001:64535" > /etc/subuid; \
-    echo -e "root:1:999\nroot:1001:64535" > /etc/subgid; \
+    adduser -D -u 1000 podman; \
+    echo -e "podman:1:999\npodman:1001:64535" >/etc/subuid; \
+    echo -e "podman:1:999\npodman:1001:64535" >/etc/subgid; \
     mkdir -p /srv/src/docleaner; \
     ln -s /mnt/requirements/ /srv/requirements; \
     ln -s /mnt/pytest.ini /srv/pytest.ini; \
@@ -22,4 +23,4 @@ RUN apk add fuse-overlayfs libmagic npm podman py3-pip; \
     ln -s /mnt/src/docleaner/api/entrypoints/web/package.json /srv/package.json; \
     ln -s /mnt/src/docleaner/api/entrypoints/web/webpack.config.js /srv/webpack.config.js; \
     ln -s /mnt/src/docleaner/api/entrypoints/web/static /srv/static
-CMD ["/usr/local/bin/run.sh"]
+CMD ["/usr/local/bin/dev.run.sh"]

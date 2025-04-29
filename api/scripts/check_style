@@ -1,3 +1,3 @@
 #!/usr/bin/env sh
 # Performs style checking of the entire codebase, meant to be run from within the api container during development
-flake8 --max-line-length=120 /srv/src/docleaner/api /srv/tests
+/srv/venv/bin/flake8 --max-line-length=120 /srv/src/docleaner/api /srv/tests

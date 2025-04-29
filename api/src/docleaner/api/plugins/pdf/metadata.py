@@ -32,7 +32,7 @@ def _identify_tags(field: str) -> List[MetadataTag]:
 
 
 def process_pdf_metadata(
-    src: Dict[str, Union[bool, Dict[str, Any]]]
+    src: Dict[str, Union[bool, Dict[str, Any]]],
 ) -> DocumentMetadata:
     """PDF exiftool-generated metadata post-processing. Strips out various tags of
     embedded documents that aren't likely to contain privacy-invasive metadata."""

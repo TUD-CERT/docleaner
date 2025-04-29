@@ -1,10 +1,10 @@
 -r production.txt
 
-black ~= 24.2.0
-flake8 ~= 7.0.0
-httpx ~= 0.26.0
+black ~= 25.1.0
+flake8 ~= 7.2.0
+httpx ~= 0.28.1
 motor-stubs ~= 1.7.1
-mypy ~= 1.8.0
-pytest ~= 8.0.0
-pytest-asyncio ~= 0.23.2
-wheel ~= 0.42.0
+mypy ~= 1.15.0
+pytest ~= 8.3.5
+pytest-asyncio ~= 0.26.0
+wheel ~= 0.45.1

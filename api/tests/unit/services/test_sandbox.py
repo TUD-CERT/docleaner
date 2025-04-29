@@ -68,7 +68,7 @@ async def test_exception_during_metadata_processing(
     but instead the job finishes with an ERROR status."""
 
     def failing_postprocessor(
-        src: Dict[str, Union[bool, Dict[str, Any]]]
+        src: Dict[str, Union[bool, Dict[str, Any]]],
     ) -> DocumentMetadata:
         raise ValueError()
 

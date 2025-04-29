@@ -213,7 +213,7 @@ class MongoDBRepository(Repository):
 
     @staticmethod
     def _create_document_metadata(
-        raw_data: Dict[str, Union[bool, Dict[str, Any]]]
+        raw_data: Dict[str, Union[bool, Dict[str, Any]]],
     ) -> DocumentMetadata:
         embeds = {}
         assert isinstance(raw_data["primary"], dict)

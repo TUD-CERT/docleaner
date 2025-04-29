@@ -8,9 +8,9 @@ import traceback
 from tempfile import TemporaryDirectory
 from typing import Any, Dict, Union
 
-from podman import PodmanClient  # type: ignore
-from podman.errors.exceptions import APIError as PodmanAPIError  # type: ignore
-from podman.domain.containers import Container  # type: ignore
+from podman import PodmanClient
+from podman.errors.exceptions import APIError as PodmanAPIError
+from podman.domain.containers import Container
 
 from docleaner.api.core.job import JobParams
 from docleaner.api.core.sandbox import Sandbox, SandboxResult
@@ -147,6 +147,6 @@ class ContainerizedSandbox(Sandbox):
         with open(result_tar, "wb") as f:
             f.write(result_tar_raw)
         with tarfile.open(result_tar, "r") as tar:
-            tar.extract(os.path.basename(path), path=tmpdir)
+            tar.extract(os.path.basename(path), path=tmpdir, filter="data")
         with open(os.path.join(tmpdir, os.path.basename(path)), "rb") as f:
             return f.read()

@@ -18,7 +18,7 @@ def build_compose_cmdline(config: str, project: str = "docleaner") -> List[str]:
     podman_compose_file = os.path.join("deployment/podman", f"{config}.yml")
     if not os.path.isfile(podman_compose_file):
         raise ValueError(f"The file {podman_compose_file} does not exist")
-    return ["podman-compose", "-p", project, "-f", podman_compose_file]
+    return ["podman-compose", "-p", project, "-f", podman_compose_file, '--podman-run-args="--systemd=always"']
 
 
 def wait_for_service(service: str, logline: str, project: str = "docleaner") -> str:
@@ -76,7 +76,7 @@ def run(podman_socket: str, config: str = "development") -> None:
 
 def shell(service: str, config: str = "development") -> None:
     """Launches a shell within a container of the given (service) name."""
-    cmdline = build_compose_cmdline(config) + ["exec", service, "/bin/sh"]
+    cmdline = build_compose_cmdline(config) + ["exec", service, "/bin/sh", "-l"]
     p = subprocess.Popen(cmdline)
     try:
         p.wait()
@@ -104,7 +104,7 @@ def test(podman_socket: str) -> None:
     print("[*] Checking types")
     subprocess.check_call(["podman", "exec", service_id, "check_types"])
     print("[*] Performing tests")
-    subprocess.check_call(["podman", "exec", service_id, "pytest", "-svv"])
+    subprocess.check_call(["podman", "exec", service_id, "/srv/venv/bin/pytest", "-svv"])
     # Environment shutdown
     if dev_env_process is not None:
         dev_env_process.send_signal(signal.SIGINT)
@@ -126,7 +126,7 @@ def build(include_nested: bool, theme: str) -> None:
     subprocess.check_call(["podman", "exec", service_id, "select_theme", theme])
     subprocess.check_call(["podman", "exec", service_id, "npm", "run", "build-prod"])
     subprocess.check_call(["podman", "exec", service_id, "python3", "setup.py", "bdist_wheel"])
-    api_version = subprocess.check_output(["podman", "exec", service_id, "python3", "-c",
+    api_version = subprocess.check_output(["podman", "exec", service_id, "/srv/venv/bin/python3", "-c",
                                            "from importlib.metadata import version; print(version('docleaner-api'))"])\
         .decode("utf-8").strip()
     subprocess.check_call(["podman", "cp", f"{service_id}:/srv/dist/docleaner_api-{api_version}-py3-none-any.whl", "dist/"])

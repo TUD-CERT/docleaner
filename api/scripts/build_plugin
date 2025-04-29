@@ -14,16 +14,21 @@ fi
 
 PLUGIN=$(echo "${1}" | sed -re "s/.*plugins\/([^/]+)\/.*/\1/")
 IMAGE="docleaner/plugin_${PLUGIN}"
+PODMAN_URL=""
+if [ -n "${DOCLEANER_CONF}" ]; then
+  PODMAN_SOCKET=$(awk -F ' = ' '/^podman_uri/ {print $2}' ${DOCLEANER_CONF})
+  PODMAN_URL="--url ${PODMAN_SOCKET}"
+fi
 # If an image with the same name already exists, remove it
-podman rmi -i "${IMAGE}"
+podman ${PODMAN_URL} rmi -i "${IMAGE}"
 echo "[*] Building container image ${IMAGE} from ${1}"
-podman build -t ${IMAGE} $(dirname $1)
+podman ${PODMAN_URL} build -t "${IMAGE}" $(dirname $1)
 
 if [ $# -eq 2 ]; then
   OUT_PATH="${2}/docleaner_plugin_${PLUGIN}.tar"
   echo "[*] Writing image ${IMAGE} to ${OUT_PATH}"
   mkdir -p "${2}"
-  podman save -o "${OUT_PATH}" "${IMAGE}"
+  podman ${PODMAN_URL} save -o "${OUT_PATH}" "${IMAGE}"
   echo "[*] Removing temporary image ${IMAGE}"
-  podman rmi -i "${IMAGE}"
+  podman ${PODMAN_URL} rmi -i "${IMAGE}"
 fi
