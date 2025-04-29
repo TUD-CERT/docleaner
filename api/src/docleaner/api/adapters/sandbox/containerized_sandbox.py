@@ -97,13 +97,13 @@ class ContainerizedSandbox(Sandbox):
                     ["/opt/analyze", "/tmp/source", "/tmp/meta_src", "/tmp/params"]
                 )
                 if process_status != 0:
-                    log.append(process_out.decode("utf-8"))
+                    log.append(process_out.decode("utf-8", errors="ignore"))
                     raise ValueError()
                 # Metadata processing
                 process_status, process_out = container.exec_run(
                     ["/opt/process", "/tmp/source", "/tmp/result", "/tmp/params"]
                 )
-                log.append(process_out.decode("utf-8"))
+                log.append(process_out.decode("utf-8", errors="ignore"))
                 if process_status != 0:
                     raise ValueError()
                 # Post-process metadata analysis
@@ -111,7 +111,7 @@ class ContainerizedSandbox(Sandbox):
                     ["/opt/analyze", "/tmp/result", "/tmp/meta_result", "/tmp/params"]
                 )
                 if process_status != 0:
-                    log.append(process_out.decode("utf-8"))
+                    log.append(process_out.decode("utf-8", errors="ignore"))
                     raise ValueError()
                 # Retrieve result from container
                 result_document = self._retrieve_file("/tmp/result", container, tmpdir)
