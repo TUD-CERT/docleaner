@@ -16,7 +16,7 @@ services:
       #- <path/to/podman.sock>:/run/ext_podman.sock:z
 
   proxy:
-    image: nginx:stable
+    image: docker.io/library/nginx:stable
     networks:
       - docleaner
     ports:
@@ -29,7 +29,7 @@ services:
       #- <path/to/tls.key>:/srv/tls.key:z
 
   database:
-    image: mongo:6
+    image: docker.io/library/mongo:6
     networks:
       - docleaner
     restart: unless-stopped

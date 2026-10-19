@@ -15,7 +15,7 @@ services:
       - ${DOCLEANER_PODMAN_SOCKET}:/run/ext_podman.sock
 
   proxy:
-    image: nginx:stable
+    image: docker.io/library/nginx:stable
     networks:
       - docleaner-dev
     ports:
@@ -25,7 +25,7 @@ services:
       - ${PWD}/deployment/podman/nginx.dev.conf:/etc/nginx/nginx.conf:Z
 
   database:
-    image: mongo:6
+    image: docker.io/library/mongo:6
     networks:
       - docleaner-dev
 
