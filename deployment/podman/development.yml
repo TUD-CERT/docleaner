@@ -8,8 +8,10 @@ services:
       - DOCLEANER_CONF=/etc/docleaner.conf
     networks:
       - docleaner-dev
+    security_opt:
+      - label=type:container_runtime_t
     volumes:
-      - ${PWD}/api:/mnt
+      - ${PWD}/api:/mnt:Z
       - ${DOCLEANER_PODMAN_SOCKET}:/run/ext_podman.sock
 
   proxy:
@@ -20,7 +22,7 @@ services:
       - "8080:8080"
     restart: unless-stopped
     volumes:
-      - ${PWD}/deployment/podman/nginx.dev.conf:/etc/nginx/nginx.conf
+      - ${PWD}/deployment/podman/nginx.dev.conf:/etc/nginx/nginx.conf:Z
 
   database:
     image: mongo:6

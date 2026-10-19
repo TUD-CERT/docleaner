@@ -9,9 +9,11 @@ services:
     networks:
       - docleaner
     restart: unless-stopped
+    security_opt:
+      - label=type:container_runtime_t
     volumes:
-      - ${PWD}/docleaner.conf:/etc/docleaner.conf
-      #- <path/to/podman.sock>:/run/ext_podman.sock
+      - ${PWD}/docleaner.conf:/etc/docleaner.conf:Z
+      #- <path/to/podman.sock>:/run/ext_podman.sock:z
 
   proxy:
     image: nginx:stable
@@ -22,9 +24,9 @@ services:
       - "8443:8443"
     restart: unless-stopped
     volumes:
-      - ${PWD}/nginx.tls.conf:/etc/nginx/nginx.conf
-      #- <path/to/tls.crt>:/srv/tls.crt
-      #- <path/to/tls.key>:/srv/tls.key
+      - ${PWD}/nginx.tls.conf:/etc/nginx/nginx.conf:Z
+      #- <path/to/tls.crt>:/srv/tls.crt:z
+      #- <path/to/tls.key>:/srv/tls.key:z
 
   database:
     image: mongo:6
@@ -32,7 +34,7 @@ services:
       - docleaner
     restart: unless-stopped
     #volumes:
-    #  - <path/to/data>:/data/db
+    #  - <path/to/data>:/data/db:Z
 
 networks:
   docleaner:
