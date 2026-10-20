@@ -1,6 +1,5 @@
 FROM alpine:3.21
 
-ARG INCLUDE_PLUGINS
 ENV DOCLEANER_CONF="/etc/docleaner.conf"
 ENV DOCLEANER_LOGLVL="info"
 ADD deployment/podman/api.run.sh /usr/local/bin/
@@ -8,15 +7,14 @@ ADD deployment/podman/containers.conf /opt
 ADD dist/docleaner_api*.whl /opt
 COPY dist/plugins/* /opt/plugins/
 RUN set -ex; \
-    apk add fuse-overlayfs libmagic podman py3-pip tini; \
+    apk add libmagic podman py3-pip tini; \
     python3 -m venv /opt/venv; \
     /opt/venv/bin/pip3 install /opt/docleaner_api*.whl; \
     mv /opt/containers.conf /etc/containers/containers.conf; \
     adduser -D -u 1000 podman; \
     echo -e "podman:1:999\npodman:1001:64535" >/etc/subuid; \
-    echo -e "podman:1:999\npodman:1001:64535" >/etc/subgid; \
-    if [ $INCLUDE_PLUGINS = "true" ]; then for p in /opt/plugins/*; do su podman -c "podman load -i \"$p\""; rm "$p"; done; fi
+    echo -e "podman:1:999\npodman:1001:64535" >/etc/subgid
+VOLUME /home/podman/.local/share/containers
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["/usr/local/bin/api.run.sh"]
-EXPOSE 8080
 USER 1000:1000

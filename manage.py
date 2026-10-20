@@ -112,7 +112,7 @@ def test(podman_socket: str) -> None:
     shutdown()
 
 
-def build(include_nested: bool, theme: str) -> None:
+def build(theme: str) -> None:
     config = "development"
     proj = "docleaner-build"
     shutil.rmtree("dist", ignore_errors=True)
@@ -140,7 +140,6 @@ def build(include_nested: bool, theme: str) -> None:
     print("Building docleaner/api container image")
     subprocess.check_call(["podman", "build", "-f", "deployment/podman/Containerfile.api",
                            "-t", f"docleaner/api:{api_version}-{theme}",
-                           "--build-arg", f"INCLUDE_PLUGINS={str(include_nested).lower()}",
                            "."])
     subprocess.check_call(["podman", "save", "-o", f"dist/docleaner_api-{api_version}-{theme}.tar", f"docleaner/api:{api_version}-{theme}"])
     subprocess.check_call(["podman", "rmi", f"docleaner/api:{api_version}-{theme}"])
@@ -174,7 +173,6 @@ def parse_args() -> Tuple[argparse.Namespace, List[str]]:
                                   "or 'none' to disable and use nested containers")
 
     build_parser = subparsers.add_parser("build", help="Assembles the project into distributable components (to dist/)")
-    build_parser.add_argument("-n", "--nested", action="store_true", help="Include nested containerized plugin images")
     build_parser.add_argument("-t", "--theme", type=str, default="default", help="Build with selected web frontend theme")
     return parser.parse_known_args()
 
@@ -191,4 +189,4 @@ if __name__ == "__main__":
     elif args.subcmd == "test":
         test(podman_socket=args.podman_socket)
     elif args.subcmd == "build":
-        build(include_nested=args.nested, theme=args.theme)
+        build(theme=args.theme)
