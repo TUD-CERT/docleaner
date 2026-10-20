@@ -1,4 +1,4 @@
-FROM alpine:3.21
+FROM alpine:3.24
 
 ENV PATH /srv/node_modules/.bin:$PATH
 ENV NODE_PATH /srv/node_modules
