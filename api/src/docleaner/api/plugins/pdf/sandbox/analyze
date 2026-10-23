@@ -37,7 +37,9 @@ def preprocess_exiftool_metadata(src: bytes) -> Dict[str, Union[bool, Dict[str, 
 def pdf_contains_signatures(path: str) -> bool:
     with open(path, 'rb') as pdf:
         try:
-            r = PdfFileReader(pdf)
+            r = PdfFileReader(pdf, strict=False)
+            if r.encrypted:
+                r.decrypt(b"")
             return len(r.embedded_signatures) > 0
         except Exception as e:
             print(f"pyHanko Exception: {e}")
