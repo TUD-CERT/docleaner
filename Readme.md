@@ -29,8 +29,6 @@ will build all components and put everything required for deployment into a newl
 
 Without further arguments, `manage.py` enables the `default` web frontend theme during the build process. To use another theme, provide its name via `-t <theme>`. The selected theme will be reflected in the resulting container image's *tag* field (`docleaner/api:<version>-<theme>`).
 
-Pass `-n` to `manage.py` to embed the container images required for plugins (e.g. for containerized sandboxes) into the final API image. Without that switch, plugin images will still be built and placed in `dist/plugins`.
-
 ## Deployment
 The docleaner service is intended to be run containerized. Three containers/services are required for a minimal deployment: The docleaner API served via [uvicorn](https://www.uvicorn.org), an HTTP reverse proxy ([nginx](https://nginx.org)) and a database ([MongoDB](https://www.mongodb.com)). On top of that, each job (document) submitted to docleaner will be processed within a newly spawned unprivileged container (sandbox). These ephemeral containers can either be run **nested** within the API container itself or be run **on the host** in parallel to all other containers (both using Podman).
 
@@ -60,11 +58,9 @@ flowchart TB
     proxy
 ```
 
-Remember to add the `-n` flag when building the project (`manage.py build -n`). That way, all plugin images will be embedded into the API container image.
-
 Since ideally both the API container and its nested containers should run "rootless" (as a regular user), uid mappings need to be configured in `/etc/subuid` and `/etc/subgid` (see also [How to use Podman inside of a container](https://www.redhat.com/sysadmin/podman-inside-container), specifically the "Rootless Podman in rootless Podman" scenario).
 
-In `docleaner.conf`, make sure that `podman_uri` is set to `unix:///home/podman/nested_podman.sock`, which is an unprivileged Podman system socket that will be created automatically inside the docleaner API container upon startup.
+In `docleaner.conf`, make sure that `podman_uri` is set to `unix:///home/podman/nested_podman.sock`, which is an unprivileged Podman system socket that will be created automatically inside the docleaner API container upon startup. The plugin container images are baked into the API container during the build process. They are loaded on container startup in case nested sandbox containers are used.
 
 ### Sandbox containers on the host (b)
 ```mermaid
