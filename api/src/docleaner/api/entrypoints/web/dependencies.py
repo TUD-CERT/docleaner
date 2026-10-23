@@ -52,37 +52,37 @@ def init() -> None:
 
 
 def get_clock() -> Clock:
-    global _clock
+    global _clock  # noqa: F824
     return _clock
 
 
 def get_file_identifier() -> FileIdentifier:
-    global _file_identifier
+    global _file_identifier  # noqa: F824
     return _file_identifier
 
 
 def get_job_types() -> List[JobType]:
-    global _job_types
+    global _job_types  # noqa: F824
     return _job_types
 
 
 def get_queue() -> JobQueue:
-    global _queue
+    global _queue  # noqa: F824
     return _queue
 
 
 def get_repo() -> Repository:
-    global _repo
+    global _repo  # noqa: F824
     return _repo
 
 
 def get_base_url() -> str:
-    global _base_url
+    global _base_url  # noqa: F824
     return _base_url
 
 
 def get_contact() -> Optional[str]:
-    global _config
+    global _config  # noqa: F824
     contact = _config.get("docleaner", "contact", fallback="")
     if len(contact) == 0:
         return None
@@ -90,5 +90,5 @@ def get_contact() -> Optional[str]:
 
 
 def get_version() -> str:
-    global _version
+    global _version  # noqa: F824
     return _version

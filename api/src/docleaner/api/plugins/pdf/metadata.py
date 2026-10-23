@@ -2,7 +2,6 @@ from typing import Any, Dict, List, Union
 
 from docleaner.api.core.metadata import DocumentMetadata, MetadataField, MetadataTag
 
-
 PDF_TAGS = {
     "XMP:XMP-pdfuaid:Part": [MetadataTag.ACCESSIBILITY],
     "XMP:XMP-pdfe:ISO_PDFEVersion": [MetadataTag.COMPLIANCE],

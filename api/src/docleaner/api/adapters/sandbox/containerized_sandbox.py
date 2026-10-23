@@ -90,20 +90,22 @@ class ContainerizedSandbox(Sandbox):
             container.start()
             logger.debug("Copying %s into container %s", source_tar, container.name)
             with open(source_tar, "rb") as tar_raw:
-                container.put_archive("/tmp", tar_raw)
+                container.put_archive("/tmp", tar_raw)  # type: ignore[arg-type]
             try:
                 # Pre-process metadata analysis
                 process_status, process_out = container.exec_run(
                     ["/opt/analyze", "/tmp/source", "/tmp/meta_src", "/tmp/params"]
                 )
                 if process_status != 0:
-                    log.append(process_out.decode("utf-8", errors="ignore"))
+                    if isinstance(process_out, bytes):
+                        log.append(process_out.decode("utf-8", errors="ignore"))
                     raise ValueError()
                 # Metadata processing
                 process_status, process_out = container.exec_run(
                     ["/opt/process", "/tmp/source", "/tmp/result", "/tmp/params"]
                 )
-                log.append(process_out.decode("utf-8", errors="ignore"))
+                if isinstance(process_out, bytes):
+                    log.append(process_out.decode("utf-8", errors="ignore"))
                 if process_status != 0:
                     raise ValueError()
                 # Post-process metadata analysis
@@ -111,7 +113,8 @@ class ContainerizedSandbox(Sandbox):
                     ["/opt/analyze", "/tmp/result", "/tmp/meta_result", "/tmp/params"]
                 )
                 if process_status != 0:
-                    log.append(process_out.decode("utf-8", errors="ignore"))
+                    if isinstance(process_out, bytes):
+                        log.append(process_out.decode("utf-8", errors="ignore"))
                     raise ValueError()
                 # Retrieve result from container
                 result_document = self._retrieve_file("/tmp/result", container, tmpdir)
@@ -127,16 +130,15 @@ class ContainerizedSandbox(Sandbox):
                 logger.warning(
                     f"Exception in containerized_sandbox.process():\n{traceback.format_exc()}"
                 )
-            finally:
-                logger.debug("Stopping container %s", container.name)
-                container.stop(timeout=10)
-                return SandboxResult(
-                    success=success,
-                    log=log,
-                    result=result_document,
-                    metadata_result=metadata_result,
-                    metadata_src=metadata_src,
-                )
+            logger.debug("Stopping container %s", container.name)
+            container.stop(timeout=10)
+            return SandboxResult(
+                success=success,
+                log=log,
+                result=result_document,
+                metadata_result=metadata_result,
+                metadata_src=metadata_src,
+            )
 
     @staticmethod
     def _retrieve_file(path: str, container: Container, tmpdir: str) -> bytes:

@@ -24,7 +24,6 @@ from docleaner.api.services.jobs import create_job, delete_job, get_job, get_job
 from docleaner.api.services.repository import Repository
 from docleaner.api.services.sessions import get_session
 
-
 web_api = APIRouter(include_in_schema=False)
 
 
