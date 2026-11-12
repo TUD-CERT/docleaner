@@ -1,1 +1,1 @@
-import "./logo.png";
+import "./logo.svg";
