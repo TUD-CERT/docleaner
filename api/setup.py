@@ -28,4 +28,4 @@ setup(name="docleaner-api",
       url="https://docleaner.cert.tu-dresden.de",
       author="TUD-CERT",
       author_email="cert@tu-dresden.de",
-      version="20240214")
+      version="20261112")
